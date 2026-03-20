@@ -1,5 +1,4 @@
 import java.util.Properties
-import java.io.InputStream
 
 plugins {
     id("com.android.application")
@@ -13,15 +12,15 @@ plugins {
 val keyProperties = Properties()
 val keyPropertiesFile = rootProject.file("key.properties")
 if (keyPropertiesFile.exists()) {
-    keyPropertiesFile.inputStream().use { stream: InputStream ->
-        keyProperties.load(stream)
+    keyPropertiesFile.inputStream().use { stream ->
+        keyProperties.load(stream as java.io.InputStream)
     }
 }
 
-val signingKeyAlias      = keyProperties.getProperty("keyAlias") ?: System.getenv("KEY_ALIAS") ?: ""
-val signingKeyPassword   = keyProperties.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD") ?: ""
-val signingStorePassword = keyProperties.getProperty("storePassword") ?: System.getenv("KEY_STORE_PASSWORD") ?: ""
-val signingStorePath     = keyProperties.getProperty("storeFile") ?: System.getenv("KEY_PATH") ?: "kukufiti-release.jks"
+val signingKeyAlias: String      = keyProperties.getProperty("keyAlias") ?: System.getenv("KEY_ALIAS") ?: ""
+val signingKeyPassword: String   = keyProperties.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD") ?: ""
+val signingStorePassword: String = keyProperties.getProperty("storePassword") ?: System.getenv("KEY_STORE_PASSWORD") ?: ""
+val signingStorePath: String     = keyProperties.getProperty("storeFile") ?: System.getenv("KEY_PATH") ?: "kukufiti-release.jks"
 
 android {
     namespace = "com.fredrick.kukufiti"
