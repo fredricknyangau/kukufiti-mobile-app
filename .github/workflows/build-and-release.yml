@@ -75,7 +75,7 @@ jobs:
           KEY_PASSWORD:       ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS:          ${{ secrets.KEY_ALIAS }}
           KEY_PATH:           kukufiti-release.jks
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=API_URL=${{ secrets.API_URL }}
 
       # ─── 9b. EXTRACT VERSION FROM PUBSPEC ───────────────────────────
       - name: Get version from pubspec

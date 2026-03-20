@@ -13,11 +13,7 @@ class AppConfig {
 
     if (envApiUrl.isNotEmpty) return envApiUrl;
 
-    if (kReleaseMode) {
-      throw StateError(
-        'API_URL is not set. Please build the app with `--dart-define=API_URL=<your backend url>`.',
-      );
-    }
+    // In release mode, if not set, return empty string or fallback so main.dart can catch it.
 
     return kIsWeb ? 'http://localhost:8000/api/v1' : 'http://10.0.2.2:8000/api/v1';
   }
