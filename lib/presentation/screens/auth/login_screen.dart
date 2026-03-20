@@ -94,6 +94,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await SecureStorageService.clearRememberedEmail();
       }
 
+      if (!mounted) return;
+
       ToastService.showSuccess(context, "Welcome back!");
       context.go('/dashboard');
     } else if (authState.error != null) {

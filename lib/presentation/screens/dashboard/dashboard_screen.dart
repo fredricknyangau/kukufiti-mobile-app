@@ -10,13 +10,49 @@ import '../../../providers/auth_provider.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/custom_card.dart';
 
+import '../../../providers/update_provider.dart';
+import '../../widgets/update_dialog.dart';
+
 import '../../../providers/data_providers.dart';
 
-class DashboardScreen extends ConsumerWidget {
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _updateChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdate();
+    });
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (_updateChecked) return;
+    _updateChecked = true;
+
+    final updateInfo = await ref.read(updateCheckProvider.future);
+
+    if (!mounted) return;
+
+    if (updateInfo != null && updateInfo.isUpdateAvailable) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // force user to acknowledge
+        builder: (_) => UpdateDialog(updateInfo: updateInfo),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     final metricsAsync = ref.watch(dashboardMetricsProvider);

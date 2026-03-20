@@ -1,18 +1,19 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// A small wrapper around `flutter_secure_storage` to keep token and credentials storage centralized.
 class SecureStorageService {
   static const _authTokenKey = 'auth_token';
   static const _rememberedEmailKey = 'remembered_email';
 
-  static final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   /// Auth Token Operations
   static Future<String?> getAuthToken() async {
     try {
       return await _storage.read(key: _authTokenKey);
     } catch (e) {
-      print('SecureStorageService: Failed to read auth token: $e');
+      debugPrint('SecureStorageService: Failed to read auth token: $e');
       return null;
     }
   }
@@ -22,7 +23,7 @@ class SecureStorageService {
       await _storage.write(key: _authTokenKey, value: token);
       return true;
     } catch (e) {
-      print('SecureStorageService: Failed to store auth token: $e');
+      debugPrint('SecureStorageService: Failed to store auth token: $e');
       return false;
     }
   }
@@ -32,7 +33,7 @@ class SecureStorageService {
       await _storage.delete(key: _authTokenKey);
       return true;
     } catch (e) {
-      print('SecureStorageService: Failed to delete auth token: $e');
+      debugPrint('SecureStorageService: Failed to delete auth token: $e');
       return false;
     }
   }

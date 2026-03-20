@@ -88,7 +88,7 @@ class BatchesScreen extends ConsumerWidget {
                           daysElapsed = DateTime.now().difference(date).inDays;
                         } catch (_) {}
                       }
-                      
+
                       final status = (batch['status'] ?? 'active').toString().toLowerCase();
                       Color statusColor;
                       switch (status) {
@@ -156,7 +156,7 @@ class BatchesScreen extends ConsumerWidget {
                                                     onPressed: () {
                                                       HapticFeedback.mediumImpact();
                                                       Navigator.pop(context, true);
-                                                    }, 
+                                                    },
                                                     child: const Text('Delete', style: TextStyle(color: Colors.red))
                                                   ),
                                                 ],
@@ -313,7 +313,7 @@ class _AddBatchSheetState extends State<_AddBatchSheet> {
       } else {
         await ApiClient.instance.post(ApiEndpoints.batches, data: data);
       }
-      
+
       if (mounted) {
         HapticFeedback.heavyImpact(); // Success feedback
         ToastService.showSuccess(context, widget.batch != null ? 'Batch updated' : 'Batch created');
@@ -386,7 +386,7 @@ class _AddBatchSheetState extends State<_AddBatchSheet> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _status,
+              initialValue: _status,
               decoration: InputDecoration(
                 labelText: 'Status',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

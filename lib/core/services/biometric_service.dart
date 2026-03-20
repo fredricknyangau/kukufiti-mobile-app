@@ -1,5 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
@@ -11,7 +12,7 @@ class BiometricService {
       final bool canAuthenticate = canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
       return canAuthenticate;
     } on PlatformException catch (e) {
-      print('BiometricService: Error checking hardware: $e');
+      debugPrint('BiometricService: Error checking hardware: $e');
       return false;
     }
   }
@@ -28,7 +29,7 @@ class BiometricService {
       );
       return didAuthenticate;
     } on PlatformException catch (e) {
-      print('BiometricService: Authentication error: $e');
+      debugPrint('BiometricService: Authentication error: $e');
       return false;
     }
   }
@@ -38,7 +39,7 @@ class BiometricService {
     try {
       return await _auth.getAvailableBiometrics();
     } on PlatformException catch (e) {
-      print('BiometricService: Error getting types: $e');
+      debugPrint('BiometricService: Error getting types: $e');
       return <BiometricType>[];
     }
   }
