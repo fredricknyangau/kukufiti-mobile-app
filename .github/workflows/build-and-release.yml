@@ -1,0 +1,131 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches:
+      - main       # stable releases
+      - develop    # pre-releases for testing
+
+jobs:
+  build:
+    name: Build & Release Flutter APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─── 1. CHECKOUT ────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # full history for accurate changelog
+
+      # ─── 2. JAVA ────────────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ─── 3. FLUTTER ─────────────────────────────────────────────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      # ─── 4. CACHE PUB PACKAGES ──────────────────────────────────────
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      # ─── 5. INSTALL DEPENDENCIES ────────────────────────────────────
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ─── 6. ANALYZE CODE ────────────────────────────────────────────
+      - name: Analyze code
+        run: flutter analyze
+        continue-on-error: true   # don't block release on lint warnings
+
+      # ─── 7. RUN TESTS ───────────────────────────────────────────────
+      - name: Run tests
+        run: flutter test
+
+      # ─── 8. DECODE KEYSTORE ─────────────────────────────────────────
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode \
+            > android/app/kukufiti-release.jks
+
+      # ─── 9. BUILD RELEASE APK ───────────────────────────────────────
+      - name: Build release APK
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PATH: kukufiti-release.jks
+        run: flutter build apk --release
+
+      # ─── 10. RENAME APK ─────────────────────────────────────────────
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/kukufiti-v${{ github.run_number }}.apk
+
+      # ─── 11. GENERATE CHANGELOG ─────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get last 5 commit messages
+          CHANGES=$(git log -5 --pretty=format:"- %s (%an)" 2>/dev/null || echo "- Initial release")
+          
+          # Write to output (handles multiline)
+          echo "changes<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # ─── 12. CREATE GITHUB RELEASE ──────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "KukuFiti v${{ github.run_number }}"
+          body: |
+            ## KukuFiti Build v${{ github.run_number }}
+
+            | Field | Value |
+            |---|---|
+            | Branch | `${{ github.ref_name }}` |
+            | Commit | `${{ github.sha }}` |
+            | Build | `#${{ github.run_number }}` |
+            | Built at | `${{ github.event.head_commit.timestamp }}` |
+
+            ## Recent Changes
+            ${{ steps.changelog.outputs.changes }}
+
+            ## How to Install
+            1. Download `kukufiti-v${{ github.run_number }}.apk` below
+            2. On your Android phone: **Settings → Security → Install unknown apps** → Enable
+            3. Open the downloaded APK file and tap **Install**
+
+            > ⚠️ If prompted "Play Protect blocked the install", tap **Install anyway** — this is expected for APKs outside the Play Store.
+          files: build/app/outputs/flutter-apk/kukufiti-v${{ github.run_number }}.apk
+          prerelease: ${{ github.ref_name != 'main' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ─── 13. CLEANUP OLD PRE-RELEASES ───────────────────────────────
+      - name: Delete old develop pre-releases
+        if: github.ref_name == 'develop'
+        uses: dev-drprasad/delete-older-releases@v0.3.0
+        with:
+          keep_latest: 3
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
