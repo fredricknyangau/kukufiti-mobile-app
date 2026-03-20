@@ -131,11 +131,30 @@ class AdminDashboardScreen extends ConsumerWidget {
                     onTap: () => GoRouter.of(context).push('/manage-resources'),
                   ),
                 ),
+                const SizedBox(height: 12),
+                CustomCard(
+                  padding: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(LucideIcons.users, color: theme.colorScheme.primary),
+                    ),
+                    title: const Text('Manage Accounts & Users', style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text('View and update user roles and status', style: TextStyle(fontSize: 12)),
+                    trailing: const Icon(LucideIcons.chevronRight),
+                    onTap: () => GoRouter.of(context).push('/manage-users'),
+                  ),
+                ),
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildStatCard(BuildContext context, String title, String value, String subtitle, IconData icon) {
     return CustomCard(

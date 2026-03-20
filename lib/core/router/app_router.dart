@@ -51,6 +51,8 @@ import '../../features/alerts_management/presentation/screens/alerts_screen.dart
 import '../../features/admin_dashboard_management/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/audit_logs_management/presentation/screens/audit_logs_screen.dart';
 import '../../features/admin_dashboard_management/presentation/screens/manage_resources_screen.dart';
+import '../../features/admin_dashboard_management/presentation/screens/manage_users_screen.dart';
+
 
 
 class _RouterRefreshListenable extends ChangeNotifier {
@@ -241,6 +243,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/manage-resources',
                 builder: (context, state) => const ManageResourcesScreen(),
               ),
+              GoRoute(
+                path: '/manage-users',
+                builder: (context, state) => const ManageUsersScreen(),
+              ),
+
               GoRoute(
                 path: '/audit-logs',
                 builder: (context, state) => const AuditLogsScreen(),

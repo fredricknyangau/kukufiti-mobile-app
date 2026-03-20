@@ -29,30 +29,34 @@ class ManageResourcesScreen extends ConsumerWidget {
           if (guides.isEmpty) {
             return const Center(child: Text('No resources available.'));
           }
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: guides.length,
-            itemBuilder: (context, index) {
-              final guide = guides[index];
-              IconData iconData = LucideIcons.bookOpen;
-              if (guide['icon'] == 'syringe') iconData = LucideIcons.syringe;
-              if (guide['icon'] == 'alertTriangle') iconData = LucideIcons.alertTriangle;
-              if (guide['icon'] == 'wheat') iconData = LucideIcons.wheat;
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(resourcesProvider),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: guides.length,
+              itemBuilder: (context, index) {
+                final guide = guides[index];
+                IconData iconData = LucideIcons.bookOpen;
+                if (guide['icon'] == 'syringe') iconData = LucideIcons.syringe;
+                if (guide['icon'] == 'alertTriangle') iconData = LucideIcons.alertTriangle;
+                if (guide['icon'] == 'wheat') iconData = LucideIcons.wheat;
 
-              return _buildResourceCard(
-                context,
-                ref,
-                guide,
-                iconData,
-              );
-            },
+                return _buildResourceCard(
+                  context,
+                  ref,
+                  guide,
+                  iconData,
+                );
+              },
+            ),
           );
+
         },
       ),
     );

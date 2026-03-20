@@ -168,4 +168,11 @@ final tasksProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
 
+final adminUsersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  final res = await ApiClient.instance.get('/admin/users');
+  return List<dynamic>.from(_extractData(res.data) ?? []);
+});
+
+
 
