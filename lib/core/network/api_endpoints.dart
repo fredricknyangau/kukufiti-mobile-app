@@ -42,5 +42,11 @@ class ApiEndpoints {
   // Billing
   static const String mySubscription = '/billing/my-subscription';
   static const String subscribe = '/billing/subscribe';
+
+  // New: Backend Sync
+  static const String resources = '/resources/';
+  static const String settings = '/settings/';
+  static const String tasks = '/tasks/';
 }
+
 

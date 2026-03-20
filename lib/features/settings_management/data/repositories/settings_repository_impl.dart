@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/settings_state.dart';
 import '../../domain/repositories/settings_repository.dart';
 
@@ -17,14 +19,44 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      final themeIndex = prefs.getInt(_themeKey) ?? ThemeMode.system.index;
-      final themeMode = ThemeMode.values[themeIndex];
-      
-      final currency = prefs.getString(_currencyKey) ?? 'KES';
-      final language = prefs.getString(_languageKey) ?? 'en';
+      // Load local first
+      var themeIndex = prefs.getInt(_themeKey) ?? ThemeMode.system.index;
+      var currency = prefs.getString(_currencyKey) ?? 'KES';
+      var language = prefs.getString(_languageKey) ?? 'en';
+      var pushNotifications = prefs.getBool(_pushNotificationsKey) ?? true;
+      var emailSummaries = prefs.getBool(_emailSummariesKey) ?? false;
 
-      final pushNotifications = prefs.getBool(_pushNotificationsKey) ?? true;
-      final emailSummaries = prefs.getBool(_emailSummariesKey) ?? false;
+      // Try sync from backend
+      try {
+        final res = await ApiClient.instance.get(ApiEndpoints.settings);
+        final List<dynamic> remoteSettings = res.data ?? [];
+        for (var setting in remoteSettings) {
+          final key = setting['key'];
+          final value = setting['value'];
+          
+          if (key == _themeKey && value != null) {
+             themeIndex = ThemeMode.values.indexWhere((m) => m.name == value);
+             if (themeIndex == -1) themeIndex = ThemeMode.system.index;
+             await prefs.setInt(_themeKey, themeIndex);
+          } else if (key == _currencyKey && value != null) {
+             currency = value;
+             await prefs.setString(_currencyKey, currency);
+          } else if (key == _languageKey && value != null) {
+             language = value;
+             await prefs.setString(_languageKey, language);
+          } else if (key == _pushNotificationsKey && value != null) {
+             pushNotifications = value == 'true';
+             await prefs.setBool(_pushNotificationsKey, pushNotifications);
+          } else if (key == _emailSummariesKey && value != null) {
+             emailSummaries = value == 'true';
+             await prefs.setBool(_emailSummariesKey, emailSummaries);
+          }
+        }
+      } catch (e) {
+        // Fallback silently to local cache if offline/error
+      }
+
+      final themeMode = ThemeMode.values[themeIndex];
 
       return Right(SettingsState(
         themeMode: themeMode,
@@ -38,11 +70,20 @@ class SettingsRepositoryImpl implements SettingsRepository {
     }
   }
 
+  Future<void> _syncSettingWithBackend(String key, String value) async {
+    try {
+      await ApiClient.instance.put('${ApiEndpoints.settings}$key', data: {'value': value});
+    } catch (e) {
+      // Ignore failures, rely on local cache
+    }
+  }
+
   @override
   Future<Either<Failure, void>> setThemeMode(ThemeMode mode) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_themeKey, mode.index);
+      await _syncSettingWithBackend(_themeKey, mode.name);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -54,6 +95,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_currencyKey, currency);
+      await _syncSettingWithBackend(_currencyKey, currency);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -65,16 +107,19 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_languageKey, language);
+      await _syncSettingWithBackend(_languageKey, language);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
     }
   }
+
   @override
   Future<Either<Failure, void>> setPushNotifications(bool enabled) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_pushNotificationsKey, enabled);
+      await _syncSettingWithBackend(_pushNotificationsKey, enabled.toString());
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -86,10 +131,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_emailSummariesKey, enabled);
+      await _syncSettingWithBackend(_emailSummariesKey, enabled.toString());
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
     }
   }
 }
+
 

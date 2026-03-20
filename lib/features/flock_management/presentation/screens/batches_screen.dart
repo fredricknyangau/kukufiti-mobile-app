@@ -348,83 +348,85 @@ class _AddBatchSheetState extends State<_AddBatchSheet> {
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction, // Real-time validation
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.batch != null ? 'Edit Batch' : 'Add New Batch',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            CustomInput(
-              label: 'Batch Name',
-              hintText: 'e.g., Flock A - Q1',
-              controller: _nameController,
-              validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-            ),
-            const SizedBox(height: 16),
-            CustomInput(
-              label: 'Initial Count',
-              hintText: 'e.g., 500',
-              controller: _sizeController,
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                final count = int.tryParse(v);
-                if (count == null) return 'Enter a valid number';
-                if (count <= 0) return 'Must be greater than 0';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            CustomInput(
-              label: 'Breed (Optional)',
-              hintText: 'e.g., Cobb 500, Kienyeji',
-              controller: _breedController,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _status,
-              decoration: InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.batch != null ? 'Edit Batch' : 'Add New Batch',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-              items: ['active', 'completed', 'sold', 'culled', 'terminated']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase())))
-                  .toList(),
-              onChanged: (v) {
-                if (v != null) {
-                  HapticFeedback.selectionClick();
-                  setState(() => _status = v);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Start Date'),
-              subtitle: Text(DateFormat('yyyy-MM-dd').format(_startDate!)),
-              trailing: const Icon(LucideIcons.calendar),
-              onTap: () async {
-                HapticFeedback.lightImpact();
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _startDate!,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                );
-                if (picked != null) setState(() => _startDate = picked);
-              },
-            ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: widget.batch != null ? 'Update Batch' : 'Create Batch',
-              onPressed: _submit,
-              isLoading: _isLoading,
-            ),
-          ],
+              const SizedBox(height: 24),
+              CustomInput(
+                label: 'Batch Name',
+                hintText: 'e.g., Flock A - Q1',
+                controller: _nameController,
+                validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              CustomInput(
+                label: 'Initial Count',
+                hintText: 'e.g., 500',
+                controller: _sizeController,
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Required';
+                  final count = int.tryParse(v);
+                  if (count == null) return 'Enter a valid number';
+                  if (count <= 0) return 'Must be greater than 0';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              CustomInput(
+                label: 'Breed (Optional)',
+                hintText: 'e.g., Cobb 500, Kienyeji',
+                controller: _breedController,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _status,
+                decoration: InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                items: ['active', 'completed', 'sold', 'culled', 'terminated']
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase())))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _status = v);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Start Date'),
+                subtitle: Text(DateFormat('yyyy-MM-dd').format(_startDate!)),
+                trailing: const Icon(LucideIcons.calendar),
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate!,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null) setState(() => _startDate = picked);
+                },
+              ),
+              const SizedBox(height: 24),
+              CustomButton(
+                text: widget.batch != null ? 'Update Batch' : 'Create Batch',
+                onPressed: _submit,
+                isLoading: _isLoading,
+              ),
+            ],
+          ),
         ),
       ),
     );

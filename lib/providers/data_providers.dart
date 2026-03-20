@@ -155,3 +155,17 @@ final profileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) a
   final res = await ApiClient.instance.get(ApiEndpoints.profile);
   return Map<String, dynamic>.from(_extractData(res.data) ?? {});
 });
+
+final resourcesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  final res = await ApiClient.instance.get(ApiEndpoints.resources);
+  return List<dynamic>.from(_extractData(res.data) ?? []);
+});
+
+final tasksProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  final res = await ApiClient.instance.get(ApiEndpoints.tasks);
+  return List<dynamic>.from(_extractData(res.data) ?? []);
+});
+
+

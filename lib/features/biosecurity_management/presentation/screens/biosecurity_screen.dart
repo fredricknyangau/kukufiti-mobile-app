@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../providers/data_providers.dart';
 
 import '../../../../core/network/api_client.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
@@ -252,10 +253,29 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                               );
                               if (confirm == true) {
                                 try {
+
                                   await ApiClient.instance.delete('${ApiEndpoints.biosecurity}${item['id']}');
+
                                   ref.invalidate(biosecurityProvider);
+
                                 } catch (e) {
-                                  if (context.mounted) ToastService.showError(context, 'Failed to delete');
+
+                                  if (context.mounted) {
+
+                                    String message = 'Failed to delete';
+
+                                    if (e is DioException && e.response?.statusCode == 404) {
+
+                                      message = 'Record already deleted';
+
+                                      ref.invalidate(biosecurityProvider);
+
+                                    }
+
+                                    ToastService.showError(context, message);
+
+                                  }
+
                                 }
                               }
                             }

@@ -14,16 +14,26 @@ import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 
-class FeedScreen extends ConsumerWidget {
+
+class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends ConsumerState<FeedScreen> {
+  String? _selectedBatchId; // null = All Batches
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final feedAsync = ref.watch(feedProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
+    final batches = broilerState.batches;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -44,8 +54,20 @@ class FeedScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
-             final totalAmount = records.fold<double>(0, (prev, e) => prev + (e['quantity_kg'] as num).toDouble());
+             // Filter Logic
+             final filteredRecords = _selectedBatchId == null 
+                 ? records 
+                 : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
+
+             final totalAmount = filteredRecords.fold<double>(0, (prev, e) => prev + (e['quantity_kg'] as num).toDouble());
              
+             // Feed by Type Breakdown
+             final feedTypes = ['starter', 'grower', 'finisher'];
+             final feedByType = feedTypes.map((type) {
+               final qty = filteredRecords.where((e) => e['feed_type'] == type).fold<double>(0, (prev, e) => prev + (e['quantity_kg'] as num).toDouble());
+               return {'type': type, 'quantity': qty};
+             }).where((e) => (e['quantity'] as double) > 0).toList();
+
              return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -76,26 +98,67 @@ class FeedScreen extends ConsumerWidget {
                               Icon(LucideIcons.list, color: theme.colorScheme.secondary, size: 32),
                               const SizedBox(height: 8),
                               const Text('Records', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text('${records.length} Entries'),
+                              Text('${filteredRecords.length} Entries'),
                             ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  
+                  // Filter Dropdown
+                  DropdownButtonFormField<String?>(
+                    initialValue: _selectedBatchId,
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Batch',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('All Batches')),
+                      ...batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                    ],
+                    onChanged: (v) => setState(() => _selectedBatchId = v),
+                  ),
+                  
+                  const SizedBox(height: 16),
+
+                  // Feed Type Breakdown
+                  if (feedByType.isNotEmpty) ...[
+                    Text('Breakdown by Type', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 13, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: feedByType.map((t) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withAlpha(70),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: theme.colorScheme.primary.withAlpha(50)),
+                        ),
+                        child: Text('${(t['type'] as String).toUpperCase()}: ${(t['quantity'] as double).toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      )).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  const CustomDivider(),
+                  const SizedBox(height: 16),
+
                   Text(
                     'Feed Intake Log',
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  if (records.isEmpty)
+                  if (filteredRecords.isEmpty)
                     CustomCard(
                       child: Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24.0),
                           child: Text(
-                            'No feed records available.',
+                            'No feed records found for this selection.',
                             style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150)),
                           ),
                         ),
@@ -105,9 +168,9 @@ class FeedScreen extends ConsumerWidget {
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: records.length,
+                      itemCount: filteredRecords.length,
                       itemBuilder: (context, index) {
-                        final item = records.reversed.toList()[index];
+                        final item = filteredRecords.reversed.toList()[index];
                         final dateStr = item['event_date']?.toString() ?? DateTime.now().toIso8601String();
                         final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         
@@ -142,7 +205,14 @@ class FeedScreen extends ConsumerWidget {
                                       await ApiClient.instance.delete('${ApiEndpoints.feed}/${item['id']}');
                                       ref.invalidate(feedProvider);
                                     } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+                                      if (context.mounted) {
+                                        String message = 'Failed to delete';
+                                        if (e is DioException && e.response?.statusCode == 404) {
+                                          message = 'Record already deleted';
+                                          ref.invalidate(feedProvider);
+                                        }
+                                        ToastService.showError(context, message);
+                                      }
                                     }
                                   }
                                 }

@@ -14,6 +14,7 @@ import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 
 class WeightScreen extends ConsumerWidget {
   const WeightScreen({super.key});
@@ -181,10 +182,29 @@ class WeightScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
+
                                       await ApiClient.instance.delete('${ApiEndpoints.weight}/${item['id']}');
+
                                       ref.invalidate(weightProvider);
+
                                     } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+
+                                      if (context.mounted) {
+
+                                        String message = 'Failed to delete';
+
+                                        if (e is DioException && e.response?.statusCode == 404) {
+
+                                          message = 'Record already deleted';
+
+                                          ref.invalidate(weightProvider);
+
+                                        }
+
+                                        ToastService.showError(context, message);
+
+                                      }
+
                                     }
                                   }
                                 }

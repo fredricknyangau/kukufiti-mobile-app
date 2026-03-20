@@ -17,15 +17,41 @@ import '../../presentation/screens/main_layout_screen.dart';
 
 // Features / Dashboard
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
+// Flock
 import '../../features/flock_management/presentation/screens/flocks_screen.dart';
 import '../../features/flock_management/presentation/screens/batches_screen.dart';
 import '../../features/flock_management/presentation/screens/batch_details_screen.dart';
+
+// Operations
+import '../../features/feed_management/presentation/screens/feed_screen.dart';
+import '../../features/weight_management/presentation/screens/weight_screen.dart';
+import '../../features/vaccinations_management/presentation/screens/vaccinations_screen.dart';
+import '../../features/mortality_management/presentation/screens/mortality_screen.dart';
+import '../../features/calendar_management/presentation/screens/calendar_screen.dart';
 import '../../features/inventory_management/presentation/screens/inventory_screen.dart';
-import '../../features/expenses_management/presentation/screens/financials_screen.dart';
 import '../../features/reports_management/presentation/screens/reports_screen.dart';
+
+// Financials
+import '../../features/expenses_management/presentation/screens/financials_screen.dart';
+import '../../features/expenses_management/presentation/screens/expenditures_screen.dart';
+import '../../features/sales_management/presentation/screens/sales_screen.dart';
+import '../../features/market_management/presentation/screens/market_screen.dart';
+import '../../features/analytics_management/presentation/screens/analytics_screen.dart';
+
+// Business / Management
 import '../../features/settings_management/presentation/screens/settings_screen.dart';
 import '../../features/profile_management/presentation/screens/profile_screen.dart';
-import '../../features/analytics_management/presentation/screens/analytics_screen.dart';
+import '../../features/people_management/presentation/screens/people_screen.dart';
+import '../../features/biosecurity_management/presentation/screens/biosecurity_screen.dart';
+import '../../features/vet_management/presentation/screens/vet_screen.dart';
+import '../../features/resources_management/presentation/screens/resources_screen.dart';
+import '../../features/alerts_management/presentation/screens/alerts_screen.dart';
+
+// Admin
+import '../../features/admin_dashboard_management/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/audit_logs_management/presentation/screens/audit_logs_screen.dart';
+import '../../features/admin_dashboard_management/presentation/screens/manage_resources_screen.dart';
+
 
 class _RouterRefreshListenable extends ChangeNotifier {
   _RouterRefreshListenable(Ref ref) {
@@ -109,6 +135,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/reports',
                 builder: (context, state) => const ReportsScreen(),
               ),
+              // Added Operations
+              GoRoute(
+                path: '/feed',
+                builder: (context, state) => const FeedScreen(),
+              ),
+              GoRoute(
+                path: '/weight',
+                builder: (context, state) => const WeightScreen(),
+              ),
+              GoRoute(
+                path: '/vaccinations',
+                builder: (context, state) => const VaccinationsScreen(),
+              ),
+              GoRoute(
+                path: '/mortality',
+                builder: (context, state) => const MortalityScreen(),
+              ),
+              GoRoute(
+                path: '/calendar',
+                builder: (context, state) => const CalendarScreen(),
+              ),
             ],
           ),
           
@@ -133,17 +180,29 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branch 2: Analytics
+          // Branch 2: Analytics / Finance
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/analytics',
                 builder: (context, state) => const AnalyticsScreen(),
               ),
+              GoRoute(
+                path: '/expenditures',
+                builder: (context, state) => const ExpendituresScreen(),
+              ),
+              GoRoute(
+                path: '/sales',
+                builder: (context, state) => const SalesScreen(),
+              ),
+              GoRoute(
+                path: '/market',
+                builder: (context, state) => const MarketScreen(),
+              ),
             ],
           ),
 
-          // Branch 3: Settings
+          // Branch 3: Settings / Admin
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -153,6 +212,38 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
+              ),
+              GoRoute(
+                path: '/people',
+                builder: (context, state) => const PeopleScreen(),
+              ),
+              GoRoute(
+                path: '/biosecurity',
+                builder: (context, state) => const BiosecurityScreen(),
+              ),
+              GoRoute(
+                path: '/vet',
+                builder: (context, state) => const VetScreen(),
+              ),
+              GoRoute(
+                path: '/resources',
+                builder: (context, state) => const ResourcesScreen(),
+              ),
+              GoRoute(
+                path: '/alerts',
+                builder: (context, state) => const AlertsScreen(),
+              ),
+              GoRoute(
+                path: '/admin',
+                builder: (context, state) => const AdminDashboardScreen(),
+              ),
+              GoRoute(
+                path: '/manage-resources',
+                builder: (context, state) => const ManageResourcesScreen(),
+              ),
+              GoRoute(
+                path: '/audit-logs',
+                builder: (context, state) => const AuditLogsScreen(),
               ),
             ],
           ),

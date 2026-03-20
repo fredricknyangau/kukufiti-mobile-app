@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/network/api_client.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
@@ -170,10 +171,29 @@ class ExpendituresScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
+
                                       await ApiClient.instance.delete('${ApiEndpoints.expenditures}/${item['id']}');
+
                                       ref.invalidate(expendituresProvider);
+
                                     } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+
+                                      if (context.mounted) {
+
+                                        String message = 'Failed to delete';
+
+                                        if (e is DioException && e.response?.statusCode == 404) {
+
+                                          message = 'Record already deleted';
+
+                                          ref.invalidate(expendituresProvider);
+
+                                        }
+
+                                        ToastService.showError(context, message);
+
+                                      }
+
                                     }
                                   }
                                 }

@@ -14,12 +14,22 @@ import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 
-class MortalityScreen extends ConsumerWidget {
+
+class MortalityScreen extends ConsumerStatefulWidget {
   const MortalityScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MortalityScreen> createState() => _MortalityScreenState();
+}
+
+class _MortalityScreenState extends ConsumerState<MortalityScreen> {
+  String? _selectedBatchId;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final theme = Theme.of(context);
     final mortalityAsync = ref.watch(mortalityProvider);
     final broilerState = ref.watch(broilerProvider);
@@ -47,6 +57,10 @@ class MortalityScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
+            final filteredRecords = _selectedBatchId == null 
+              ? records 
+              : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
+            final totalMortality = filteredRecords.fold<int>(0, (prev, e) => prev + (e['count'] as num).toInt());
             final spots = <FlSpot>[];
             final now = DateTime.now();
             final labels = <String>[];
@@ -56,7 +70,7 @@ class MortalityScreen extends ConsumerWidget {
               final dayStr = DateFormat('yyyy-MM-dd').format(day);
               labels.add(DateFormat('EEE').format(day));
               
-              final countToday = records.where((e) {
+              final countToday = filteredRecords.where((e) {
                 final dateStr = e['event_date']?.toString() ?? '';
                 return dateStr.startsWith(dayStr);
               }).fold<int>(0, (prev, e) => prev + (e['count'] as num).toInt());
@@ -70,6 +84,45 @@ class MortalityScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  DropdownButtonFormField<String?>(
+                    initialValue: _selectedBatchId,
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Batch',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('All Batches')),
+                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                    ],
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedBatchId = v;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CustomCard(
+                    isPremium: true,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Total Mortality', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14)),
+                              const SizedBox(height: 4),
+                              Text('$totalMortality birds dead', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.error)),
+                            ],
+                          ),
+                          Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error, size: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   CustomCard(
                     isPremium: true,
                     child: Column(
@@ -131,7 +184,7 @@ class MortalityScreen extends ConsumerWidget {
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  if (records.isEmpty)
+                  if (filteredRecords.isEmpty)
                     CustomCard(
                       child: Center(
                         child: Padding(
@@ -147,9 +200,9 @@ class MortalityScreen extends ConsumerWidget {
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: records.length,
+                      itemCount: filteredRecords.length,
                       itemBuilder: (context, index) {
-                         final item = records.reversed.toList()[index];
+                         final item = filteredRecords.reversed.toList()[index];
                         final dateStr = item['event_date']?.toString() ?? DateTime.now().toIso8601String();
                         final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         
@@ -184,7 +237,14 @@ class MortalityScreen extends ConsumerWidget {
                                       await ApiClient.instance.delete('${ApiEndpoints.mortality}/${item['id']}');
                                       ref.invalidate(mortalityProvider);
                                     } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+                                      if (context.mounted) {
+                                        String message = 'Failed to delete';
+                                        if (e is DioException && e.response?.statusCode == 404) {
+                                          message = 'Record already deleted';
+                                          ref.invalidate(mortalityProvider);
+                                        }
+                                        ToastService.showError(context, message);
+                                      }
                                     }
                                   }
                                 }

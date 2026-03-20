@@ -114,8 +114,32 @@ class AnalyticsScreen extends ConsumerWidget {
                          height: 250,
                          child: weightSpots.isEmpty ? const Center(child: Text('No data')) : LineChart(
                            LineChartData(
-                             gridData: const FlGridData(show: false),
+                             gridData: FlGridData(
+                               show: true,
+                               drawVerticalLine: false,
+                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                             ),
                              borderData: FlBorderData(show: false),
+                             titlesData: FlTitlesData(
+                               show: true,
+                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               bottomTitles: AxisTitles(
+                                 sideTitles: SideTitles(
+                                   showTitles: true,
+                                   reservedSize: 22,
+                                   getTitlesWidget: (value, meta) {
+                                     final index = value.toInt();
+                                     if (index >= 0 && index < sortedWeight.length) {
+                                         final dateStr = sortedWeight[index]['event_date']?.toString() ?? '';
+                                         final date = DateTime.tryParse(dateStr) ?? DateTime.now();
+                                         return Text(DateFormat('dd/MM').format(date), style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                     }
+                                     return const SizedBox();
+                                   },
+                                 ),
+                               ),
+                             ),
                              lineBarsData: [
                                LineChartBarData(
                                  spots: weightSpots,
@@ -149,8 +173,31 @@ class AnalyticsScreen extends ConsumerWidget {
                          height: 250,
                          child: BarChart(
                            BarChartData(
-                             gridData: const FlGridData(show: false),
+                             gridData: FlGridData(
+                               show: true,
+                               drawVerticalLine: false,
+                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                             ),
                              borderData: FlBorderData(show: false),
+                             titlesData: FlTitlesData(
+                               show: true,
+                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               bottomTitles: AxisTitles(
+                                 sideTitles: SideTitles(
+                                   showTitles: true,
+                                   reservedSize: 22,
+                                   getTitlesWidget: (value, meta) {
+                                     final index = value.toInt();
+                                     if (index >= 0 && index <= 6) {
+                                         final day = DateTime.now().subtract(Duration(days: 6 - index));
+                                         return Text(DateFormat('E').format(day), style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                     }
+                                     return const SizedBox();
+                                   },
+                                 ),
+                               ),
+                             ),
                              barGroups: mortalityData,
                            )
                          ),
@@ -176,11 +223,30 @@ class AnalyticsScreen extends ConsumerWidget {
                          height: 250,
                          child: financeSpotsRev.isEmpty ? const Center(child: Text('No data')) : LineChart(
                            LineChartData(
-                             gridData: const FlGridData(show: false),
+                             gridData: FlGridData(
+                               show: true,
+                               drawVerticalLine: false,
+                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                             ),
                              borderData: FlBorderData(show: false),
-                             titlesData: const FlTitlesData(
-                               rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                             titlesData: FlTitlesData(
+                               show: true,
+                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                               bottomTitles: AxisTitles(
+                                 sideTitles: SideTitles(
+                                   showTitles: true,
+                                   reservedSize: 22,
+                                   getTitlesWidget: (value, meta) {
+                                     final index = value.toInt();
+                                     if (index >= 0 && index < financeData.length) {
+                                         final name = financeData[index]['name']?.toString() ?? '';
+                                         return Text(name, style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                     }
+                                     return const SizedBox();
+                                   },
+                                 ),
+                               ),
                              ),
                              lineBarsData: [
                                LineChartBarData(

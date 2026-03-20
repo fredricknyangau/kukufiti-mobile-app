@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+
 
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
@@ -107,8 +109,28 @@ class AdminDashboardScreen extends ConsumerWidget {
                        ),
                      );
                    },
-                 ),
-               ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text('Management Controls', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                CustomCard(
+                  padding: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(LucideIcons.bookOpen, color: theme.colorScheme.primary),
+                    ),
+                    title: const Text('Manage Guides & Resources', style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Add, edit, or delete farm resources', style: TextStyle(fontSize: 12)),
+                    trailing: const Icon(LucideIcons.chevronRight),
+                    onTap: () => GoRouter.of(context).push('/manage-resources'),
+                  ),
+                ),
           ],
         ),
       ),

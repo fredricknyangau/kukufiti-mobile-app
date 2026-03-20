@@ -14,12 +14,22 @@ import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dio/dio.dart';
 
-class VaccinationsScreen extends ConsumerWidget {
+
+class VaccinationsScreen extends ConsumerStatefulWidget {
   const VaccinationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VaccinationsScreen> createState() => _VaccinationsScreenState();
+}
+
+class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
+  String? _selectedBatchId;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final theme = Theme.of(context);
     final vaccAsync = ref.watch(vaccinationProvider);
     final broilerState = ref.watch(broilerProvider);
@@ -44,7 +54,10 @@ class VaccinationsScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
-            final sortedRecords = List<dynamic>.from(records)
+            final filteredRecords = _selectedBatchId == null 
+              ? records 
+              : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
+            final sortedRecords = List<dynamic>.from(filteredRecords)
               ..sort((a, b) {
                 final dateA = DateTime.tryParse(a['event_date']?.toString() ?? '') ?? DateTime(2000);
                 final dateB = DateTime.tryParse(b['event_date']?.toString() ?? '') ?? DateTime(2000);
@@ -57,12 +70,51 @@ class VaccinationsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  DropdownButtonFormField<String?>(
+                    initialValue: _selectedBatchId,
+                    decoration: InputDecoration(
+                      labelText: 'Filter by Batch',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('All Batches')),
+                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                    ],
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedBatchId = v;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CustomCard(
+                    isPremium: true,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Total Administered', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14)),
+                              const SizedBox(height: 4),
+                              Text('${sortedRecords.length} records', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                            ],
+                          ),
+                          Icon(LucideIcons.syringe, color: theme.colorScheme.primary, size: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Records Overview',
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  if (records.isEmpty)
+                  if (filteredRecords.isEmpty)
                       CustomCard(
                         child: Center(
                           child: Padding(
@@ -110,10 +162,29 @@ class VaccinationsScreen extends ConsumerWidget {
                                      );
                                      if (confirm == true) {
                                        try {
+
                                          await ApiClient.instance.delete('${ApiEndpoints.vaccination}/${v['id']}');
+
                                          ref.invalidate(vaccinationProvider);
+
                                        } catch (e) {
-                                         if (context.mounted) ToastService.showError(context, 'Failed to delete');
+
+                                         if (context.mounted) {
+
+                                           String message = 'Failed to delete';
+
+                                           if (e is DioException && e.response?.statusCode == 404) {
+
+                                             message = 'Record already deleted';
+
+                                             ref.invalidate(vaccinationProvider);
+
+                                           }
+
+                                           ToastService.showError(context, message);
+
+                                         }
+
                                        }
                                      }
                                    }

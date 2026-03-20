@@ -25,8 +25,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final feedAsync = ref.watch(feedProvider);
     final vaccinationAsync = ref.watch(vaccinationProvider);
     final weightAsync = ref.watch(weightProvider);
+    final tasksAsync = ref.watch(tasksProvider);
 
-    if (mortalityAsync.isLoading || feedAsync.isLoading || vaccinationAsync.isLoading || weightAsync.isLoading) {
+    if (mortalityAsync.isLoading || feedAsync.isLoading || vaccinationAsync.isLoading || weightAsync.isLoading || tasksAsync.isLoading) {
       return Scaffold(
         drawer: const AppDrawer(),
         appBar: AppBar(title: const Text('Calendar')),
@@ -88,6 +89,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           'description': '',
           'icon': LucideIcons.scale,
           'color': Colors.green,
+        });
+      }
+    }
+
+    // Aggregate Tasks
+    for (final e in tasksAsync.value ?? []) {
+      if (e['due_date'] != null) {
+        allEvents.add({
+          'type': 'task',
+          'date': DateTime.parse(e['due_date']),
+          'title': e['title'] ?? 'Task',
+          'description': e['description'] ?? '',
+          'icon': LucideIcons.calendarCheck2,
+          'color': Colors.orange,
         });
       }
     }

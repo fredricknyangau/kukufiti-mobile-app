@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/network/api_client.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_button.dart';
@@ -182,10 +183,29 @@ class SalesScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
+
                                       await ApiClient.instance.delete('${ApiEndpoints.sales}/${item['id']}');
+
                                       ref.invalidate(salesProvider);
+
                                     } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+
+                                      if (context.mounted) {
+
+                                        String message = 'Failed to delete';
+
+                                        if (e is DioException && e.response?.statusCode == 404) {
+
+                                          message = 'Record already deleted';
+
+                                          ref.invalidate(salesProvider);
+
+                                        }
+
+                                        ToastService.showError(context, message);
+
+                                      }
+
                                     }
                                   }
                                 }
