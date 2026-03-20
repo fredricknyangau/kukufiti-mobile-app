@@ -3,8 +3,8 @@ name: Build & Release APK
 on:
   push:
     branches:
-      - main       # stable releases
-      - develop    # pre-releases for testing
+      - main
+      - develop
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # full history for accurate changelog
+          fetch-depth: 0
 
       # ─── 2. JAVA ────────────────────────────────────────────────────
       - name: Set up JDK 17
@@ -51,25 +51,30 @@ jobs:
       # ─── 6. ANALYZE CODE ────────────────────────────────────────────
       - name: Analyze code
         run: flutter analyze
-        continue-on-error: true   # don't block release on lint warnings
+        continue-on-error: true        # ← warns but never blocks the build
 
       # ─── 7. RUN TESTS ───────────────────────────────────────────────
       - name: Run tests
         run: flutter test
 
-      # ─── 8. DECODE KEYSTORE ─────────────────────────────────────────
+      # ─── 8. DECODE SECRETS ──────────────────────────────────────────
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode \
             > android/app/kukufiti-release.jks
 
+      - name: Decode google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode \
+            > android/app/google-services.json
+
       # ─── 9. BUILD RELEASE APK ───────────────────────────────────────
       - name: Build release APK
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PATH: kukufiti-release.jks
+          KEY_PASSWORD:       ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS:          ${{ secrets.KEY_ALIAS }}
+          KEY_PATH:           kukufiti-release.jks
         run: flutter build apk --release
 
       # ─── 10. RENAME APK ─────────────────────────────────────────────
@@ -82,13 +87,11 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # Get last 5 commit messages
-          CHANGES=$(git log -5 --pretty=format:"- %s (%an)" 2>/dev/null || echo "- Initial release")
-          
-          # Write to output (handles multiline)
+          CHANGES=$(git log -5 --pretty=format:"- %s (%an)" 2>/dev/null \
+                    || echo "- Initial release")
           echo "changes<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES"     >> $GITHUB_OUTPUT
+          echo "EOF"          >> $GITHUB_OUTPUT
 
       # ─── 12. CREATE GITHUB RELEASE ──────────────────────────────────
       - name: Create GitHub Release
@@ -114,7 +117,7 @@ jobs:
             2. On your Android phone: **Settings → Security → Install unknown apps** → Enable
             3. Open the downloaded APK file and tap **Install**
 
-            > ⚠️ If prompted "Play Protect blocked the install", tap **Install anyway** — this is expected for APKs outside the Play Store.
+            > ⚠️ If prompted "Play Protect blocked the install", tap **Install anyway**
           files: build/app/outputs/flutter-apk/kukufiti-v${{ github.run_number }}.apk
           prerelease: ${{ github.ref_name != 'main' }}
         env:
