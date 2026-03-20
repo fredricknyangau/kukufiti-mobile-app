@@ -51,7 +51,7 @@ jobs:
       # ─── 6. ANALYZE CODE ────────────────────────────────────────────
       - name: Analyze code
         run: flutter analyze
-        continue-on-error: true        # ← warns but never blocks the build
+        continue-on-error: true
 
       # ─── 7. RUN TESTS ───────────────────────────────────────────────
       - name: Run tests
@@ -77,11 +77,18 @@ jobs:
           KEY_PATH:           kukufiti-release.jks
         run: flutter build apk --release
 
+      # ─── 9b. EXTRACT VERSION FROM PUBSPEC ───────────────────────────
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       # ─── 10. RENAME APK ─────────────────────────────────────────────
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/kukufiti-v${{ github.run_number }}.apk
+             build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
 
       # ─── 11. GENERATE CHANGELOG ─────────────────────────────────────
       - name: Generate changelog
@@ -93,14 +100,26 @@ jobs:
           echo "$CHANGES"     >> $GITHUB_OUTPUT
           echo "EOF"          >> $GITHUB_OUTPUT
 
-      # ─── 12. CREATE GITHUB RELEASE ──────────────────────────────────
+      # ─── 12. FIREBASE APP DISTRIBUTION ──────────────────────────────
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: internal-testers
+          file: build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
+          releaseNotes: |
+            Build ${{ github.run_number }} — ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+
+      # ─── 13. CREATE GITHUB RELEASE ──────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: "KukuFiti v${{ github.run_number }}"
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "KukuFiti v${{ steps.version.outputs.version }}"
           body: |
-            ## KukuFiti Build v${{ github.run_number }}
+            ## KukuFiti Build v${{ steps.version.outputs.version }}
 
             | Field | Value |
             |---|---|
@@ -113,17 +132,17 @@ jobs:
             ${{ steps.changelog.outputs.changes }}
 
             ## How to Install
-            1. Download `kukufiti-v${{ github.run_number }}.apk` below
+            1. Download `kukufiti-v${{ steps.version.outputs.version }}.apk` below
             2. On your Android phone: **Settings → Security → Install unknown apps** → Enable
             3. Open the downloaded APK file and tap **Install**
 
             > ⚠️ If prompted "Play Protect blocked the install", tap **Install anyway**
-          files: build/app/outputs/flutter-apk/kukufiti-v${{ github.run_number }}.apk
+          files: build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
           prerelease: ${{ github.ref_name != 'main' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ─── 13. CLEANUP OLD PRE-RELEASES ───────────────────────────────
+      # ─── 14. CLEANUP OLD PRE-RELEASES ───────────────────────────────
       - name: Delete old develop pre-releases
         if: github.ref_name == 'develop'
         uses: dev-drprasad/delete-older-releases@v0.3.0
