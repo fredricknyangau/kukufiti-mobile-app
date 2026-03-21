@@ -21,9 +21,7 @@ class AppConfig {
     }
 
     // In release mode, if not set, return empty string or fallback so main.dart can catch it.
-    return kIsWeb
-        ? 'http://192.168.100.45:8000/api/v1'
-        : 'http://10.0.2.2:8000/api/v1';
+    return 'https://kukufiti-backend.onrender.com/api/v1';
   }
 
   /// Returns `true` when the app is currently using the local development API URL.
