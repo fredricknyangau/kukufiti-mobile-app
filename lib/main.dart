@@ -9,6 +9,21 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings_management/presentation/controllers/settings_controller.dart';
 
+class ConfigInvalidNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    return kReleaseMode && AppConfig.isUsingDefaultApiUrl;
+  }
+
+  void setInvalid(bool value) {
+    state = value;
+  }
+}
+
+final configInvalidProvider = NotifierProvider<ConfigInvalidNotifier, bool>(() {
+  return ConfigInvalidNotifier();
+});
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -19,13 +34,21 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('offline_cache');
 
-  final bool configIsInvalid = kReleaseMode && AppConfig.isUsingDefaultApiUrl;
-
   runApp(
-    ProviderScope(
-      child: configIsInvalid ? const ConfigErrorApp() : const MyApp(),
+    const ProviderScope(
+      child: RootApp(),
     ),
   );
+}
+
+class RootApp extends ConsumerWidget {
+  const RootApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isInvalid = ref.watch(configInvalidProvider);
+    return isInvalid ? const ConfigErrorApp() : const MyApp();
+  }
 }
 
 class MyApp extends ConsumerWidget {
@@ -48,41 +71,93 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-class ConfigErrorApp extends StatelessWidget {
+class ConfigErrorApp extends ConsumerStatefulWidget {
   const ConfigErrorApp({super.key});
+
+  @override
+  ConsumerState<ConfigErrorApp> createState() => _ConfigErrorAppState();
+}
+
+class _ConfigErrorAppState extends ConsumerState<ConfigErrorApp> {
+  final _urlController = TextEditingController();
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController.text = AppConfig.apiUrl;
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveUrl() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) {
+      setState(() => _errorText = 'URL cannot be empty');
+      return;
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      setState(() => _errorText = 'URL must start with http:// or https://');
+      return;
+    }
+
+    try {
+      final box = Hive.box('offline_cache');
+      await box.put('API_URL', url);
+      ref.read(configInvalidProvider.notifier).setInvalid(false);
+    } catch (e) {
+      setState(() => _errorText = 'Save failed: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KukuFiti — Configuration Error',
+      title: 'KukuFiti — Configuration',
       theme: AppTheme.lightTheme,
       home: Scaffold(
-        appBar: AppBar(title: const Text('Configuration Error')),
+        appBar: AppBar(title: const Text('Backend Configuration')),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Missing backend URL',
+                  'Missing or Default Backend URL',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'The app is running in release mode but the backend API URL is not configured.\n\n'
-                  'Please rebuild the app with a valid backend URL using:\n'
-                  '`--dart-define=API_URL=https://your-backend/api/v1`',
+                  'The app is running in release mode. Please enter your backend URL to continue.\n\n'
+                  'Example: http://192.168.100.45:8000/api/v1',
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                TextField(
+                  controller: _urlController,
+                  decoration: InputDecoration(
+                    labelText: 'Backend API URL',
+                    hintText: 'http://<ip-address>:8000/api/v1',
+                    border: const OutlineInputBorder(),
+                    errorText: _errorText,
+                  ),
+                  keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    debugPrint('Reload requested');
-                  },
-                  child: const Text('Retry (restart app)'),
+                  onPressed: _saveUrl,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Save & Connect'),
                 ),
               ],
             ),
