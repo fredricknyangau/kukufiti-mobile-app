@@ -10,6 +10,8 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/custom_input.dart';
 
+import '../../../core/utils/error_handler.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -59,16 +61,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
-        final data = e.response?.data;
-        String message = 'Registration failed. Please try again.';
-        if (data is Map && data.containsKey('detail')) {
-          final detail = data['detail'];
-          message = detail is List ? detail.map((e) => e['msg']).join(', ') : detail.toString();
-        }
-        ToastService.showError(context, message);
+        ToastService.showError(context, getFriendlyErrorMessage(e));
       }
     } catch (e) {
-      if (mounted) ToastService.showError(context, 'An unexpected error occurred.');
+      if (mounted) {
+        ToastService.showError(context, getFriendlyErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

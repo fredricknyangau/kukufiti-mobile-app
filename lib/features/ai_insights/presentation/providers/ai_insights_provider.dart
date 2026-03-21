@@ -7,6 +7,7 @@ import '../../data/models/fcr_insights.dart';
 import '../../data/models/ai_chat.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AiInsightsState {
   final bool isLoading;
@@ -68,7 +69,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
       final data = _extractData(response);
       state = state.copyWith(isLoading: false, recommendation: FeedRecommendationResponse.fromJson(data));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 
@@ -82,7 +83,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
       final data = _extractData(response);
       state = state.copyWith(isLoading: false, mortalityAnalysis: MortalityAnalysisResponse.fromJson(data));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 
@@ -96,7 +97,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
       final data = _extractData(response);
       state = state.copyWith(isLoading: false, harvestPrediction: HarvestPredictionResponse.fromJson(data));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 
@@ -110,7 +111,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
       final data = _extractData(response);
       state = state.copyWith(isLoading: false, diseaseRisk: DiseaseRiskResponse.fromJson(data));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 
@@ -124,7 +125,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
       final data = _extractData(response);
       state = state.copyWith(isLoading: false, fcrInsights: FcrInsightsResponse.fromJson(data));
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 
@@ -147,7 +148,7 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
         chatHistory: [...state.chatHistory, aiMessage],
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: getFriendlyErrorMessage(e));
     }
   }
 

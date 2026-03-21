@@ -4,6 +4,8 @@ import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/storage/secure_storage_service.dart';
 
+import '../core/utils/error_handler.dart';
+
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
@@ -65,7 +67,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(
         isAuthenticated: false,
         isLoading: false,
-        error: e.toString(),
+        error: getFriendlyErrorMessage(e),
       );
     }
   }

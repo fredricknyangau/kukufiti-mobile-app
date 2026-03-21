@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
 
+import '../../../../core/utils/error_handler.dart';
+
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
 
@@ -23,7 +25,35 @@ class AdminDashboardScreen extends ConsumerWidget {
     }
 
     if (statsAsync.hasError || transAsync.hasError) {
-      return const Scaffold(body: Center(child: Text('Error loading admin data.')));
+      final error = statsAsync.error ?? transAsync.error;
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  getFriendlyErrorMessage(error),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    ref.invalidate(adminStatsProvider);
+                    ref.invalidate(adminTransactionsProvider);
+                  },
+                  icon: const Icon(LucideIcons.refreshCw, size: 16),
+                  label: const Text('Try Again'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     final stats = statsAsync.value ?? {};
