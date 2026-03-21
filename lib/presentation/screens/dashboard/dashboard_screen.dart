@@ -804,7 +804,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             context,
             icon: LucideIcons.sparkles,
             label: 'AI Advisory',
-            route: '/ai-feed-advisory',
+            route: '/ai-insights-hub',
             color: Colors.deepPurple,
           ),
           _buildActionItem(

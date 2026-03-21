@@ -74,7 +74,7 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
     final isLocked = settings.biometricLockEnabled && !_isUnlocked;
 
     void goBranch(int index) {
-      if (index == 2 && isStarter) {
+      if (index == 3 && isStarter) {
         showPremiumUpgradeDialog(context, 'Analytics & Custom Reports');
         return;
       }
@@ -159,20 +159,24 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
               onDestinationSelected: goBranch,
               destinations: [
                 const NavigationDestination(
-                  icon: Icon(LucideIcons.home),
-                  label: 'Home',
+                   icon: Icon(LucideIcons.home),
+                   label: 'Home',
                 ),
                 const NavigationDestination(
-                  icon: Icon(LucideIcons.layers),
-                  label: 'Batches',
+                   icon: Icon(LucideIcons.layers),
+                   label: 'Batches',
+                ),
+                const NavigationDestination(
+                   icon: Icon(LucideIcons.sparkles),
+                   label: 'AI Advisory',
                 ),
                 NavigationDestination(
-                  icon: const Icon(LucideIcons.pieChart),
-                  label: isStarter ? 'Analytics 🔒' : 'Analytics',
+                   icon: const Icon(LucideIcons.pieChart),
+                   label: isStarter ? 'Analytics 🔒' : 'Analytics',
                 ),
                 const NavigationDestination(
-                  icon: Icon(LucideIcons.settings),
-                  label: 'Settings',
+                   icon: Icon(LucideIcons.settings),
+                   label: 'Settings',
                 ),
               ],
             ),

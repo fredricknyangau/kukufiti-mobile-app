@@ -33,8 +33,13 @@ import '../../features/calendar_management/presentation/screens/calendar_screen.
 import '../../features/inventory_management/presentation/screens/inventory_screen.dart';
 import '../../features/reports_management/presentation/screens/reports_screen.dart';
 
-// AI Insights
 import '../../features/ai_insights/presentation/screens/feed_advisory_screen.dart';
+import '../../features/ai_insights/presentation/screens/mortality_analysis_screen.dart';
+import '../../features/ai_insights/presentation/screens/ai_advisory_hub_screen.dart';
+import '../../features/ai_insights/presentation/screens/harvest_prediction_screen.dart';
+import '../../features/ai_insights/presentation/screens/disease_risk_screen.dart';
+import '../../features/ai_insights/presentation/screens/fcr_insights_screen.dart';
+import '../../features/ai_insights/presentation/screens/ai_chat_screen.dart';
 
 // Financials
 import '../../features/expenses_management/presentation/screens/financials_screen.dart';
@@ -161,10 +166,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const FeedScreen(),
               ),
               GoRoute(
-                path: '/ai-feed-advisory',
-                builder: (context, state) => const FeedAdvisoryScreen(),
-              ),
-              GoRoute(
                 path: '/weight',
                 builder: (context, state) => const WeightScreen(),
               ),
@@ -204,7 +205,41 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branch 2: Analytics / Finance
+          // Branch 2: AI Advisory
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/ai-insights-hub',
+                builder: (context, state) => const AiAdvisoryHubScreen(),
+              ),
+              GoRoute(
+                path: '/ai-feed-advisory',
+                builder: (context, state) => const FeedAdvisoryScreen(),
+              ),
+              GoRoute(
+                path: '/ai-mortality-analysis',
+                builder: (context, state) => const MortalityAdvisoryScreen(),
+              ),
+              GoRoute(
+                path: '/ai-harvest-prediction',
+                builder: (context, state) => const HarvestPredictionScreen(),
+              ),
+              GoRoute(
+                path: '/ai-disease-risk',
+                builder: (context, state) => const DiseaseRiskScreen(),
+              ),
+              GoRoute(
+                path: '/ai-fcr-insights',
+                builder: (context, state) => const FcrInsightsScreen(),
+              ),
+              GoRoute(
+                path: '/ai-chat',
+                builder: (context, state) => const AiChatScreen(),
+              ),
+            ],
+          ),
+
+          // Branch 3: Analytics / Finance
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -226,7 +261,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branch 3: Settings / Admin
+          // Branch 4: Settings / Admin
           StatefulShellBranch(
             routes: [
               GoRoute(

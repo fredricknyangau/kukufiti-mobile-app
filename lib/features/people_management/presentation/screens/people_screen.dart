@@ -23,6 +23,7 @@ class PeopleScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('People Management', style: TextStyle(fontWeight: FontWeight.bold)),
           bottom: const TabBar(
+            dividerColor: Colors.transparent,
             tabs: [
               Tab(text: 'Suppliers'),
               Tab(text: 'Customers'),

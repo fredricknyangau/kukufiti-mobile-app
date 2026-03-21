@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
@@ -75,6 +76,7 @@ class AnalyticsScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Performance Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
           bottom: const TabBar(
+            dividerColor: Colors.transparent,
             tabs: [
               Tab(text: 'Growth'),
               Tab(text: 'Health'),
@@ -92,32 +94,78 @@ class AnalyticsScreen extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 1.5,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.4,
                   children: [
-                    _buildStatCard(context, 'Avg Weight', sortedWeight.isNotEmpty ? '${((sortedWeight.last['average_weight_grams'] as num?)?.toDouble() ?? 0.0) / 1000} kg' : 'N/A'),
-                    _buildStatCard(context, 'Mortality Rate', '${metrics['mortality_rate'] ?? 0}%'),
-                    _buildStatCard(context, 'Active Flocks', '${metrics['active_flocks'] ?? 0}'),
-                    _buildStatCard(context, 'Total Birds', '${metrics['current_birds'] ?? 0}'),
+                    _buildStatCard(
+                      context, 
+                      'Avg Weight', 
+                      sortedWeight.isNotEmpty ? '${((sortedWeight.last['average_weight_grams'] as num?)?.toDouble() ?? 0.0) / 1000} kg' : 'N/A',
+                      icon: LucideIcons.scale,
+                      color: theme.colorScheme.primary,
+                    ),
+                    _buildStatCard(
+                      context, 
+                      'Mortality Rate', 
+                      '${metrics['mortality_rate'] ?? 0}%',
+                      icon: LucideIcons.trendingDown,
+                      color: theme.colorScheme.error,
+                    ),
+                    _buildStatCard(
+                      context, 
+                      'Active Flocks', 
+                      '${metrics['active_flocks'] ?? 0}',
+                      icon: LucideIcons.layers,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    _buildStatCard(
+                      context, 
+                      'Total Birds', 
+                      '${metrics['current_birds'] ?? 0}',
+                      icon: LucideIcons.twitter, // standard bird icon equivalent
+                      color: Colors.orange,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 CustomCard(
                   isPremium: true,
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Text('Weight Trends', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 16),
+                       Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         children: [
+                           Text('Weight Trends', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                           const Icon(LucideIcons.trendingUp, color: Colors.green, size: 20),
+                         ],
+                       ),
+                       const SizedBox(height: 24),
                        SizedBox(
                          height: 250,
-                         child: weightSpots.isEmpty ? const Center(child: Text('No data')) : LineChart(
+                         child: weightSpots.isEmpty ? const Center(child: Text('No data available')) : LineChart(
                            LineChartData(
+                             lineTouchData: LineTouchData(
+                               touchTooltipData: LineTouchTooltipData(
+                                 getTooltipItems: (touchedSpots) {
+                                   return touchedSpots.map((spot) {
+                                     return LineTooltipItem(
+                                       '${spot.y.toStringAsFixed(1)} g',
+                                       const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                     );
+                                   }).toList();
+                                 },
+                               ),
+                             ),
                              gridData: FlGridData(
                                show: true,
                                drawVerticalLine: false,
-                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                               getDrawingHorizontalLine: (value) => FlLine(
+                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05), 
+                                 strokeWidth: 1,
+                               ),
                              ),
                              borderData: FlBorderData(show: false),
                              titlesData: FlTitlesData(
@@ -145,8 +193,19 @@ class AnalyticsScreen extends ConsumerWidget {
                                  spots: weightSpots,
                                  isCurved: true,
                                  color: theme.colorScheme.primary,
-                                 barWidth: 3,
+                                 barWidth: 4,
                                  dotData: const FlDotData(show: false),
+                                 belowBarData: BarAreaData(
+                                   show: true,
+                                   gradient: LinearGradient(
+                                     colors: [
+                                       theme.colorScheme.primary.withValues(alpha: 0.15),
+                                       theme.colorScheme.primary.withValues(alpha: 0.0),
+                                     ],
+                                     begin: Alignment.topCenter,
+                                     end: Alignment.bottomCenter,
+                                   ),
+                                 ),
                                )
                              ]
                            )
@@ -164,11 +223,18 @@ class AnalyticsScreen extends ConsumerWidget {
               children: [
                  CustomCard(
                   isPremium: true,
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Text('Daily Mortality Trend', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 16),
+                       Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         children: [
+                           Text('Daily Mortality Trend', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                           const Icon(LucideIcons.alertTriangle, color: Colors.orange, size: 20),
+                         ],
+                       ),
+                       const SizedBox(height: 24),
                        SizedBox(
                          height: 250,
                          child: BarChart(
@@ -176,7 +242,10 @@ class AnalyticsScreen extends ConsumerWidget {
                              gridData: FlGridData(
                                show: true,
                                drawVerticalLine: false,
-                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                               getDrawingHorizontalLine: (value) => FlLine(
+                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05), 
+                                 strokeWidth: 1,
+                               ),
                              ),
                              borderData: FlBorderData(show: false),
                              titlesData: FlTitlesData(
@@ -214,19 +283,41 @@ class AnalyticsScreen extends ConsumerWidget {
               children: [
                  CustomCard(
                   isPremium: true,
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Text('Revenue vs Expenses', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 16),
+                       Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         children: [
+                           Text('Revenue vs Expenses', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                           const Icon(LucideIcons.dollarSign, color: Colors.green, size: 20),
+                         ],
+                       ),
+                       const SizedBox(height: 24),
                        SizedBox(
                          height: 250,
-                         child: financeSpotsRev.isEmpty ? const Center(child: Text('No data')) : LineChart(
+                         child: financeSpotsRev.isEmpty ? const Center(child: Text('No data loaded')) : LineChart(
                            LineChartData(
+                             lineTouchData: LineTouchData(
+                               touchTooltipData: LineTouchTooltipData(
+                                 getTooltipItems: (touchedSpots) {
+                                   return touchedSpots.map((spot) {
+                                     return LineTooltipItem(
+                                       spot.y.toStringAsFixed(0),
+                                       const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                     );
+                                   }).toList();
+                                 },
+                               ),
+                             ),
                              gridData: FlGridData(
                                show: true,
                                drawVerticalLine: false,
-                               getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.onSurface.withValues(alpha: 0.1), strokeWidth: 1),
+                               getDrawingHorizontalLine: (value) => FlLine(
+                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.05), 
+                                 strokeWidth: 1,
+                               ),
                              ),
                              borderData: FlBorderData(show: false),
                              titlesData: FlTitlesData(
@@ -253,15 +344,37 @@ class AnalyticsScreen extends ConsumerWidget {
                                  spots: financeSpotsRev,
                                  isCurved: true,
                                  color: theme.colorScheme.primary,
-                                 barWidth: 3,
-                                 belowBarData: BarAreaData(show: true, color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+                                 barWidth: 4,
+                                 dotData: const FlDotData(show: false),
+                                 belowBarData: BarAreaData(
+                                   show: true, 
+                                   gradient: LinearGradient(
+                                     colors: [
+                                       theme.colorScheme.primary.withValues(alpha: 0.15),
+                                       theme.colorScheme.primary.withValues(alpha: 0.0),
+                                     ],
+                                     begin: Alignment.topCenter,
+                                     end: Alignment.bottomCenter,
+                                   ),
+                                 ),
                                ),
                                LineChartBarData(
                                  spots: financeSpotsExp,
                                  isCurved: true,
                                  color: theme.colorScheme.error,
-                                 barWidth: 3,
-                                 belowBarData: BarAreaData(show: true, color: theme.colorScheme.error.withValues(alpha: 0.1)),
+                                 barWidth: 4,
+                                 dotData: const FlDotData(show: false),
+                                 belowBarData: BarAreaData(
+                                   show: true, 
+                                   gradient: LinearGradient(
+                                     colors: [
+                                       theme.colorScheme.error.withValues(alpha: 0.15),
+                                       theme.colorScheme.error.withValues(alpha: 0.0),
+                                     ],
+                                     begin: Alignment.topCenter,
+                                     end: Alignment.bottomCenter,
+                                   ),
+                                 ),
                                )
                              ]
                            )
@@ -278,17 +391,44 @@ class AnalyticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value) {
-    return CustomCard(
-      padding: const EdgeInsets.all(12),
+  Widget _buildStatCard(BuildContext context, String title, String value, {required IconData icon, required Color color}) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+         color: theme.colorScheme.surface,
+         borderRadius: BorderRadius.circular(16),
+         border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+         gradient: LinearGradient(
+           colors: [
+             color.withValues(alpha: 0.05),
+             theme.colorScheme.surface,
+           ],
+           begin: Alignment.topLeft,
+           end: Alignment.bottomRight,
+         ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)), maxLines: 1)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title, 
+                style: TextStyle(
+                  fontSize: 12, 
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Icon(icon, color: color, size: 18),
+            ],
+          ),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5),
           ),
         ],
       ),

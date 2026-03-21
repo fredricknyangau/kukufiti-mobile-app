@@ -52,6 +52,11 @@ class ApiEndpoints {
 
   // AI Advisory
   static const String aiFeedRecommendation = '/ai/feed-recommendation';
+  static const String aiMortalityAnalysis = '/ai/mortality-analysis';
+  static const String aiHarvestPrediction = '/ai/harvest-prediction';
+  static const String aiDiseaseRisk = '/ai/disease-risk';
+  static const String aiFcrInsights = '/ai/fcr-insights';
+  static const String aiChat = '/ai/chat';
 }
 
 

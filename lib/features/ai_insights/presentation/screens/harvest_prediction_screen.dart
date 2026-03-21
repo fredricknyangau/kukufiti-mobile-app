@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/models/harvest_prediction.dart';
+import '../providers/ai_insights_provider.dart';
+import '../../../../providers/broiler_provider.dart';
+
+class HarvestPredictionScreen extends ConsumerStatefulWidget {
+  const HarvestPredictionScreen({super.key});
+
+  @override
+  ConsumerState<HarvestPredictionScreen> createState() => _HarvestPredictionScreenState();
+}
+
+class _HarvestPredictionScreenState extends ConsumerState<HarvestPredictionScreen> {
+  String? _selectedBatchId;
+  final _targetWeightController = TextEditingController();
+
+  @override
+  void dispose() {
+    _targetWeightController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final broilerState = ref.watch(broilerProvider);
+    final aiState = ref.watch(aiInsightsProvider);
+    final batches = broilerState.batches;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Harvest Readiness')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Predict Optimal Harvest Date',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Select a batch and entered your desired target weights to compute estimated finishing days.',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+
+            DropdownButtonFormField<String>(
+              initialValue: _selectedBatchId,
+              decoration: const InputDecoration(
+                labelText: 'Select Batch',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.layers),
+              ),
+              items: batches.map((batch) {
+                return DropdownMenuItem<String>(
+                  value: batch['id'].toString(),
+                  child: Text(batch['name'] ?? 'Batch #${batch['id']}'),
+                );
+              }).toList(),
+              onChanged: (val) {
+                setState(() => _selectedBatchId = val);
+              },
+            ),
+            const SizedBox(height: 16),
+
+            TextFormField(
+              controller: _targetWeightController,
+              decoration: const InputDecoration(
+                labelText: 'Target Weight (kg)',
+                hintText: 'e.g., 2.2',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.fitness_center),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (val) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+
+            ElevatedButton(
+              onPressed: (_selectedBatchId == null || _targetWeightController.text.isEmpty || aiState.isLoading)
+                  ? null
+                  : _triggerAnalysis,
+              child: aiState.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Predict Readiness'),
+            ),
+
+            const SizedBox(height: 32),
+
+            if (aiState.error != null) ...[
+              Text(aiState.error!, style: const TextStyle(color: Colors.red)),
+            ],
+
+            if (aiState.harvestPrediction != null) ...[
+              _buildReportCard(theme, aiState.harvestPrediction!),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _triggerAnalysis() {
+    HapticFeedback.heavyImpact();
+    final batches = ref.read(broilerProvider).batches;
+    final batch = batches.firstWhere((b) => b['id'].toString() == _selectedBatchId);
+
+    // Calculate age
+    int ageDays = 0;
+    if (batch['start_date'] != null) {
+       try {
+         final date = DateTime.parse(batch['start_date']);
+         ageDays = DateTime.now().difference(date).inDays;
+       } catch (_) {}
+    }
+
+    final request = HarvestPredictionRequest(
+      flockAgeDays: ageDays,
+      currentAvgWeightKg: (batch['current_avg_weight'] != null) ? (batch['current_avg_weight'] as num).toDouble() : 1.5, // fallback
+      targetWeightKg: double.parse(_targetWeightController.text),
+      breed: batch['breed'] ?? 'Cobb 500',
+    );
+
+    ref.read(aiInsightsProvider.notifier).fetchHarvestPrediction(request);
+  }
+
+  Widget _buildReportCard(ThemeData theme, HarvestPredictionResponse response) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             Text(
+               'Status: ${response.statusFlag}',
+               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+             ),
+             const SizedBox(height: 12),
+             Text('Estimated Days remaining: ${response.estimatedDaysToTarget} days'),
+             Text('Daily gain estimate: ${response.dailyGainEstimateG.toStringAsFixed(1)}g'),
+             const Divider(height: 24),
+             const Text('Recommendations:', style: TextStyle(fontWeight: FontWeight.bold)),
+             ...response.recommendations.map((r) => Text('• $r')),
+          ],
+        ),
+      ),
+    );
+  }
+}
