@@ -13,11 +13,42 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final userAsync = ref.watch(profileProvider);
+    final subscriptionAsync = ref.watch(subscriptionProvider);
     final user = userAsync.value;
     final currentRoute = GoRouterState.of(context).matchedLocation;
 
+    final sub = subscriptionAsync.value;
+    final plan = sub?['plan_type'] ?? 'STARTER';
+    final isStarter = plan == 'STARTER';
+
+    bool isPremiumRoute(String route) {
+      return ['/inventory', '/alerts', '/analytics'].contains(route);
+    }
+
+    void showUpgradeDialog(BuildContext context, String feature) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Unlock $feature', style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('Access into $feature requires a Professional Plan subscription to enable Advanced Farm Intelligence metrics securely.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Maybe Later')),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/pricing');
+              },
+              child: const Text('Upgrade Now'),
+            ),
+          ],
+        ),
+      );
+    }
+
     Widget buildDrawerItem(String title, String route, IconData icon) {
       final isSelected = currentRoute == route;
+      final locked = isStarter && isPremiumRoute(route);
+
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         child: ListTile(
@@ -36,11 +67,18 @@ class AppDrawer extends ConsumerWidget {
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
             ),
           ),
+          trailing: locked 
+              ? Icon(LucideIcons.lock, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)) 
+              : null,
           selected: isSelected,
           selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.08),
           onTap: () {
             Navigator.pop(context);
-            const branchRoutes = ['/dashboard', '/batches', '/analytics', '/settings'];
+            if (locked) {
+              showUpgradeDialog(context, title);
+              return;
+            }
+            const branchRoutes = ['/dashboard', '/batches', '/analytics', '/settings', '/farms'];
             if (branchRoutes.contains(route)) {
               context.go(route);
             } else {
@@ -208,6 +246,8 @@ class AppDrawer extends ConsumerWidget {
                       buildDrawerItem('Reports', '/reports', LucideIcons.fileText),
                       buildDrawerItem('Vet & Health', '/vet', LucideIcons.activity),
                       buildDrawerItem('Resources', '/resources', LucideIcons.bookOpen),
+                      if (plan == 'ENTERPRISE')
+                        buildDrawerItem('Manage Farms', '/farms', LucideIcons.home),
                       buildDrawerItem('Settings', '/settings', LucideIcons.settings),
                       buildDrawerItem('Alerts', '/alerts', LucideIcons.bell),
                     ],
@@ -258,14 +298,65 @@ class AppDrawer extends ConsumerWidget {
                         style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    title: Text(
-                      user?['full_name'] ?? 'Farmer',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user?['full_name'] ?? 'Farmer',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        subscriptionAsync.when(
+                          data: (sub) {
+                            final plan = sub['plan_type'] ?? 'STARTER';
+                            final isPremium = plan != 'STARTER';
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isPremium 
+                                    ? theme.colorScheme.primary.withValues(alpha: 0.1) 
+                                    : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isPremium 
+                                      ? theme.colorScheme.primary.withValues(alpha: 0.3) 
+                                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Text(
+                                plan,
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: isPremium ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (e, s) => const SizedBox.shrink(),
+                        ),
+                      ],
                     ),
-                    subtitle: Text(user?['email'] ?? '', style: const TextStyle(fontSize: 11)),
+                    subtitle: Text(user?['email'] ?? '', style: const TextStyle(fontSize: 10)),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/profile');
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.only(left: 8, right: 4),
+                    leading: Icon(LucideIcons.trendingUp, color: theme.colorScheme.primary, size: 20),
+                    title: Text(
+                      'Upgrade Plan',
+                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/pricing');
                     },
                   ),
                   ListTile(

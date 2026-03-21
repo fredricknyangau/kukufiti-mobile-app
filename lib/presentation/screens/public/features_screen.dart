@@ -12,12 +12,15 @@ class FeaturesScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final List<Map<String, dynamic>> items = [
-      {'title': 'Flock Management', 'desc': 'Track daily mortality, feed consumption, and growth metrics accurately.', 'icon': LucideIcons.layers, 'color': Colors.blue},
-      {'title': 'Finance Tracker', 'desc': 'Log expenses and sales to identify exact real-time margins.', 'icon': LucideIcons.coins, 'color': Colors.teal},
-      {'title': 'Smart Alerts', 'desc': 'Real-time push notifications when threshold limits are breached.', 'icon': LucideIcons.bellRing, 'color': Colors.amber},
-      {'title': 'Inventory Ledger', 'desc': 'Auto-updating stock for feeds, vaccines, and supplements.', 'icon': LucideIcons.package, 'color': Colors.indigo},
-      {'title': 'Audit Logs', 'desc': 'Track all security changes for accountability across workforce.', 'icon': LucideIcons.shieldCheck, 'color': Colors.teal},
-      {'title': 'Reports Export', 'desc': 'PDF and Spreadsheet generation for banking & tax ready documentation.', 'icon': LucideIcons.fileSpreadsheet, 'color': Colors.redAccent},
+      {'title': 'Financial Analytics', 'desc': 'Gain deep insights into your farm\'s profitability per batch.', 'icon': LucideIcons.barChart3, 'color': Colors.teal},
+      {'title': 'Mortality Monitoring', 'desc': 'Log daily mortality trends and receive automated threshold alerts.', 'icon': LucideIcons.activity, 'color': Colors.red},
+      {'title': 'Conversion Optimize', 'desc': 'Monitor FCR (Feed Conversion Ratio) in real-time to save feed.', 'icon': LucideIcons.trendingUp, 'color': Colors.blue},
+      {'title': 'Biosecurity Logs', 'desc': 'Maintain tamper-proof records of critical safety biosecurity logs.', 'icon': LucideIcons.shieldCheck, 'color': Colors.indigo},
+      {'title': 'Task Scheduling', 'desc': 'Schedule vaccinations and routine tasks with integrated reminders.', 'icon': LucideIcons.checkCircle, 'color': Colors.deepPurple},
+      {'title': 'Team Collaboration', 'desc': 'Assign roles and permissions to staff and farm managers.', 'icon': LucideIcons.users, 'color': Colors.amber},
+      {'title': 'Mobile-First Design', 'desc': 'Manage your farm from field using optimized responsive setup.', 'icon': LucideIcons.smartphone, 'color': Colors.cyan},
+      {'title': 'Cloud Backup', 'desc': 'Automatic cloud backups and enterprise-grade security safety.', 'icon': LucideIcons.cloud, 'color': Colors.blueGrey},
+      {'title': 'Real-time Alerts', 'desc': 'React instantly to missed vaccinations or mortality triggers.', 'icon': LucideIcons.clock, 'color': Colors.orange},
     ];
 
     return Scaffold(

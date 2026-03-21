@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
+import '../core/storage/hive_cache_service.dart';
 import 'auth_provider.dart';
 
 // Helper to handle both `{ "data": [...] }` and `[...]` response structures safely.
@@ -77,6 +78,9 @@ final expendituresProvider = FutureProvider.autoDispose<List<dynamic>>((ref) asy
 
 final inventoryProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
+  final sub = ref.watch(subscriptionProvider).value;
+  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+
   final res = await ApiClient.instance.get(ApiEndpoints.inventory);
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
@@ -90,12 +94,24 @@ final inventoryHistoryProvider = FutureProvider.autoDispose.family<List<dynamic>
 // Analytics
 final dashboardMetricsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.dashboardMetrics);
-  return Map<String, dynamic>.from(_extractData(res.data) ?? {});
+  const cacheKey = 'dashboard_metrics';
+  try {
+    final res = await ApiClient.instance.get(ApiEndpoints.dashboardMetrics);
+    final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
+    await HiveCacheService.cacheData(cacheKey, data);
+    return data;
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return Map<String, dynamic>.from(cached);
+    rethrow;
+  }
 });
 
 final financialChartProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
+  final sub = ref.watch(subscriptionProvider).value;
+  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+
   final res = await ApiClient.instance.get(ApiEndpoints.financialChart);
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
@@ -116,6 +132,9 @@ final adminTransactionsProvider = FutureProvider.autoDispose<List<dynamic>>((ref
 // Logs and People
 final alertsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
+  final sub = ref.watch(subscriptionProvider).value;
+  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+
   final res = await ApiClient.instance.get(ApiEndpoints.alerts);
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
@@ -164,13 +183,47 @@ final resourcesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async 
 
 final tasksProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.tasks);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  const cacheKey = 'tasks';
+  try {
+    final res = await ApiClient.instance.get(ApiEndpoints.tasks);
+    final data = List<dynamic>.from(_extractData(res.data) ?? []);
+    await HiveCacheService.cacheData(cacheKey, data);
+    return data;
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return List<dynamic>.from(cached);
+    rethrow;
+  }
 });
 
 final adminUsersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
   final res = await ApiClient.instance.get('/admin/users');
+  return List<dynamic>.from(_extractData(res.data) ?? []);
+});
+
+final subscriptionProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  const cacheKey = 'subscription';
+  try {
+    final res = await ApiClient.instance.get('/billing/my-subscription');
+    final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
+    await HiveCacheService.cacheData(cacheKey, data);
+    return data;
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return Map<String, dynamic>.from(cached);
+    rethrow;
+  }
+});
+
+final farmsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  final sub = ref.watch(subscriptionProvider).value;
+  if ((sub?['plan_type'] ?? 'STARTER') != 'ENTERPRISE') {
+    return [];
+  }
+  final res = await ApiClient.instance.get(ApiEndpoints.farms);
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
 

@@ -79,7 +79,7 @@ class ManageResourcesScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -95,7 +95,7 @@ class ManageResourcesScreen extends ConsumerWidget {
                     constraints: const BoxConstraints(),
                     onPressed: () => _showResourceFormDialog(context: context, ref: ref, guide: guide),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.red),
                     padding: EdgeInsets.zero,

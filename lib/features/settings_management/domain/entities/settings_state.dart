@@ -6,6 +6,7 @@ class SettingsState {
   final String language;
   final bool pushNotificationsEnabled;
   final bool emailSummariesEnabled;
+  final bool biometricLockEnabled;
 
   SettingsState({
     required this.themeMode,
@@ -13,6 +14,7 @@ class SettingsState {
     required this.language,
     this.pushNotificationsEnabled = true,
     this.emailSummariesEnabled = false,
+    this.biometricLockEnabled = false,
   });
 
   SettingsState copyWith({
@@ -21,6 +23,7 @@ class SettingsState {
     String? language,
     bool? pushNotificationsEnabled,
     bool? emailSummariesEnabled,
+    bool? biometricLockEnabled,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -28,6 +31,7 @@ class SettingsState {
       language: language ?? this.language,
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       emailSummariesEnabled: emailSummariesEnabled ?? this.emailSummariesEnabled,
+      biometricLockEnabled: biometricLockEnabled ?? this.biometricLockEnabled,
     );
   }
 }

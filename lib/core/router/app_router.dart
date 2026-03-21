@@ -7,6 +7,8 @@ import '../../providers/auth_provider.dart';
 import '../../presentation/screens/public/landing_screen.dart';
 import '../../presentation/screens/public/features_screen.dart';
 import '../../presentation/screens/public/pricing_screen.dart';
+import '../../presentation/screens/public/about_screen.dart';
+import '../../presentation/screens/public/contact_screen.dart';
 
 // Auth
 import '../../presentation/screens/auth/login_screen.dart';
@@ -31,6 +33,9 @@ import '../../features/calendar_management/presentation/screens/calendar_screen.
 import '../../features/inventory_management/presentation/screens/inventory_screen.dart';
 import '../../features/reports_management/presentation/screens/reports_screen.dart';
 
+// AI Insights
+import '../../features/ai_insights/presentation/screens/feed_advisory_screen.dart';
+
 // Financials
 import '../../features/expenses_management/presentation/screens/financials_screen.dart';
 import '../../features/expenses_management/presentation/screens/expenditures_screen.dart';
@@ -52,6 +57,9 @@ import '../../features/admin_dashboard_management/presentation/screens/admin_das
 import '../../features/audit_logs_management/presentation/screens/audit_logs_screen.dart';
 import '../../features/admin_dashboard_management/presentation/screens/manage_resources_screen.dart';
 import '../../features/admin_dashboard_management/presentation/screens/manage_users_screen.dart';
+
+// Farm Management
+import '../../features/farm_management/presentation/screens/farms_screen.dart';
 
 
 
@@ -75,7 +83,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthPath = state.uri.path == '/login' || state.uri.path == '/register';
       final isPublicPath = state.uri.path == '/' || 
                           state.uri.path == '/features' || 
-                          state.uri.path == '/pricing';
+                          state.uri.path == '/pricing' ||
+                          state.uri.path == '/about' ||
+                          state.uri.path == '/contact';
 
       if (!isAuthenticated && !isAuthPath && !isPublicPath) {
         return '/login';
@@ -100,6 +110,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/pricing',
         builder: (context, state) => const PricingScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        builder: (context, state) => const AboutScreen(),
+      ),
+      GoRoute(
+        path: '/contact',
+        builder: (context, state) => const ContactScreen(),
       ),
 
       // Auth Routes
@@ -141,6 +159,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/feed',
                 builder: (context, state) => const FeedScreen(),
+              ),
+              GoRoute(
+                path: '/ai-feed-advisory',
+                builder: (context, state) => const FeedAdvisoryScreen(),
               ),
               GoRoute(
                 path: '/weight',
@@ -210,6 +232,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/settings',
                 builder: (context, state) => const SettingsScreen(),
+              ),
+              GoRoute(
+                path: '/farms',
+                builder: (context, state) => const FarmsScreen(),
               ),
               GoRoute(
                 path: '/profile',

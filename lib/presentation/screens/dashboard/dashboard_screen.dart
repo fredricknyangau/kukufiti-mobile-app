@@ -1,9 +1,15 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:mobile/presentation/widgets/custom_divider.dart';
+import '../../../core/notifications/notification_service.dart';
+import '../../../core/network/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import 'package:fl_chart/fl_chart.dart';
 import '../../../providers/auth_provider.dart';
@@ -14,8 +20,7 @@ import '../../../providers/update_provider.dart';
 import '../../widgets/update_dialog.dart';
 
 import '../../../providers/data_providers.dart';
-
-
+import '../../widgets/premium_upgrade_dialog.dart';
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -84,6 +89,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         _buildCriticalAlertsHeader(context, alertsAsync, theme),
                         const SizedBox(height: 16),
                         _buildFinancialSummary(context, ref, theme, metrics),
+                        _buildFarmsSummary(context, theme),
+                        _buildTasksOverview(context, theme),
                         const SizedBox(height: 24),
                         _buildSectionTitle(theme, 'Quick Overview'),
                         const SizedBox(height: 12),
@@ -95,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(height: 24),
                         _buildSectionTitle(theme, 'Live Tracking Timeline'),
                         const SizedBox(height: 12),
-                        _buildActivitiesTimeline(context, theme),
+                        _buildActivitiesTimeline(context, theme, metrics),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -153,7 +160,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 20, top: 40),
+                padding: const EdgeInsets.only(left: 56, top: 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -217,6 +224,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ThemeData theme,
     Map<String, dynamic> metrics,
   ) {
+    final subAsync = ref.watch(subscriptionProvider);
+    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
+    final isPremium = plan != 'STARTER';
+
     final totalRev = (metrics['total_revenue'] as num?)?.toDouble() ?? 0.0;
     final totalExp = (metrics['total_expenses'] as num?)?.toDouble() ?? 0.0;
     final netProfit = (metrics['net_profit'] as num?)?.toDouble() ?? 0.0;
@@ -239,168 +250,234 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
-        child: Column(
+        child: Stack(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Net Earnings',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.6,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Net Earnings',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'en_KE',
+                            symbol: 'KES ',
+                          ).format(netProfit),
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: netProfit >= 0
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.error,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'en_KE',
-                        symbol: 'KES ',
-                      ).format(netProfit),
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color:
+                            (netProfit >= 0
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.error)
+                                .withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        netProfit >= 0
+                            ? LucideIcons.trendingUp
+                            : LucideIcons.trendingDown,
                         color: netProfit >= 0
                             ? theme.colorScheme.primary
                             : theme.colorScheme.error,
+                        size: 28,
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color:
-                        (netProfit >= 0
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.error)
-                            .withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    netProfit >= 0
-                        ? LucideIcons.trendingUp
-                        : LucideIcons.trendingDown,
-                    color: netProfit >= 0
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.error,
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Mini Graph section
-            SizedBox(
-              height: 60,
-              width: double.infinity,
-              child: chartAsync.when(
-                loading: () => const Center(
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                error: (e, _) => const SizedBox.shrink(),
-                data: (chartData) {
-                  if (chartData.isEmpty) return const SizedBox.shrink();
-
-                  final List<FlSpot> revSpots = [];
-                  final List<FlSpot> expSpots = [];
-
-                  final sortedData = List<dynamic>.from(chartData)
-                    ..sort(
-                      (a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''),
-                    );
-
-                  for (int i = 0; i < sortedData.length; i++) {
-                    final d = sortedData[i];
-                    revSpots.add(
-                      FlSpot(
-                        i.toDouble(),
-                        (d['revenue'] as num?)?.toDouble() ?? 0.0,
+                // Mini Graph section
+                SizedBox(
+                  height: 60,
+                  width: double.infinity,
+                  child: chartAsync.when(
+                    loading: () => const Center(
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                    );
-                    expSpots.add(
-                      FlSpot(
-                        i.toDouble(),
-                        (d['expenses'] as num?)?.toDouble() ?? 0.0,
-                      ),
-                    );
-                  }
-
-                  return LineChart(
-                    LineChartData(
-                      gridData: const FlGridData(show: false),
-                      titlesData: const FlTitlesData(show: false),
-                      borderData: FlBorderData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: revSpots,
-                          isCurved: true,
-                          color: theme.colorScheme.primary,
-                          barWidth: 3,
-                          isStrokeCapRound: true,
-                          dotData: const FlDotData(show: false),
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.08,
-                            ),
-                          ),
-                        ),
-                        LineChartBarData(
-                          spots: expSpots,
-                          isCurved: true,
-                          color: theme.colorScheme.error,
-                          barWidth: 2,
-                          isStrokeCapRound: true,
-                          dotData: const FlDotData(show: false),
-                          dashArray: [5, 5],
-                        ),
-                      ],
                     ),
-                  );
-                },
-              ),
-            ),
+                    error: (e, _) => const SizedBox.shrink(),
+                    data: (chartData) {
+                      if (chartData.isEmpty) return const SizedBox.shrink();
 
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: CustomDivider(height: 1),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFinancialMetric(
-                    theme,
-                    title: 'Revenue',
-                    amount: totalRev,
-                    color: theme.colorScheme.primary,
-                    icon: LucideIcons.arrowUpRight,
+                      final List<FlSpot> revSpots = [];
+                      final List<FlSpot> expSpots = [];
+
+                      final sortedData = List<dynamic>.from(chartData)
+                        ..sort(
+                          (a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''),
+                        );
+
+                      for (int i = 0; i < sortedData.length; i++) {
+                        final d = sortedData[i];
+                        revSpots.add(
+                          FlSpot(
+                            i.toDouble(),
+                            (d['revenue'] as num?)?.toDouble() ?? 0.0,
+                          ),
+                        );
+                        expSpots.add(
+                          FlSpot(
+                            i.toDouble(),
+                            (d['expenses'] as num?)?.toDouble() ?? 0.0,
+                          ),
+                        );
+                      }
+
+                      return LineChart(
+                        LineChartData(
+                          gridData: const FlGridData(show: false),
+                          titlesData: const FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: revSpots,
+                              isCurved: true,
+                              color: theme.colorScheme.primary,
+                              barWidth: 3,
+                              isStrokeCapRound: true,
+                              dotData: const FlDotData(show: false),
+                              belowBarData: BarAreaData(
+                                show: true,
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.08,
+                                ),
+                              ),
+                            ),
+                            LineChartBarData(
+                              spots: expSpots,
+                              isCurved: true,
+                              color: theme.colorScheme.error,
+                              barWidth: 2,
+                              isStrokeCapRound: true,
+                              dotData: const FlDotData(show: false),
+                              dashArray: [5, 5],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
-                Container(
-                  height: 30,
-                  width: 1,
-                  color: theme.colorScheme.outline.withValues(alpha: 0.5),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: CustomDivider(height: 1),
                 ),
-                Expanded(
-                  child: _buildFinancialMetric(
-                    theme,
-                    title: 'Expenses',
-                    amount: totalExp,
-                    color: theme.colorScheme.error,
-                    icon: LucideIcons.arrowDownLeft,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFinancialMetric(
+                        theme,
+                        title: 'Revenue',
+                        amount: totalRev,
+                        color: theme.colorScheme.primary,
+                        icon: LucideIcons.arrowUpRight,
+                      ),
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1,
+                      color: theme.colorScheme.outline.withValues(alpha: 0.5),
+                    ),
+                    Expanded(
+                      child: _buildFinancialMetric(
+                        theme,
+                        title: 'Expenses',
+                        amount: totalExp,
+                        color: theme.colorScheme.error,
+                        icon: LucideIcons.arrowDownLeft,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      if (!isPremium) {
+                        showPremiumUpgradeDialog(context, 'PDF Export');
+                      } else {
+                        _generateAndSharePdf(context, metrics);
+                      }
+                    },
+                    icon: Icon(
+                      isPremium ? LucideIcons.download : LucideIcons.lock,
+                      size: 16,
+                    ),
+                    label: const Text(
+                      'Export PDF Report',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
             ),
+            if (!isPremium)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(LucideIcons.lock, color: Colors.white, size: 24),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Premium Feature',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                            ),
+                            const SizedBox(height: 4),
+                            TextButton(
+                              onPressed: () => showPremiumUpgradeDialog(context, 'Financial Trend Analytics'),
+                              child: const Text('Upgrade to View', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -446,46 +523,189 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildStatsGrid(BuildContext context, Map<String, dynamic> metrics) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    final subAsync = ref.watch(subscriptionProvider);
+    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
+    final isPremium = plan != 'STARTER';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildStatCard(
-          context,
-          title: 'Active Batches',
-          value: (metrics['active_flocks'] ?? 0).toString(),
-          icon: LucideIcons.layers,
-          color: Colors.blue,
-          onTap: () => context.push('/batches'),
+        GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildStatCard(
+              context,
+              title: 'Active Batches',
+              value: (metrics['active_flocks'] ?? 0).toString(),
+              icon: LucideIcons.layers,
+              color: Colors.blue,
+              onTap: () => context.push('/batches'),
+            ),
+            _buildStatCard(
+              context,
+              title: 'Total Birds',
+              value: (metrics['current_birds'] ?? 0).toString(),
+              icon: LucideIcons.userPlus,
+              color: Colors.orange,
+              onTap: () => context.push('/batches'),
+            ),
+            _buildStatCard(
+              context,
+              title: 'Mortality Rate',
+              value: '${metrics['mortality_rate'] ?? 0}%',
+              icon: LucideIcons.skull,
+              color: Colors.redAccent,
+              onTap: () => context.push('/mortality'),
+            ),
+            _buildStatCard(
+              context,
+              title: 'Market Prices',
+              value: 'Check',
+              icon: LucideIcons.lineChart,
+              color: Colors.green,
+              onTap: () => context.push('/market'),
+            ),
+          ],
         ),
-        _buildStatCard(
-          context,
-          title: 'Total Birds',
-          value: (metrics['current_birds'] ?? 0).toString(),
-          icon: LucideIcons.userPlus, // Changed to general user/bird count icon
-          color: Colors.orange,
-          onTap: () => context.push('/batches'),
+        const SizedBox(height: 16),
+        CustomCard(
+          isPremium: isPremium,
+          onTap: () {
+            if (!isPremium) {
+              // import 'premium_upgrade_dialog.dart' will be added in next step at top if missing.
+              // Assuming showPremiumUpgradeDialog exists
+              showPremiumUpgradeDialog(context, 'FCR Analytics');
+            } else {
+              context.push('/analytics');
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.compass, color: Colors.deepPurple),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Feed Conversion Ratio (FCR)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        isPremium 
+                            ? 'Your aggregate FCR is ${metrics['fcr_rate'] ?? '0.0'}'
+                            : 'Unlock advanced metric analytics calculation',
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isPremium)
+                  const Icon(LucideIcons.lock, size: 16, color: Colors.grey)
+                else
+                  const Icon(LucideIcons.chevronRight, color: Colors.grey),
+              ],
+            ),
+          ),
         ),
-        _buildStatCard(
-          context,
-          title: 'Mortality Rate',
-          value: '${metrics['mortality_rate'] ?? 0}%',
-          icon: LucideIcons.skull,
-          color: Colors.redAccent,
-          onTap: () => context.push('/mortality'),
-        ),
-        _buildStatCard(
-          context,
-          title: 'Market Prices',
-          value: 'Check',
-          icon: LucideIcons.lineChart,
-          color: Colors.green,
-          onTap: () => context.push('/market'),
-        ),
+        const SizedBox(height: 16),
+        if (isPremium)
+          _buildClimateCard(context, Theme.of(context))
+        else
+          _buildLockedClimateCard(context, Theme.of(context)),
       ],
+    );
+  }
+
+  Widget _buildClimateCard(BuildContext context, ThemeData theme) {
+    return CustomCard(
+      isPremium: true,
+      onTap: () {},
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Smart Climate (IoT)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('Live', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.thermometer, label: 'Temp', value: '24.5 °C', color: Colors.orange)),
+                Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.droplet, label: 'Humidity', value: '65%', color: Colors.blue)),
+                Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.wind, label: 'Status', value: 'Stable', color: Colors.green)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClimateMetric(ThemeData theme, {required IconData icon, required String label, required String value, required Color color}) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        Text(label, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+      ],
+    );
+  }
+
+  Widget _buildLockedClimateCard(BuildContext context, ThemeData theme) {
+    return CustomCard(
+      isPremium: false,
+      onTap: () => showPremiumUpgradeDialog(context, 'Smart IoT Climate Trackers'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: const Icon(LucideIcons.gauge, color: Colors.teal),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Smart Climate Trackers (IoT)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Unlock real-time sensor analytics integration', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                ],
+              ),
+            ),
+            const Icon(LucideIcons.lock, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
     );
   }
 
@@ -572,10 +792,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final subAsync = ref.watch(subscriptionProvider);
+    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
+    final isStarter = plan == 'STARTER';
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
+          _buildActionItem(
+            context,
+            icon: LucideIcons.sparkles,
+            label: 'AI Advisory',
+            route: '/ai-feed-advisory',
+            color: Colors.deepPurple,
+          ),
           _buildActionItem(
             context,
             icon: LucideIcons.users,
@@ -596,6 +827,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             label: 'Inventory',
             route: '/inventory',
             color: Colors.indigo,
+            isLocked: isStarter,
           ),
           _buildActionItem(
             context,
@@ -615,30 +847,66 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     required String label,
     required String route,
     required Color color,
+    bool isLocked = false,
   }) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child: InkWell(
-        onTap: () => context.push(route),
+        onTap: () {
+          if (isLocked) {
+            showPremiumUpgradeDialog(context, label);
+          } else {
+            context.push(route);
+          }
+        },
         borderRadius: BorderRadius.circular(16),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: color.withValues(alpha: 0.15),
-                  width: 1,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: color.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(icon, size: 28, color: color),
                 ),
-              ),
-              child: Icon(icon, size: 28, color: color),
+                if (isLocked)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: Icon(
+                        LucideIcons.lock,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
-              label,
+              isLocked ? '$label 🔒' : label,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -700,16 +968,53 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildActivitiesTimeline(BuildContext context, ThemeData theme) {
-    final activities = [
-      {'title': 'Mortality Recorded', 'desc': 'Batch 3 - 2 birds', 'time': '10 m ago', 'icon': LucideIcons.skull, 'color': Colors.redAccent},
-      {'title': 'Feed Replenished', 'desc': 'added 50kg Starter', 'time': '2 h ago', 'icon': LucideIcons.package, 'color': Colors.blue},
-      {'title': 'Weight Check', 'desc': 'Batch 2 avg 1.45kg', 'time': 'Yesterday', 'icon': LucideIcons.scale, 'color': Colors.amber},
-    ];
+  Widget _buildActivitiesTimeline(BuildContext context, ThemeData theme, Map<String, dynamic> metrics) {
+    final List<dynamic> activities = metrics['recent_activities'] ?? [];
+
+    if (activities.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: Text(
+            'No recent activities recorded today.',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: activities.map((act) {
-        final Color color = act['color'] as Color;
+        final type = act['type'] ?? 'other';
+        IconData icon = LucideIcons.bell;
+        Color color = Colors.grey;
+
+        switch (type) {
+          case 'sale':
+            icon = LucideIcons.shoppingBag;
+            color = Colors.green;
+            break;
+          case 'expense':
+            icon = LucideIcons.package;
+            color = Colors.blue;
+            break;
+          case 'mortality':
+            icon = LucideIcons.skull;
+            color = Colors.redAccent;
+            break;
+          case 'feed':
+            icon = LucideIcons.wheat;
+            color = Colors.orange;
+            break;
+        }
+
+        final dateStr = act['date'] ?? '';
+        String formattedTime = 'Recent';
+        try {
+          final dt = DateTime.parse(dateStr);
+          formattedTime = DateFormat('MMM d').format(dt);
+        } catch (_) {}
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: Row(
@@ -723,7 +1028,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       color: color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(act['icon'] as IconData, color: color, size: 16),
+                    child: Icon(icon, color: color, size: 16),
                   ),
                   Container(
                     width: 2,
@@ -745,12 +1050,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              act['title'].toString(),
+                              act['title']?.toString() ?? 'Activity',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              act['desc'].toString(),
+                              act['desc']?.toString() ?? '',
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                 fontSize: 12,
@@ -760,7 +1065,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                       ),
                       Text(
-                        act['time'].toString(),
+                        formattedTime,
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                           fontSize: 11,
@@ -775,5 +1080,190 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }).toList(),
     );
+  }
+
+  Widget _buildFarmsSummary(BuildContext context, ThemeData theme) {
+    final subAsync = ref.watch(subscriptionProvider);
+    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
+    if (plan != 'ENTERPRISE') return const SizedBox.shrink();
+
+    return ref.watch(farmsProvider).when(
+          loading: () => const SizedBox.shrink(),
+          error: (e, _) => const SizedBox.shrink(),
+          data: (farms) {
+            if (farms.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: CustomCard(
+                isPremium: true,
+                onTap: () => context.push('/farms'),
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        LucideIcons.home,
+                        color: theme.colorScheme.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Connected Farms',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'You are managing ${farms.length} locations.',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      LucideIcons.chevronRight,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+  }
+
+  Widget _buildTasksOverview(BuildContext context, ThemeData theme) {
+    return ref.watch(tasksProvider).when(
+          loading: () => const SizedBox.shrink(),
+          error: (e, _) => const SizedBox.shrink(),
+          data: (tasks) {
+            final pendingTasks = tasks.where((t) => t['status'] == 'PENDING').toList();
+            if (pendingTasks.isEmpty) return const SizedBox.shrink();
+
+            // Trigger one-time instant ambient notification
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+               NotificationService.showNotification(
+                  id: 100,
+                  title: 'Daily Reminders 🐔',
+                  body: 'You have ${pendingTasks.length} pending operations today.',
+               );
+            });
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle(theme, 'Pending Tasks'),
+                  const SizedBox(height: 12),
+                  ...pendingTasks.take(3).map((task) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: CustomCard(
+                          onTap: () => context.push('/calendar'),
+                          child: ListTile(
+                            dense: true,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(LucideIcons.calendarCheck2, size: 16, color: theme.colorScheme.primary),
+                            ),
+                            title: Text(
+                              task['title']?.toString() ?? 'Task',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(task['due_date']?.toString() ?? ''),
+                            trailing: Checkbox(
+                              value: false,
+                              onChanged: (v) async {
+                                if (v == true) {
+                                  final messenger = ScaffoldMessenger.of(context);
+                                  try {
+                                    await ApiClient.instance.put('/tasks/${task['id']}', data: {'status': 'DONE'});
+                                    ref.invalidate(tasksProvider);
+                                  } catch (e) {
+                                    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+            );
+          },
+        );
+  }
+
+  Future<void> _generateAndSharePdf(BuildContext context, Map<String, dynamic> metrics) async {
+    final pdf = pw.Document();
+    
+    final totalRev = (metrics['total_revenue'] as num?)?.toDouble() ?? 0.0;
+    final totalExp = (metrics['total_expenses'] as num?)?.toDouble() ?? 0.0;
+    final netProfit = (metrics['net_profit'] as num?)?.toDouble() ?? 0.0;
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Header(level: 0, child: pw.Text('Kuku Fiti - Financial Report', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 24))),
+              pw.SizedBox(height: 20),
+              pw.Text('Date: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}'),
+              pw.SizedBox(height: 40),
+              pw.Text('Financial Overview', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 18)),
+              pw.Divider(),
+              pw.SizedBox(height: 12),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Total Revenue:'),
+                  pw.Text('KES ${totalRev.toStringAsFixed(2)}'),
+                ],
+              ),
+              pw.SizedBox(height: 8),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Total Expenses:'),
+                  pw.Text('KES ${totalExp.toStringAsFixed(2)}'),
+                ],
+              ),
+              pw.SizedBox(height: 12),
+              pw.Divider(),
+              pw.SizedBox(height: 8),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Net Earnings:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text('KES ${netProfit.toStringAsFixed(2)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.sharePdf(bytes: await pdf.save(), filename: 'financial_report.pdf');
   }
 }

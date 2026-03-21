@@ -13,6 +13,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   static const String _languageKey = 'settings_language';
   static const String _pushNotificationsKey = 'settings_push_notifications';
   static const String _emailSummariesKey = 'settings_email_summaries';
+  static const String _biometricLockKey = 'settings_biometric_lock';
 
   @override
   Future<Either<Failure, SettingsState>> getSettings() async {
@@ -25,6 +26,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       var language = prefs.getString(_languageKey) ?? 'en';
       var pushNotifications = prefs.getBool(_pushNotificationsKey) ?? true;
       var emailSummaries = prefs.getBool(_emailSummariesKey) ?? false;
+      var biometricLock = prefs.getBool(_biometricLockKey) ?? false;
 
       // Try sync from backend
       try {
@@ -50,6 +52,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
           } else if (key == _emailSummariesKey && value != null) {
              emailSummaries = value == 'true';
              await prefs.setBool(_emailSummariesKey, emailSummaries);
+          } else if (key == _biometricLockKey && value != null) {
+             biometricLock = value == 'true';
+             await prefs.setBool(_biometricLockKey, biometricLock);
           }
         }
       } catch (e) {
@@ -64,6 +69,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         language: language,
         pushNotificationsEnabled: pushNotifications,
         emailSummariesEnabled: emailSummaries,
+        biometricLockEnabled: biometricLock,
       ));
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -132,6 +138,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_emailSummariesKey, enabled);
       await _syncSettingWithBackend(_emailSummariesKey, enabled.toString());
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setBiometricLock(bool enabled) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_biometricLockKey, enabled);
+      await _syncSettingWithBackend(_biometricLockKey, enabled.toString());
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

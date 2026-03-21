@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
+import '../../../../presentation/widgets/paywall_widget.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -24,7 +25,16 @@ class AlertsScreen extends ConsumerWidget {
       ),
       body: alertsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+        error: (err, s) {
+          if (err.toString().contains('403') || err.toString().contains('requires a Professional Plan')) {
+            return const PaywallWidget(
+              title: 'Alerts & Notifications',
+              description: 'Receive real-time push notifications, custom threshold triggers, and biosecurity warnings with a Professional Plan.',
+              icon: LucideIcons.bellRing,
+            );
+          }
+          return Center(child: Text('Error: $err'));
+        },
         data: (alerts) {
           if (alerts.isEmpty) {
              return const Center(child: Text('You have no new alerts.'));

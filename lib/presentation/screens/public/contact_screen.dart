@@ -61,6 +61,13 @@ class ContactScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
+                      // ─── CONTACT INFORMATION ───
+                      _buildContactDetailItem(LucideIcons.mail, 'Email', 'support@kukufiti.com', theme),
+                      const SizedBox(height: 12),
+                      _buildContactDetailItem(LucideIcons.phone, 'Phone', '+254 700 000 000', theme),
+                      const SizedBox(height: 12),
+                      _buildContactDetailItem(LucideIcons.mapPin, 'Office', 'Nairobi Garage, Westlands', theme),
+                      const SizedBox(height: 32),
                       CustomCard(
                         isPremium: true,
                         padding: const EdgeInsets.all(24),
@@ -99,6 +106,37 @@ class ContactScreen extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildContactDetailItem(IconData icon, String title, String value, ThemeData theme) {
+    return CustomCard(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13),
+                ),
+              ],
             ),
           ),
         ],

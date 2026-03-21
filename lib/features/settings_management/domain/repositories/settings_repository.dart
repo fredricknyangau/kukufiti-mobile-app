@@ -10,5 +10,6 @@ abstract class SettingsRepository {
   Future<Either<Failure, void>> setLanguage(String language);
   Future<Either<Failure, void>> setPushNotifications(bool enabled);
   Future<Either<Failure, void>> setEmailSummaries(bool enabled);
+  Future<Either<Failure, void>> setBiometricLock(bool enabled);
 }
 

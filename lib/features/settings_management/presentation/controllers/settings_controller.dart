@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../providers/auth_provider.dart';
+
 import '../../domain/entities/settings_state.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../data/repositories/settings_repository_impl.dart';
@@ -23,10 +25,14 @@ class SettingsNotifier extends Notifier<SettingsState> {
       language: 'en',
       pushNotificationsEnabled: true,
       emailSummariesEnabled: false,
+      biometricLockEnabled: false,
     );
   }
 
   Future<void> _loadSettings() async {
+    final authState = ref.read(authProvider);
+    if (!authState.isAuthenticated) return;
+
     final repository = ref.read(settingsRepositoryProvider);
     final result = await repository.getSettings();
     result.fold(
@@ -63,6 +69,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(emailSummariesEnabled: enabled);
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setEmailSummaries(enabled);
+  }
+
+  Future<void> setBiometricLock(bool enabled) async {
+    state = state.copyWith(biometricLockEnabled: enabled);
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setBiometricLock(enabled);
   }
 }
 

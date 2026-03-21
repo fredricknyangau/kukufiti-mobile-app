@@ -96,6 +96,20 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            'Security',
+            [
+              ListTile(
+                leading: const Icon(LucideIcons.lock),
+                title: const Text('Biometric App Lock'),
+                trailing: Switch(
+                  value: settings.biometricLockEnabled,
+                  onChanged: (v) => notifier.setBiometricLock(v),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSettingsSection(
             'About',
             [
               ListTile(

@@ -28,7 +28,7 @@ class ApiEndpoints {
   // Other
   static const String biosecurity = '/biosecurity/';
   static const String alerts = '/alerts/';
-  static const String auditLogs = '/audit/';
+  static const String auditLogs = '/admin/audit-logs';
   static String people(String type) => '/people/$type';
 
   // Analytics
@@ -42,11 +42,16 @@ class ApiEndpoints {
   // Billing
   static const String mySubscription = '/billing/my-subscription';
   static const String subscribe = '/billing/subscribe';
+  static const String plans = '/billing/plans';
 
   // New: Backend Sync
   static const String resources = '/resources/';
   static const String settings = '/settings/';
   static const String tasks = '/tasks/';
+  static const String farms = '/farms/';
+
+  // AI Advisory
+  static const String aiFeedRecommendation = '/ai/feed-recommendation';
 }
 
 

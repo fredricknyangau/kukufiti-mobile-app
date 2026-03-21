@@ -101,7 +101,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                          child: Icon(LucideIcons.user, color: theme.colorScheme.primary),
                        ),
                        title: Text(trx['user_email'] ?? 'Unknown User', style: const TextStyle(fontWeight: FontWeight.bold)),
-                       subtitle: Text('${trx['plan'] ?? 'Base Plan'} • KES ${trx['amount_paid'] ?? 0}'),
+                       subtitle: Text('${trx['plan'] ?? 'Base Plan'} • KES ${trx['amount'] ?? 0}'),
                        trailing: Chip(
                          label: Text(status),
                          backgroundColor: isCompleted ? Colors.green : Colors.orange,

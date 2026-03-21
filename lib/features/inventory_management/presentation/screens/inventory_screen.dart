@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
+import '../../../../presentation/widgets/paywall_widget.dart';
 import '../../../../presentation/widgets/custom_button.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
@@ -37,15 +38,24 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         onRefresh: () async => ref.invalidate(inventoryProvider),
         child: inventoryAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Error: $err'),
-                ElevatedButton(onPressed: () => ref.invalidate(inventoryProvider), child: const Text('Retry')),
-              ],
-            ),
-          ),
+          error: (err, stack) {
+            if (err.toString().contains('403') || err.toString().contains('requires a Professional Plan')) {
+              return const PaywallWidget(
+                title: 'Inventory Management',
+                description: 'Track accurate stock levels, vaccine usage, and low threshold limits automatically with a Professional Plan.',
+                icon: LucideIcons.package2,
+              );
+            }
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: $err'),
+                  ElevatedButton(onPressed: () => ref.invalidate(inventoryProvider), child: const Text('Retry')),
+                ],
+               ),
+            );
+          },
           data: (items) {
              if (items.isEmpty) {
                 return ListView(

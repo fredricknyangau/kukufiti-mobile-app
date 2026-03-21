@@ -2,9 +2,13 @@ import 'package:mobile/presentation/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/storage/secure_storage_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/public_drawer.dart';
+import 'package:go_router/go_router.dart';
 
 class PricingScreen extends StatefulWidget {
   const PricingScreen({super.key});
@@ -15,6 +19,28 @@ class PricingScreen extends StatefulWidget {
 
 class _PricingScreenState extends State<PricingScreen> {
   bool _isAnnual = true;
+  List<dynamic> _plans = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlans();
+  }
+
+  Future<void> _fetchPlans() async {
+    try {
+      final response = await ApiClient.instance.get(ApiEndpoints.plans);
+      if (mounted) {
+        setState(() {
+          _plans = response.data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,31 +120,34 @@ class _PricingScreenState extends State<PricingScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Plan Cards
-                  _buildPlanCard(
-                    theme: theme,
-                    title: 'Starter',
-                    price: _isAnnual ? 'KES 2,000' : 'KES 2,500',
-                    period: '/month',
-                    desc: 'Perfect for small household flocks.',
-                    features: ['Up to 100 Birds', 'Core Analytics', 'Standard Support'],
-                    isPremium: false,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildPlanCard(
-                    theme: theme,
-                    title: 'Pro Farmer',
-                    price: _isAnnual ? 'KES 4,000' : 'KES 5,000',
-                    period: '/month',
-                    desc: 'Advanced tools for commercial growth.',
-                    features: [
-                      'Unlimited Flocks',
-                      'Advanced Financial Analytics',
-                      'Priority Support',
-                      'Offline Sync capability',
-                    ],
-                    isPremium: true,
-                  ),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_plans.isEmpty)
+                    const Center(child: Text('No plans available.'))
+                  else
+                    ..._plans.map((plan) {
+                      final price = _isAnnual 
+                          ? (plan['annual_price'] ?? plan['monthly_price'])
+                          : plan['monthly_price'];
+                      final period = _isAnnual 
+                          ? (plan['annual_price'] != null ? '/year' : plan['period'])
+                          : plan['period'];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: _buildPlanCard(
+                          theme: theme,
+                          title: plan['name'],
+                          price: price,
+                          period: period,
+                          desc: plan['description'],
+                          features: List<String>.from(plan['features']),
+                          isPremium: plan['popular'],
+                          cta: plan['cta'] ?? 'Get Started',
+                          onPressed: () => _handleGetStarted(plan),
+                        ),
+                      );
+                    }),
                 ],
               ),
             ),
@@ -158,6 +187,8 @@ class _PricingScreenState extends State<PricingScreen> {
     required String desc,
     required List<String> features,
     required bool isPremium,
+    required String cta,
+    required VoidCallback onPressed,
   }) {
     return CustomCard(
       isPremium: true,
@@ -224,13 +255,112 @@ class _PricingScreenState extends State<PricingScreen> {
                 )),
             const SizedBox(height: 16),
             CustomButton(
-              text: 'Get Started',
-              onPressed: () {},
+              text: cta,
+              onPressed: onPressed,
               variant: isPremium ? CustomButtonVariant.primary : CustomButtonVariant.outline,
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _handleGetStarted(Map<String, dynamic> plan) async {
+    final token = await SecureStorageService.getAuthToken();
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        context.push('/login');
+      }
+      return;
+    }
+
+    if (plan['id'] == 'STARTER') {
+      if (mounted) context.go('/dashboard');
+      return;
+    }
+
+    if (plan['id'] == 'ENTERPRISE') {
+      if (mounted) context.push('/contact');
+      return;
+    }
+
+    if (mounted) {
+      _showMpesaPrompt(plan);
+    }
+  }
+
+  void _showMpesaPrompt(Map<String, dynamic> plan) {
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Subscribe to ${plan['name']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Amount: ${_isAnnual ? (plan['annual_price'] ?? plan['monthly_price']) : plan['monthly_price']}'),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'M-Pesa Phone Number',
+                    hintText: '2547XXXXXXXX',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Required';
+                    if (!RegExp(r'^(2547|2541|07|01)\d{8}$').hasMatch(val)) {
+                      return 'Invalid Phone Number';
+                    }
+                    return null;
+                  },
+                )
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context);
+                  _submitSubscription(plan, phoneController.text.trim());
+                }
+              },
+              child: const Text('Pay with M-Pesa'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitSubscription(Map<String, dynamic> plan, String phone) async {
+    try {
+      final payload = {
+        'plan_type': plan['id'],
+        'billing_period': _isAnnual ? 'yearly' : 'monthly',
+        'phone_number': phone,
+      };
+
+      await ApiClient.instance.post(ApiEndpoints.subscribe, data: payload);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('STK Push initiated. Please enter M-Pesa pin on your phone.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Subscription failed: $e')),
+        );
+      }
+    }
   }
 }

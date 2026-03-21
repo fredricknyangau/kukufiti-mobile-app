@@ -4,8 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
-import '../../../../core/network/api_client.dart';
-import 'package:dio/dio.dart';
+
 
 class AuditLogsScreen extends ConsumerWidget {
   const AuditLogsScreen({super.key});
@@ -19,7 +18,7 @@ class AuditLogsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('System Audit Logs', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(LucideIcons.fileText), onPressed: () => _showAuditLogViewer(context)),
+          IconButton(icon: const Icon(LucideIcons.fileText), onPressed: () => _showAuditLogViewer(context, logsAsync.value ?? [])),
         ],
       ),
       body: logsAsync.when(
@@ -67,7 +66,7 @@ class AuditLogsScreen extends ConsumerWidget {
     );
   }
 
-  void _showAuditLogViewer(BuildContext context) {
+  void _showAuditLogViewer(BuildContext context, List<dynamic> logs) {
     showDialog(
       context: context,
       builder: (context) {
@@ -76,51 +75,39 @@ class AuditLogsScreen extends ConsumerWidget {
           content: SizedBox(
             width: double.maxFinite,
             height: 400,
-            child: FutureBuilder<Response>(
-              future: ApiClient.instance.get(
-                '/audit/export',
-                options: Options(responseType: ResponseType.plain),
-              ),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-                }
-                final res = snapshot.data;
-                if (res == null || res.data == null) {
-                  return const Center(child: Text('No data found.'));
-                }
-                final csvText = res.data as String;
-                final rows = csvText.split('\n').where((r) => r.trim().isNotEmpty).toList();
-                
-                if (rows.isEmpty) {
-                  return const Center(child: Text('Log is empty.'));
-                }
-
-                final header = rows[0].split(',');
-                final dataRows = rows.skip(1).map((r) => r.split(',')).toList();
-
-                return Scrollbar(
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
+            child: logs.isEmpty
+                ? const Center(child: Text('No data found.'))
+                : Scrollbar(
+                    thumbVisibility: true,
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: header.map((h) => DataColumn(label: Text(h, style: const TextStyle(fontWeight: FontWeight.bold)))).toList(),
-                        rows: dataRows.map((dr) {
-                          return DataRow(
-                            cells: dr.map((c) => DataCell(Text(c))).toList(),
-                          );
-                        }).toList(),
+                      scrollDirection: Axis.vertical,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Timestamp', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('User Email', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Resource', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('IP Address', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Details', style: TextStyle(fontWeight: FontWeight.bold))),
+                          ],
+                          rows: logs.map((log) {
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(log['timestamp']?.toString() ?? '')),
+                                DataCell(Text(log['action']?.toString() ?? '')),
+                                DataCell(Text(log['user_email']?.toString() ?? 'System')),
+                                DataCell(Text(log['resource_type']?.toString() ?? '')),
+                                DataCell(Text(log['ip_address']?.toString() ?? 'N/A')),
+                                DataCell(Text(log['details']?.toString() ?? '')),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
-                );
-              },
-            ),
           ),
           actions: [
             TextButton(
