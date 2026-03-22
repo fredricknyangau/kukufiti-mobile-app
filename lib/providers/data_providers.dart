@@ -5,10 +5,15 @@ import '../core/network/api_endpoints.dart';
 import '../core/storage/hive_cache_service.dart';
 import 'auth_provider.dart';
 
-// Helper to handle both `{ "data": [...] }` and `[...]` response structures safely.
+// Helper to handle both `{ "data": [...] }`, `{ "items": [...] }` and `[...]` response structures safely.
 dynamic _extractData(dynamic responseData) {
-  if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
-    return responseData['data'];
+  if (responseData is Map<String, dynamic>) {
+    if (responseData.containsKey('data')) {
+      return responseData['data'];
+    }
+    if (responseData.containsKey('items')) {
+      return responseData['items'];
+    }
   }
   return responseData;
 }

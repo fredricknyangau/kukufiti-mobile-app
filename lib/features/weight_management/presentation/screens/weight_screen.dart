@@ -23,6 +23,8 @@ class WeightScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final weightAsync = ref.watch(weightProvider);
+    final userAsync = ref.watch(profileProvider);
+    final isViewer = userAsync.value?['role'] == 'VIEWER';
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -163,7 +165,7 @@ class WeightScreen extends ConsumerWidget {
                             ),
                             title: Text('${item['average_weight_grams']} g', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy').format(date)),
-                            trailing: PopupMenuButton<String>(
+                              trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -225,7 +227,7 @@ class WeightScreen extends ConsumerWidget {
           },
         ),
       ),
-       floatingActionButton: FloatingActionButton(
+       floatingActionButton: isViewer ? null : FloatingActionButton(
         onPressed: () => _showAddEditWeightDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,

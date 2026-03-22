@@ -32,6 +32,8 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
     final ref = this.ref;
     final theme = Theme.of(context);
     final vaccAsync = ref.watch(vaccinationProvider);
+    final userAsync = ref.watch(profileProvider);
+    final isViewer = userAsync.value?['role'] == 'VIEWER';
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -143,7 +145,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                                ),
                                title: Text(v['vaccine_name'] ?? 'Unknown Vaccine', style: const TextStyle(fontWeight: FontWeight.bold)),
                                subtitle: Text('Date: ${DateFormat('MMM dd, yyyy').format(date)} | Method: ${(v['administration_method'] ?? 'Standard').replaceAll('_', ' ').toUpperCase()}'),
-                               trailing: PopupMenuButton<String>(
+                               trailing: isViewer ? null : PopupMenuButton<String>(
                                  icon: const Icon(LucideIcons.moreVertical),
                                  onSelected: (value) async {
                                    if (value == 'edit') {
@@ -205,7 +207,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isViewer ? null : FloatingActionButton(
         onPressed: () => _showAddEditVaccinationDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,

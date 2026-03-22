@@ -31,6 +31,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final feedAsync = ref.watch(feedProvider);
+    final userAsync = ref.watch(profileProvider);
+    final isViewer = userAsync.value?['role'] == 'VIEWER';
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
     final batches = broilerState.batches;
@@ -183,7 +185,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                             ),
                             title: Text('${item['quantity_kg']} kg - ${(item['feed_type'] ?? 'Standard').toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy').format(date)),
-                            trailing: PopupMenuButton<String>(
+                            trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -233,7 +235,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           },
         ),
       ),
-       floatingActionButton: FloatingActionButton(
+       floatingActionButton: isViewer ? null : FloatingActionButton(
         onPressed: () => _showAddEditFeedDialog(context, ref, currentBatch),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,

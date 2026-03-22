@@ -87,11 +87,11 @@ class AdminDashboardScreen extends ConsumerWidget {
               children: [
                 _buildStatCard(context, 'Total Users', '${stats['total_users'] ?? 0}', '${stats['active_users'] ?? 0} active', LucideIcons.userPlus),
                 _buildStatCard(context, 'Inventory', '${stats['total_flocks'] ?? 0} Flocks', '${stats['active_flocks'] ?? 0} active', LucideIcons.fileText),
-                _buildStatCard(context, 'Active Subs', '${stats['active_subs'] ?? 0}', '', LucideIcons.creditCard),
+                _buildStatCard(context, 'Active Subs', '${stats['active_subscriptions'] ?? 0}', '', LucideIcons.creditCard),
                 _buildStatCard(
                   context, 
                   'Est. Revenue', 
-                  NumberFormat.compactCurrency(locale: 'en_KE', symbol: 'KES ').format(double.tryParse(stats['est_revenue']?.toString() ?? '') ?? 0.0), 
+                  NumberFormat.compactCurrency(locale: 'en_KE', symbol: 'KES ').format(double.tryParse(stats['total_revenue_est']?.toString() ?? '') ?? 0.0), 
                   'Lifelong Estimate', 
                   LucideIcons.banknote
                 ),

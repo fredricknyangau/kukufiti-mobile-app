@@ -32,6 +32,8 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
     final ref = this.ref;
     final theme = Theme.of(context);
     final mortalityAsync = ref.watch(mortalityProvider);
+    final userAsync = ref.watch(profileProvider);
+    final isViewer = userAsync.value?['role'] == 'VIEWER';
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -215,7 +217,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                             ),
                             title: Text('${item['count']} birds lost', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy - HH:mm').format(date)),
-                            trailing: PopupMenuButton<String>(
+                            trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -265,7 +267,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
           },
         ),
       ),
-       floatingActionButton: FloatingActionButton(
+       floatingActionButton: isViewer ? null : FloatingActionButton(
         onPressed: () => _showAddEditMortalityDialog(context, ref, currentBatch),
         backgroundColor: Theme.of(context).colorScheme.error,
         foregroundColor: Colors.white,
