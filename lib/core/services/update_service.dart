@@ -97,10 +97,13 @@ class UpdateService {
     required String latest,
   }) {
     try {
-      final currentParts = current.split('.').map(int.parse).toList();
-      final latestParts  = latest.split('.').map(int.parse).toList();
+      // Strip build numbers for primary version comparison (e.g. "1.0.0+1" -> "1.0.0")
+      final currentBase = current.split('+')[0];
+      final latestBase = latest.split('+')[0];
 
-      // Pad shorter version with zeros: "1.0" → [1, 0, 0]
+      final currentParts = currentBase.split('.').map(int.parse).toList();
+      final latestParts = latestBase.split('.').map(int.parse).toList();
+
       while (currentParts.length < 3) {
         currentParts.add(0);
       }
@@ -112,7 +115,12 @@ class UpdateService {
         if (latestParts[i] > currentParts[i]) return true;
         if (latestParts[i] < currentParts[i]) return false;
       }
-      return false; // versions are equal
+
+      // Compare build numbers if base versions are identical
+      final currentBuild = current.contains('+') ? int.tryParse(current.split('+')[1]) ?? 0 : 0;
+      final latestBuild = latest.contains('+') ? int.tryParse(latest.split('+')[1]) ?? 0 : 0;
+
+      return latestBuild > currentBuild;
     } catch (_) {
       return false;
     }

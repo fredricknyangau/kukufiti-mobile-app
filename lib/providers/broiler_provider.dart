@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/models/broiler_models.dart';
+import '../core/storage/hive_cache_service.dart';
 
 class BroilerState {
   final Batch? currentBatch;
@@ -49,12 +50,10 @@ class BroilerNotifier extends Notifier<BroilerState> {
           ? responseData['data']
           : responseData;
       
-      final batches = data.map((e) {
-        // Handle mapping from snake_case API to camelCase model if necessary,
-        // or ensure @JsonKey is used in the model.
-        // Assuming the model.fromJson handles it.
-        return Batch.fromJson(e as Map<String, dynamic>);
-      }).toList();
+      // Cache data and update state
+      await HiveCacheService.cacheData(ApiEndpoints.batches, data);
+
+      final batches = data.map((e) => Batch.fromJson(e as Map<String, dynamic>)).toList();
 
       state = state.copyWith(
         batches: batches,
@@ -62,6 +61,18 @@ class BroilerNotifier extends Notifier<BroilerState> {
         isLoading: false,
       );
     } catch (e) {
+      // Fallback to cache offline
+      final cachedData = HiveCacheService.getCachedData(ApiEndpoints.batches);
+      if (cachedData != null) {
+        final List data = cachedData;
+        final batches = data.map((e) => Batch.fromJson(e as Map<String, dynamic>)).toList();
+        state = state.copyWith(
+          batches: batches,
+          currentBatch: batches.isNotEmpty ? batches.first : null,
+          isLoading: false,
+        );
+        return;
+      }
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

@@ -104,7 +104,7 @@ class Expenditure {
   final String id;
 
   @JsonKey(name: 'flock_id')
-  final String batchId;
+  final String? batchId;
   final DateTime date;
   final String category;
   final String description;
@@ -121,7 +121,7 @@ class Expenditure {
 
   Expenditure({
     required this.id,
-    required this.batchId,
+    this.batchId,
     required this.date,
     required this.category,
     required this.description,
@@ -389,9 +389,10 @@ class BiosecurityItem {
   Map<String, dynamic> toJson() => _$BiosecurityItemToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(fieldRename: FieldRename.snake)
 class MarketPrice {
   final String id;
+  @JsonKey(name: 'price_date')
   final DateTime date;
   final String county;
   final String? town;

@@ -82,7 +82,7 @@ Map<String, dynamic> _$MortalityRecordToJson(MortalityRecord instance) =>
 
 Expenditure _$ExpenditureFromJson(Map<String, dynamic> json) => Expenditure(
   id: json['id'] as String,
-  batchId: json['flock_id'] as String,
+  batchId: json['flock_id'] as String?,
   date: DateTime.parse(json['date'] as String),
   category: json['category'] as String,
   description: json['description'] as String,
@@ -338,12 +338,12 @@ Map<String, dynamic> _$BiosecurityItemToJson(BiosecurityItem instance) =>
 
 MarketPrice _$MarketPriceFromJson(Map<String, dynamic> json) => MarketPrice(
   id: json['id'] as String,
-  date: DateTime.parse(json['date'] as String),
+  date: DateTime.parse(json['price_date'] as String),
   county: json['county'] as String,
   town: json['town'] as String?,
   item: json['item'] as String?,
-  pricePerKg: (json['pricePerKg'] as num).toDouble(),
-  pricePerBird: (json['pricePerBird'] as num?)?.toDouble(),
+  pricePerKg: (json['price_per_kg'] as num).toDouble(),
+  pricePerBird: (json['price_per_bird'] as num?)?.toDouble(),
   status: json['status'] as String?,
   source: json['source'] as String?,
   notes: json['notes'] as String?,
@@ -352,12 +352,12 @@ MarketPrice _$MarketPriceFromJson(Map<String, dynamic> json) => MarketPrice(
 Map<String, dynamic> _$MarketPriceToJson(MarketPrice instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'date': instance.date.toIso8601String(),
+      'price_date': instance.date.toIso8601String(),
       'county': instance.county,
       'town': instance.town,
       'item': instance.item,
-      'pricePerKg': instance.pricePerKg,
-      'pricePerBird': instance.pricePerBird,
+      'price_per_kg': instance.pricePerKg,
+      'price_per_bird': instance.pricePerBird,
       'status': instance.status,
       'source': instance.source,
       'notes': instance.notes,
