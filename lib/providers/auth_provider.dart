@@ -9,18 +9,26 @@ import '../core/utils/error_handler.dart';
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
+  final bool hasSeenIntro;
   final String? error;
 
   const AuthState({
     this.isAuthenticated = false,
     this.isLoading = true,
+    this.hasSeenIntro = false,
     this.error,
   });
 
-  AuthState copyWith({bool? isAuthenticated, bool? isLoading, String? error}) {
+  AuthState copyWith({
+    bool? isAuthenticated,
+    bool? isLoading,
+    bool? hasSeenIntro,
+    String? error,
+  }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
+      hasSeenIntro: hasSeenIntro ?? this.hasSeenIntro,
       error: error,
     );
   }
@@ -35,12 +43,19 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _checkAuthStatus() async {
     final token = await SecureStorageService.getAuthToken();
+    final hasSeenIntro = await SecureStorageService.getHasSeenIntro();
 
-    if (token != null && token.isNotEmpty) {
-      state = state.copyWith(isAuthenticated: true, isLoading: false);
-    } else {
-      state = state.copyWith(isAuthenticated: false, isLoading: false);
-    }
+    state = state.copyWith(
+      isAuthenticated: token != null && token.isNotEmpty,
+      hasSeenIntro: hasSeenIntro,
+      isLoading: false,
+    );
+  }
+
+  /// Flip intro seen status
+  Future<void> setHasSeenIntro(bool value) async {
+    await SecureStorageService.setHasSeenIntro(value);
+    state = state.copyWith(hasSeenIntro: value);
   }
 
   /// Manually set authentication state (used for biometric login)

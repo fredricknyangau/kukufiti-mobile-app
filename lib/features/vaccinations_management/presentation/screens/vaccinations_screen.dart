@@ -16,6 +16,7 @@ import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
 import '../../../../core/constants/broiler_constants.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 
 class VaccinationsScreen extends ConsumerStatefulWidget {
@@ -263,6 +264,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
   late final TextEditingController _dosageController;
   late final TextEditingController _costController;
   late final TextEditingController _notesController;
+  late final TextEditingController _diseaseController;
 
   String _method = vaccinationMethods.first['value'] as String;
   bool _isLoading = false;
@@ -275,6 +277,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
     _dosageController = TextEditingController(text: widget.item?.dosage ?? '');
     _costController = TextEditingController(text: widget.item?.cost.toString() ?? '');
     _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _diseaseController = TextEditingController(text: '');
     _method = widget.item?.administrationMethod ?? vaccinationMethods.first['value'] as String;
     _completed = widget.item?.completed ?? true;
   }
@@ -285,6 +288,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
     _dosageController.dispose();
     _costController.dispose();
     _notesController.dispose();
+    _diseaseController.dispose();
     super.dispose();
   }
 
@@ -299,20 +303,19 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
+      'event_id': const Uuid().v4(),
       'vaccine_name': _nameController.text.trim(),
+      'disease_target': _diseaseController.text.trim(),
       'administration_method': _method,
       'dosage': _dosageController.text.trim().isEmpty ? null : _dosageController.text.trim(),
-      'cost': double.tryParse(_costController.text.trim()) ?? 0.0,
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      'completed': _completed,
-      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
         await ApiClient.instance.put('${ApiEndpoints.vaccination}/${widget.item!.id}', data: payload);
       } else {
-        await ApiClient.instance.post('${ApiEndpoints.vaccination}?batchId=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.vaccination}?flock_id=$batchId', data: payload);
       }
 
       if (mounted) {
@@ -361,6 +364,13 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
                       onChanged: (v) => _nameController.text = v,
                     );
                   },
+                ),
+                const SizedBox(height: 12),
+                CustomInput(
+                  label: 'Disease Target',
+                  hintText: 'e.g. Newcastle / Gumboro',
+                  controller: _diseaseController,
+                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(

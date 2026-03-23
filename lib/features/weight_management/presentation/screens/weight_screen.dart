@@ -15,6 +15,7 @@ import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 class WeightScreen extends ConsumerWidget {
   const WeightScreen({super.key});
@@ -311,17 +312,17 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
-      'average_weight': avgWeight,
+      'event_id': const Uuid().v4(),
+      'average_weight_grams': avgWeight,
       'sample_size': sampleSize,
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
         await ApiClient.instance.put('${ApiEndpoints.weight}/${widget.item!.id}', data: payload);
       } else {
-        await ApiClient.instance.post('${ApiEndpoints.weight}?batchId=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.weight}?flock_id=$batchId', data: payload);
       }
 
       if (mounted) {

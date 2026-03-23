@@ -17,6 +17,7 @@ import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
 import '../../../../core/constants/broiler_constants.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 
 class FeedScreen extends ConsumerStatefulWidget {
@@ -359,19 +360,19 @@ class _AddEditFeedDialogState extends State<_AddEditFeedDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
-      'quantity': amount,
+      'event_id': const Uuid().v4(),
+      'quantity_kg': amount,
       'feed_type': _selectedFeedType,
-      'cost': double.tryParse(_costController.text.trim()) ?? 0.0,
+      'cost_ksh': double.tryParse(_costController.text.trim()) ?? 0.0,
       'supplier': _supplierController.text.trim().isEmpty ? null : _supplierController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
         await ApiClient.instance.put('${ApiEndpoints.feed}/${widget.item!.id}', data: payload);
       } else {
-        await ApiClient.instance.post('${ApiEndpoints.feed}?batchId=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.feed}?flock_id=$batchId', data: payload);
       }
 
       if (mounted) {

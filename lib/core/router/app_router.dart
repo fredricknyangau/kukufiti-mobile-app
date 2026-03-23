@@ -86,7 +86,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       if (authState.isLoading) return null; // Wait for token initialization
+
       final isAuthenticated = authState.isAuthenticated;
+      final hasSeenIntro = authState.hasSeenIntro;
+
       final isAuthPath = state.uri.path == '/login' || state.uri.path == '/register';
       final isPublicPath = state.uri.path == '/' || 
                           state.uri.path == '/features' || 
@@ -94,12 +97,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                           state.uri.path == '/about' ||
                           state.uri.path == '/contact';
 
-      if (!isAuthenticated && !isAuthPath && !isPublicPath) {
+      if (isAuthenticated) {
+        if (isAuthPath || state.uri.path == '/') {
+          return '/dashboard';
+        }
+        return null;
+      }
+
+      // Unauthenticated
+      if (state.uri.path == '/' && hasSeenIntro) {
         return '/login';
       }
 
-      if (isAuthenticated && isAuthPath) {
-        return '/dashboard';
+      if (!isAuthPath && !isPublicPath) {
+        return '/login';
       }
 
       return null;

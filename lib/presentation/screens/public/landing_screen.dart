@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../providers/auth_provider.dart';
 
 import '../../widgets/custom_button.dart';
 import '../../widgets/public_drawer.dart';
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends ConsumerWidget {
   const LandingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -43,7 +45,10 @@ class LandingScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => context.go('/login'),
+            onPressed: () {
+              ref.read(authProvider.notifier).setHasSeenIntro(true);
+              context.go('/login');
+            },
             child: Text(
               'Log In',
               style: TextStyle(
@@ -174,7 +179,10 @@ class LandingScreen extends StatelessWidget {
                           Expanded(
                             child: CustomButton(
                               text: 'Get Started',
-                              onPressed: () => context.go('/register'),
+                              onPressed: () {
+                                ref.read(authProvider.notifier).setHasSeenIntro(true);
+                                context.go('/register');
+                              },
                             ),
                           ),
                           const SizedBox(width: 12),

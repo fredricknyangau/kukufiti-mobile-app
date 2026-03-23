@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
@@ -323,11 +324,11 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
 
     final data = {
       'name': _nameController.text.trim(),
-      'initial_chicks': initialChicks,
-      'cost_per_chick': costPerChick,
-      'total_cost': initialChicks * costPerChick,
+      'initial_count': initialChicks,
+      'cost_per_bird': costPerChick,
+      'total_acquisition_cost': initialChicks * costPerChick,
       'breed': _breed,
-      'commencement_date': DateFormat('yyyy-MM-dd').format(_startDate!),
+      'start_date': DateFormat('yyyy-MM-dd').format(_startDate!),
       'status': _status,
       'source_location': _selectedFarmId,
     };
@@ -349,8 +350,8 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       if (mounted) {
         HapticFeedback.vibrate();
         String message = widget.batch != null ? 'Failed to update batch' : 'Failed to create batch';
-        if (e is DioException && e.response?.data is Map) {
-          message = e.response!.data['detail'] ?? message;
+        if (e is DioException) {
+          message = getFriendlyErrorMessage(e);
         } else {
           message = '$message: $e';
         }

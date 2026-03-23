@@ -15,6 +15,7 @@ import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 
 class MortalityScreen extends ConsumerStatefulWidget {
@@ -371,18 +372,17 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
+      'event_id': const Uuid().v4(),
       'count': count,
       'cause': _causeController.text.trim().isEmpty ? null : _causeController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      'type': _type,
-      'date': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
         await ApiClient.instance.put('${ApiEndpoints.mortality}/${widget.item!.id}', data: payload);
       } else {
-        await ApiClient.instance.post('${ApiEndpoints.mortality}?batchId=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.mortality}?flock_id=$batchId', data: payload);
       }
 
       if (mounted) {

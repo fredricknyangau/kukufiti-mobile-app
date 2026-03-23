@@ -62,18 +62,18 @@ MortalityRecord _$MortalityRecordFromJson(Map<String, dynamic> json) =>
     MortalityRecord(
       id: json['id'] as String,
       batchId: json['flock_id'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: DateTime.parse(json['event_date'] as String),
       count: (json['count'] as num).toInt(),
       cause: json['cause'] as String?,
       notes: json['notes'] as String?,
-      type: json['type'] as String,
+      type: json['type'] as String? ?? 'death',
     );
 
 Map<String, dynamic> _$MortalityRecordToJson(MortalityRecord instance) =>
     <String, dynamic>{
       'id': instance.id,
       'flock_id': instance.batchId,
-      'date': instance.date.toIso8601String(),
+      'event_date': instance.date.toIso8601String(),
       'count': instance.count,
       'cause': instance.cause,
       'notes': instance.notes,
@@ -120,7 +120,7 @@ Map<String, dynamic> _$ExpenditureToJson(Expenditure instance) =>
 WeightRecord _$WeightRecordFromJson(Map<String, dynamic> json) => WeightRecord(
   id: json['id'] as String,
   batchId: json['flock_id'] as String,
-  date: DateTime.parse(json['date'] as String),
+  date: DateTime.parse(json['event_date'] as String),
   averageWeight: (json['average_weight_grams'] as num).toDouble(),
   sampleSize: (json['sample_size'] as num).toInt(),
   notes: json['notes'] as String?,
@@ -130,7 +130,7 @@ Map<String, dynamic> _$WeightRecordToJson(WeightRecord instance) =>
     <String, dynamic>{
       'id': instance.id,
       'flock_id': instance.batchId,
-      'date': instance.date.toIso8601String(),
+      'event_date': instance.date.toIso8601String(),
       'average_weight_grams': instance.averageWeight,
       'sample_size': instance.sampleSize,
       'notes': instance.notes,
@@ -140,7 +140,7 @@ VaccinationRecord _$VaccinationRecordFromJson(Map<String, dynamic> json) =>
     VaccinationRecord(
       id: json['id'] as String,
       batchId: json['flock_id'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: DateTime.parse(json['event_date'] as String),
       vaccineName: json['vaccine_name'] as String,
       dosage: json['dosage'] as String?,
       administrationMethod: json['administration_method'] as String,
@@ -149,14 +149,14 @@ VaccinationRecord _$VaccinationRecordFromJson(Map<String, dynamic> json) =>
       scheduledDate: json['scheduled_date'] == null
           ? null
           : DateTime.parse(json['scheduled_date'] as String),
-      completed: json['completed'] as bool,
+      completed: json['completed'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$VaccinationRecordToJson(VaccinationRecord instance) =>
     <String, dynamic>{
       'id': instance.id,
       'flock_id': instance.batchId,
-      'date': instance.date.toIso8601String(),
+      'event_date': instance.date.toIso8601String(),
       'vaccine_name': instance.vaccineName,
       'dosage': instance.dosage,
       'administration_method': instance.administrationMethod,
@@ -204,10 +204,10 @@ Map<String, dynamic> _$SaleRecordToJson(SaleRecord instance) =>
 FeedRecord _$FeedRecordFromJson(Map<String, dynamic> json) => FeedRecord(
   id: json['id'] as String,
   batchId: json['flock_id'] as String,
-  date: DateTime.parse(json['date'] as String),
+  date: DateTime.parse(json['event_date'] as String),
   feedType: json['feed_type'] as String,
-  quantity: (json['quantity'] as num).toDouble(),
-  cost: (json['cost'] as num?)?.toDouble(),
+  quantity: (json['quantity_kg'] as num).toDouble(),
+  cost: (json['cost_ksh'] as num?)?.toDouble(),
   supplier: json['supplier'] as String?,
   notes: json['notes'] as String?,
   isHomemade: json['is_homemade'] as bool?,
@@ -220,10 +220,10 @@ Map<String, dynamic> _$FeedRecordToJson(FeedRecord instance) =>
     <String, dynamic>{
       'id': instance.id,
       'flock_id': instance.batchId,
-      'date': instance.date.toIso8601String(),
+      'event_date': instance.date.toIso8601String(),
       'feed_type': instance.feedType,
-      'quantity': instance.quantity,
-      'cost': instance.cost,
+      'quantity_kg': instance.quantity,
+      'cost_ksh': instance.cost,
       'supplier': instance.supplier,
       'notes': instance.notes,
       'is_homemade': instance.isHomemade,

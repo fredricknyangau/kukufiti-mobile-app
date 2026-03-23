@@ -77,10 +77,12 @@ class MortalityRecord {
 
   @JsonKey(name: 'flock_id')
   final String batchId;
+  @JsonKey(name: 'event_date')
   final DateTime date;
   final int count;
   final String? cause;
   final String? notes;
+  @JsonKey(defaultValue: 'death')
   final String type; // 'death' | 'cull'
 
   MortalityRecord({
@@ -145,6 +147,7 @@ class WeightRecord {
 
   @JsonKey(name: 'flock_id')
   final String batchId;
+  @JsonKey(name: 'event_date')
   final DateTime date;
 
   @JsonKey(name: 'average_weight_grams')
@@ -171,6 +174,7 @@ class VaccinationRecord {
 
   @JsonKey(name: 'flock_id')
   final String batchId;
+  @JsonKey(name: 'event_date')
   final DateTime date;
   final String vaccineName;
   final String? dosage;
@@ -178,6 +182,7 @@ class VaccinationRecord {
   final double? cost;
   final String? notes;
   final DateTime? scheduledDate;
+  @JsonKey(defaultValue: true)
   final bool completed;
 
   VaccinationRecord({
@@ -245,9 +250,12 @@ class FeedRecord {
 
   @JsonKey(name: 'flock_id')
   final String batchId;
+  @JsonKey(name: 'event_date')
   final DateTime date;
   final String feedType;
+  @JsonKey(name: 'quantity_kg')
   final double quantity;
+  @JsonKey(name: 'cost_ksh')
   final double? cost;
   final String? supplier;
   final String? notes;

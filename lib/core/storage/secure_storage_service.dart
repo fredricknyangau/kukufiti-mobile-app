@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 class SecureStorageService {
   static const _authTokenKey = 'auth_token';
   static const _rememberedEmailKey = 'remembered_email';
+  static const _hasSeenIntroKey = 'has_seen_intro';
 
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
@@ -56,6 +57,22 @@ class SecureStorageService {
   static Future<void> clearRememberedEmail() async {
     try {
       await _storage.delete(key: _rememberedEmailKey);
+    } catch (_) {}
+  }
+
+  /// Intro Seen Operations
+  static Future<bool> getHasSeenIntro() async {
+    try {
+      final value = await _storage.read(key: _hasSeenIntroKey);
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<void> setHasSeenIntro(bool value) async {
+    try {
+      await _storage.write(key: _hasSeenIntroKey, value: value.toString());
     } catch (_) {}
   }
 }
