@@ -13,7 +13,7 @@ import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
-import 'package:uuid/uuid.dart';
+import '../../../../core/models/broiler_models.dart';
 import 'package:dio/dio.dart';
 
 class WeightScreen extends ConsumerWidget {
@@ -23,8 +23,7 @@ class WeightScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final weightAsync = ref.watch(weightProvider);
-    final userAsync = ref.watch(profileProvider);
-    final isViewer = userAsync.value?['role'] == 'VIEWER';
+    final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -47,18 +46,15 @@ class WeightScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
-            final sortedRecords = List<dynamic>.from(records)
-              ..sort((a, b) {
-                final dateA = DateTime.tryParse(a['event_date']?.toString() ?? '') ?? DateTime(2000);
-                final dateB = DateTime.tryParse(b['event_date']?.toString() ?? '') ?? DateTime(2000);
-                return dateA.compareTo(dateB);
-              });
+            final sortedRecords = List<WeightRecord>.from(records)
+              ..sort((a, b) => a.date.compareTo(b.date));
 
             final spots = <FlSpot>[];
             for (int i = 0; i < sortedRecords.length; i++) {
-              final weight = (sortedRecords[i]['average_weight_grams'] as num).toDouble();
-              spots.add(FlSpot(i.toDouble(), weight));
+              spots.add(FlSpot(i.toDouble(), sortedRecords[i].averageWeight));
             }
+
+            final isViewer = profileAsync.value?.role == 'VIEWER';
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -96,11 +92,9 @@ class WeightScreen extends ConsumerWidget {
                                       getTitlesWidget: (value, meta) {
                                         final index = value.toInt();
                                         if (index >= 0 && index < sortedRecords.length) {
-                                          final dateStr = sortedRecords[index]['event_date']?.toString() ?? '';
-                                          final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                                           return Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
-                                            child: Text(DateFormat('MMM dd').format(date), style: const TextStyle(fontSize: 10)),
+                                            child: Text(DateFormat('MMM dd').format(sortedRecords[index].date), style: const TextStyle(fontSize: 10)),
                                           );
                                         }
                                         return const Text('');
@@ -154,8 +148,6 @@ class WeightScreen extends ConsumerWidget {
                       itemCount: sortedRecords.length,
                       itemBuilder: (context, index) {
                         final item = sortedRecords.reversed.toList()[index];
-                        final dateStr = item['event_date']?.toString() ?? '';
-                        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
@@ -163,8 +155,8 @@ class WeightScreen extends ConsumerWidget {
                                backgroundColor: theme.colorScheme.primary.withAlpha(25),
                                child: const Icon(Icons.fitness_center, color: Colors.blue),
                             ),
-                            title: Text('${item['average_weight_grams']} g', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(DateFormat('MMM dd, yyyy').format(date)),
+                            title: Text('${item.averageWeight} g', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(DateFormat('MMM dd, yyyy').format(item.date)),
                               trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
@@ -184,29 +176,17 @@ class WeightScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
-
-                                      await ApiClient.instance.delete('${ApiEndpoints.weight}/${item['id']}');
-
+                                      await ApiClient.instance.delete('${ApiEndpoints.weight}/${item.id}');
                                       ref.invalidate(weightProvider);
-
                                     } catch (e) {
-
                                       if (context.mounted) {
-
                                         String message = 'Failed to delete';
-
                                         if (e is DioException && e.response?.statusCode == 404) {
-
                                           message = 'Record already deleted';
-
                                           ref.invalidate(weightProvider);
-
                                         }
-
                                         ToastService.showError(context, message);
-
                                       }
-
                                     }
                                   }
                                 }
@@ -227,7 +207,7 @@ class WeightScreen extends ConsumerWidget {
           },
         ),
       ),
-       floatingActionButton: isViewer ? null : FloatingActionButton(
+       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
         onPressed: () => _showAddEditWeightDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
@@ -236,14 +216,14 @@ class WeightScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddEditWeightDialog(BuildContext context, WidgetRef ref, Map<String, dynamic>? currentBatch, {Map<String, dynamic>? item}) {
+  void _showAddEditWeightDialog(BuildContext context, WidgetRef ref, Batch? currentBatch, {WeightRecord? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditWeightDialog(currentBatch: currentBatch, item: item),
     );
   }
 
-  void _showWeightDetails(BuildContext context, Map<String, dynamic> item) {
+  void _showWeightDetails(BuildContext context, WeightRecord item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -253,14 +233,11 @@ class WeightScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', item['event_date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Sample Size', '${item['sample_size']} birds'),
-              _detailRow('Average Weight', '${item['average_weight_grams']} g'),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow('Sample Size', '${item.sampleSize} birds'),
+              _detailRow('Average Weight', '${item.averageWeight} g'),
               const CustomDivider(),
-              _detailRow('Min Weight', item['min_weight_grams']?.toString() ?? 'N/A'),
-              _detailRow('Max Weight', item['max_weight_grams']?.toString() ?? 'N/A'),
-              const CustomDivider(),
-              _detailRow('Notes', item['notes']?.toString().isNotEmpty == true ? item['notes'] : 'No Notes'),
+              _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -285,8 +262,8 @@ class WeightScreen extends ConsumerWidget {
 }
 
 class _AddEditWeightDialog extends StatefulWidget {
-  final Map<String, dynamic>? currentBatch;
-  final Map<String, dynamic>? item;
+  final Batch? currentBatch;
+  final WeightRecord? item;
 
   const _AddEditWeightDialog({this.currentBatch, this.item});
 
@@ -298,8 +275,6 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _weightController;
   late final TextEditingController _sampleSizeController;
-  late final TextEditingController _minWeightController;
-  late final TextEditingController _maxWeightController;
   late final TextEditingController _notesController;
 
   bool _isLoading = false;
@@ -307,19 +282,15 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
   @override
   void initState() {
     super.initState();
-    _weightController = TextEditingController(text: widget.item?['average_weight_grams']?.toString() ?? '');
-    _sampleSizeController = TextEditingController(text: widget.item?['sample_size']?.toString() ?? '10');
-    _minWeightController = TextEditingController(text: widget.item?['min_weight_grams']?.toString() ?? '');
-    _maxWeightController = TextEditingController(text: widget.item?['max_weight_grams']?.toString() ?? '');
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
+    _weightController = TextEditingController(text: widget.item?.averageWeight.toString() ?? '');
+    _sampleSizeController = TextEditingController(text: widget.item?.sampleSize.toString() ?? '10');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
   }
 
   @override
   void dispose() {
     _weightController.dispose();
     _sampleSizeController.dispose();
-    _minWeightController.dispose();
-    _maxWeightController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -329,22 +300,10 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
 
     final avgWeight = double.tryParse(_weightController.text) ?? 0.0;
     final sampleSize = int.tryParse(_sampleSizeController.text) ?? 0;
-    final minWeight = double.tryParse(_minWeightController.text);
-    final maxWeight = double.tryParse(_maxWeightController.text);
 
     if (avgWeight <= 0 || sampleSize <= 0) return;
 
-    // Logical Check to prevent 500 error from backend
-    if (minWeight != null && minWeight > avgWeight) {
-      ToastService.showError(context, 'Min weight cannot be greater than average weight');
-      return;
-    }
-    if (maxWeight != null && maxWeight < avgWeight) {
-      ToastService.showError(context, 'Max weight cannot be less than average weight');
-      return;
-    }
-
-    final batchId = widget.item?['flock_id'] ?? widget.currentBatch?['id'];
+    final batchId = widget.item?.batchId ?? widget.currentBatch?.id;
     if (batchId == null) {
       if (mounted) ToastService.showError(context, 'No batch selected');
       return;
@@ -352,19 +311,17 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
-      'average_weight_grams': avgWeight,
+      'average_weight': avgWeight,
       'sample_size': sampleSize,
-      'min_weight_grams': _minWeightController.text.trim().isEmpty ? null : minWeight,
-      'max_weight_grams': _maxWeightController.text.trim().isEmpty ? null : maxWeight,
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.weight}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.weight}/${widget.item!.id}', data: payload);
       } else {
-        payload['event_id'] = const Uuid().v4();
-        await ApiClient.instance.post('${ApiEndpoints.weight}?flock_id=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.weight}?batchId=$batchId', data: payload);
       }
 
       if (mounted) {
@@ -402,18 +359,6 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   controller: _weightController,
                   validator: (v) => (double.tryParse(v ?? '') ?? 0.0) <= 0 ? 'Enter valid weight' : null,
-                ),
-                const SizedBox(height: 12),
-                CustomInput(
-                  label: 'Min Weight (grams, Optional)',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  controller: _minWeightController,
-                ),
-                const SizedBox(height: 12),
-                CustomInput(
-                  label: 'Max Weight (grams, Optional)',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  controller: _maxWeightController,
                 ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Notes', controller: _notesController),

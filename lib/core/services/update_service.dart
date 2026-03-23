@@ -19,7 +19,7 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  // ── Replace with your actual GitHub username and repo name ──────────
+  // GitHub username and repo name ──────────
   static const String _owner = 'fredricknyangau';
   static const String _repo  = 'kukufiti-mobile-app'; 
   // ────────────────────────────────────────────────────────────────────

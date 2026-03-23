@@ -13,7 +13,8 @@ import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
-import 'package:uuid/uuid.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/constants/broiler_constants.dart';
 import 'package:dio/dio.dart';
 
 
@@ -29,11 +30,9 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ref = this.ref;
     final theme = Theme.of(context);
     final vaccAsync = ref.watch(vaccinationProvider);
-    final userAsync = ref.watch(profileProvider);
-    final isViewer = userAsync.value?['role'] == 'VIEWER';
+    final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -58,14 +57,12 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
           data: (records) {
             final filteredRecords = _selectedBatchId == null 
               ? records 
-              : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
-            final sortedRecords = List<dynamic>.from(filteredRecords)
-              ..sort((a, b) {
-                final dateA = DateTime.tryParse(a['event_date']?.toString() ?? '') ?? DateTime(2000);
-                final dateB = DateTime.tryParse(b['event_date']?.toString() ?? '') ?? DateTime(2000);
-                return dateB.compareTo(dateA);
-              });
+              : records.where((e) => e.batchId == _selectedBatchId).toList();
+            final sortedRecords = List<VaccinationRecord>.from(filteredRecords)
+              ..sort((a, b) => b.date.compareTo(a.date));
             
+            final isViewer = profileAsync.value?.role == 'VIEWER';
+
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -81,7 +78,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                     ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('All Batches')),
-                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
                     ],
                     onChanged: (v) {
                       setState(() {
@@ -130,9 +127,6 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                       )
                   else
                     ...sortedRecords.map((v) {
-                         final dateStr = v['event_date']?.toString() ?? DateTime.now().toIso8601String();
-                         final date = DateTime.tryParse(dateStr) ?? DateTime.now();
-                         
                          return Padding(
                            padding: const EdgeInsets.only(bottom: 12),
                            child: CustomCard(
@@ -143,8 +137,8 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                                  backgroundColor: theme.colorScheme.primary.withAlpha(25),
                                  child: Icon(LucideIcons.syringe, color: theme.colorScheme.primary),
                                ),
-                               title: Text(v['vaccine_name'] ?? 'Unknown Vaccine', style: const TextStyle(fontWeight: FontWeight.bold)),
-                               subtitle: Text('Date: ${DateFormat('MMM dd, yyyy').format(date)} | Method: ${(v['administration_method'] ?? 'Standard').replaceAll('_', ' ').toUpperCase()}'),
+                               title: Text(v.vaccineName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                               subtitle: Text('Date: ${DateFormat('MMM dd, yyyy').format(v.date)} | Method: ${v.administrationMethod.replaceAll('_', ' ').toUpperCase()}'),
                                trailing: isViewer ? null : PopupMenuButton<String>(
                                  icon: const Icon(LucideIcons.moreVertical),
                                  onSelected: (value) async {
@@ -164,29 +158,17 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                                      );
                                      if (confirm == true) {
                                        try {
-
-                                         await ApiClient.instance.delete('${ApiEndpoints.vaccination}/${v['id']}');
-
+                                         await ApiClient.instance.delete('${ApiEndpoints.vaccination}/${v.id}');
                                          ref.invalidate(vaccinationProvider);
-
                                        } catch (e) {
-
                                          if (context.mounted) {
-
                                            String message = 'Failed to delete';
-
                                            if (e is DioException && e.response?.statusCode == 404) {
-
                                              message = 'Record already deleted';
-
                                              ref.invalidate(vaccinationProvider);
-
                                            }
-
                                            ToastService.showError(context, message);
-
                                          }
-
                                        }
                                      }
                                    }
@@ -207,7 +189,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
           },
         ),
       ),
-      floatingActionButton: isViewer ? null : FloatingActionButton(
+      floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
         onPressed: () => _showAddEditVaccinationDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
@@ -216,33 +198,32 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
     );
   }
 
-  void _showAddEditVaccinationDialog(BuildContext context, WidgetRef ref, Map<String, dynamic>? currentBatch, {Map<String, dynamic>? item}) {
+  void _showAddEditVaccinationDialog(BuildContext context, WidgetRef ref, Batch? currentBatch, {VaccinationRecord? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditVaccinationDialog(currentBatch: currentBatch, item: item),
     );
   }
 
-  void _showVaccinationDetails(BuildContext context, Map<String, dynamic> v) {
+  void _showVaccinationDetails(BuildContext context, VaccinationRecord v) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(v['vaccine_name'] ?? 'Vaccination'),
+        title: Text(v.vaccineName),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Event Date', v['event_date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Disease Target', v['disease_target'] ?? 'N/A'),
-              _detailRow('Method', (v['administration_method'] ?? 'N/A').toString().replaceAll('_', ' ').toUpperCase()),
+              _detailRow('Event Date', DateFormat('yyyy-MM-dd').format(v.date)),
+              _detailRow('Method', v.administrationMethod.replaceAll('_', ' ').toUpperCase()),
+              _detailRow('Cost', 'KES ${v.cost}'),
               const CustomDivider(),
-              _detailRow('Dosage', v['dosage']?.toString() ?? 'Default'),
-              _detailRow('Administered By', v['administered_by'] ?? 'Unassigned'),
-              _detailRow('Batch Number', v['batch_number'] ?? 'N/A'),
-              if (v['next_due_date'] != null)
-                _detailRow('Next due', v['next_due_date']?.toString().split('T').first ?? ''),
-              _detailRow('Notes', v['notes'] ?? 'No notes recorded'),
+              _detailRow('Dosage', v.dosage ?? 'Default'),
+              if (v.scheduledDate != null)
+                _detailRow('Scheduled Date', DateFormat('yyyy-MM-dd').format(v.scheduledDate!)),
+              _detailRow('Status', v.completed ? 'COMPLETED' : 'PENDING'),
+              _detailRow('Notes', v.notes ?? 'No notes recorded'),
             ],
           ),
         ),
@@ -267,8 +248,8 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
 }
 
 class _AddEditVaccinationDialog extends StatefulWidget {
-  final Map<String, dynamic>? currentBatch;
-  final Map<String, dynamic>? item;
+  final Batch? currentBatch;
+  final VaccinationRecord? item;
 
   const _AddEditVaccinationDialog({this.currentBatch, this.item});
 
@@ -279,31 +260,30 @@ class _AddEditVaccinationDialog extends StatefulWidget {
 class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _targetController;
   late final TextEditingController _dosageController;
-  late final TextEditingController _adminByController;
+  late final TextEditingController _costController;
   late final TextEditingController _notesController;
 
-  String _method = 'drinking_water';
+  String _method = vaccinationMethods.first['value'] as String;
   bool _isLoading = false;
+  bool _completed = true;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.item?['vaccine_name'] ?? '');
-    _targetController = TextEditingController(text: widget.item?['disease_target'] ?? '');
-    _dosageController = TextEditingController(text: widget.item?['dosage'] ?? '');
-    _adminByController = TextEditingController(text: widget.item?['administered_by'] ?? '');
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
-    _method = widget.item?['administration_method'] ?? 'drinking_water';
+    _nameController = TextEditingController(text: widget.item?.vaccineName ?? '');
+    _dosageController = TextEditingController(text: widget.item?.dosage ?? '');
+    _costController = TextEditingController(text: widget.item?.cost.toString() ?? '');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _method = widget.item?.administrationMethod ?? vaccinationMethods.first['value'] as String;
+    _completed = widget.item?.completed ?? true;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _targetController.dispose();
     _dosageController.dispose();
-    _adminByController.dispose();
+    _costController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -311,7 +291,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
   Future<void> _submit(WidgetRef ref) async {
     if (!_formKey.currentState!.validate()) return;
 
-    final batchId = widget.item?['flock_id'] ?? widget.currentBatch?['id'];
+    final batchId = widget.item?.batchId ?? widget.currentBatch?.id;
     if (batchId == null) {
       if (mounted) ToastService.showError(context, 'No batch selected');
       return;
@@ -320,19 +300,19 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
     setState(() => _isLoading = true);
     final payload = {
       'vaccine_name': _nameController.text.trim(),
-      'disease_target': _targetController.text.trim(),
       'administration_method': _method,
       'dosage': _dosageController.text.trim().isEmpty ? null : _dosageController.text.trim(),
-      'administered_by': _adminByController.text.trim().isEmpty ? null : _adminByController.text.trim(),
+      'cost': double.tryParse(_costController.text.trim()) ?? 0.0,
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      'completed': _completed,
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.vaccination}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.vaccination}/${widget.item!.id}', data: payload);
       } else {
-        payload['event_id'] = const Uuid().v4();
-        await ApiClient.instance.post('${ApiEndpoints.vaccination}?flock_id=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.vaccination}?batchId=$batchId', data: payload);
       }
 
       if (mounted) {
@@ -358,18 +338,29 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CustomInput(
-                  label: 'Vaccine Name',
-                  hintText: 'e.g. Gumboro',
-                  controller: _nameController,
-                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
-                CustomInput(
-                  label: 'Disease Target',
-                  hintText: 'e.g. Newcastle',
-                  controller: _targetController,
-                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') {
+                      return const Iterable<String>.empty();
+                    }
+                    return commonVaccines.where((String option) {
+                      return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  onSelected: (String selection) {
+                    _nameController.text = selection;
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    controller.text = _nameController.text;
+                    return CustomInput(
+                      label: 'Vaccine Name',
+                      hintText: 'e.g. Gumboro',
+                      controller: controller,
+                      focusNode: focusNode,
+                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      onChanged: (v) => _nameController.text = v,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -378,20 +369,27 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
                     labelText: 'Administration Method',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'drinking_water', child: Text('Drinking Water')),
-                    DropdownMenuItem(value: 'eye_drop', child: Text('Eye Drop')),
-                    DropdownMenuItem(value: 'injection', child: Text('Injection')),
-                    DropdownMenuItem(value: 'spray', child: Text('Spray')),
-                  ],
+                  items: vaccinationMethods
+                      .map((m) => DropdownMenuItem(value: m['value'] as String, child: Text(m['label'] as String)))
+                      .toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _method = v);
                   },
                 ),
                 const SizedBox(height: 12),
+                CustomInput(
+                  label: 'Cost (KES, Optional)',
+                  controller: _costController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+                const SizedBox(height: 12),
                 CustomInput(label: 'Dosage (Optional)', controller: _dosageController),
                 const SizedBox(height: 12),
-                CustomInput(label: 'Administered By (Optional)', controller: _adminByController),
+                SwitchListTile(
+                  title: const Text('Completed'),
+                  value: _completed,
+                  onChanged: (v) => setState(() => _completed = v),
+                ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Notes', controller: _notesController),
               ],

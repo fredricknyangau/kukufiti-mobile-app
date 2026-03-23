@@ -56,8 +56,8 @@ class _HarvestPredictionScreenState extends ConsumerState<HarvestPredictionScree
               ),
               items: batches.map((batch) {
                 return DropdownMenuItem<String>(
-                  value: batch['id'].toString(),
-                  child: Text(batch['name'] ?? 'Batch #${batch['id']}'),
+                  value: batch.id,
+                  child: Text(batch.name),
                 );
               }).toList(),
               onChanged: (val) {
@@ -106,22 +106,16 @@ class _HarvestPredictionScreenState extends ConsumerState<HarvestPredictionScree
   void _triggerAnalysis() {
     HapticFeedback.heavyImpact();
     final batches = ref.read(broilerProvider).batches;
-    final batch = batches.firstWhere((b) => b['id'].toString() == _selectedBatchId);
+    final batch = batches.firstWhere((b) => b.id == _selectedBatchId);
 
     // Calculate age
-    int ageDays = 0;
-    if (batch['start_date'] != null) {
-       try {
-         final date = DateTime.parse(batch['start_date']);
-         ageDays = DateTime.now().difference(date).inDays;
-       } catch (_) {}
-    }
+    final ageDays = DateTime.now().difference(batch.commencementDate).inDays;
 
     final request = HarvestPredictionRequest(
       flockAgeDays: ageDays,
-      currentAvgWeightKg: (batch['current_avg_weight'] != null) ? (batch['current_avg_weight'] as num).toDouble() : 1.5, // fallback
+      currentAvgWeightKg: 1.5, // Fallback
       targetWeightKg: double.parse(_targetWeightController.text),
-      breed: batch['breed'] ?? 'Cobb 500',
+      breed: batch.breed ?? 'Unknown',
     );
 
     ref.read(aiInsightsProvider.notifier).fetchHarvestPrediction(request);

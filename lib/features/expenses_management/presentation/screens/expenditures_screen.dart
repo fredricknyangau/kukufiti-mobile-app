@@ -15,6 +15,8 @@ import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/constants/broiler_constants.dart';
 
 class ExpendituresScreen extends ConsumerWidget {
   const ExpendituresScreen({super.key});
@@ -43,18 +45,13 @@ class ExpendituresScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
-            final sortedRecords = List<dynamic>.from(records)
-              ..sort((a, b) {
-                final dateA = DateTime.tryParse(a['date']?.toString() ?? '') ?? DateTime(2000);
-                final dateB = DateTime.tryParse(b['date']?.toString() ?? '') ?? DateTime(2000);
-                return dateB.compareTo(dateA);
-              });
+            final sortedRecords = List<Expenditure>.from(records)
+              ..sort((a, b) => b.date.compareTo(a.date));
             
             final categoryTotals = <String, double>{};
             for (final record in records) {
-               final cat = record['category']?.toString() ?? 'Other';
-               final amt = double.tryParse(record['amount']?.toString() ?? '') ?? 0.0;
-               categoryTotals[cat] = (categoryTotals[cat] ?? 0) + amt;
+               final cat = record.category;
+               categoryTotals[cat] = (categoryTotals[cat] ?? 0) + record.amount;
             }
             final totalExp = categoryTotals.values.fold<double>(0, (prev, e) => prev + e);
 
@@ -137,9 +134,8 @@ class ExpendituresScreen extends ConsumerWidget {
                       itemCount: sortedRecords.length,
                       itemBuilder: (context, index) {
                         final item = sortedRecords[index];
-                        final dateStr = item['date']?.toString() ?? DateTime.now().toIso8601String();
-                        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
-                        
+                        final label = expenseCategories.firstWhere((c) => c['value'] == item.category, orElse: () => {'label': item.category})['label'];
+
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
@@ -148,10 +144,10 @@ class ExpendituresScreen extends ConsumerWidget {
                                child: Icon(LucideIcons.banknote, color: theme.colorScheme.primary),
                             ),
                             title: Text(
-                              NumberFormat.currency(locale: 'en_KE', symbol: 'KES ').format(double.tryParse(item['amount']?.toString() ?? '') ?? 0.0), 
+                              NumberFormat.currency(locale: 'en_KE', symbol: 'KES ').format(item.amount), 
                               style: const TextStyle(fontWeight: FontWeight.bold)
                             ),
-                            subtitle: Text('${item['category'] ?? 'Other'} - ${DateFormat('MMM dd, yyyy').format(date)}'),
+                            subtitle: Text('$label - ${DateFormat('MMM dd, yyyy').format(item.date)}'),
                             trailing: PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
@@ -171,29 +167,17 @@ class ExpendituresScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
-
-                                      await ApiClient.instance.delete('${ApiEndpoints.expenditures}/${item['id']}');
-
+                                      await ApiClient.instance.delete('${ApiEndpoints.expenditures}/${item.id}');
                                       ref.invalidate(expendituresProvider);
-
                                     } catch (e) {
-
                                       if (context.mounted) {
-
                                         String message = 'Failed to delete';
-
                                         if (e is DioException && e.response?.statusCode == 404) {
-
                                           message = 'Record already deleted';
-
                                           ref.invalidate(expendituresProvider);
-
                                         }
-
                                         ToastService.showError(context, message);
-
                                       }
-
                                     }
                                   }
                                 }
@@ -223,14 +207,16 @@ class ExpendituresScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddExpenditureDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? item}) {
+  void _showAddExpenditureDialog(BuildContext context, WidgetRef ref, {Expenditure? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddExpenditureDialog(item: item),
     );
   }
 
-  void _showExpenditureDetails(BuildContext context, Map<String, dynamic> item) {
+  void _showExpenditureDetails(BuildContext context, Expenditure item) {
+    final label = expenseCategories.firstWhere((c) => c['value'] == item.category, orElse: () => {'label': item.category})['label'];
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -240,14 +226,14 @@ class ExpendituresScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(item['description'] ?? 'No Description', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(item.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const CustomDivider(),
-              _detailRow('Amount', 'KES ${item['amount']}', isBold: true),
-              _detailRow('Category', item['category']?.toString().toUpperCase() ?? 'OTHER'),
-              _detailRow('Date', item['date']?.toString().split('T').first ?? 'N/A'),
+              _detailRow('Amount', 'KES ${item.amount}', isBold: true),
+              _detailRow('Category', label.toUpperCase()),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
               const CustomDivider(),
-              if (item['quantity'] != null) _detailRow('Quantity', '${item['quantity']} ${item['unit'] ?? ''}'),
-              if (item['mpesa_transaction_id'] != null) _detailRow('M-Pesa ID', '${item['mpesa_transaction_id']}'),
+              if (item.quantity != null) _detailRow('Quantity', '${item.quantity} ${item.unit ?? ''}'),
+              if (item.mpesaTransactionId != null) _detailRow('M-Pesa ID', '${item.mpesaTransactionId}'),
             ],
           ),
         ),
@@ -271,7 +257,7 @@ class ExpendituresScreen extends ConsumerWidget {
 }
 
 class _AddExpenditureDialog extends ConsumerStatefulWidget {
-  final Map<String, dynamic>? item;
+  final Expenditure? item;
   const _AddExpenditureDialog({this.item});
 
   @override
@@ -286,22 +272,24 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
   final _newInvUnitController = TextEditingController();
   final _quantityController = TextEditingController();
 
-  String _category = 'other';
-  String? _selectedFlockId;
+  String _category = expenseCategories.first['value'] as String;
+  String? _selectedBatchId;
   String? _selectedInventoryId;
   bool _createInventoryItem = false;
+  String? _selectedSupplierId;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.item != null) {
-      _amountController.text = (widget.item!['amount'] ?? '').toString();
-      _descController.text = widget.item!['description'] ?? '';
-      _category = widget.item!['category'] ?? 'other';
-      _selectedFlockId = widget.item!['flock_id'];
-      _selectedInventoryId = widget.item!['inventory_item_id'];
-      _quantityController.text = (widget.item!['quantity'] ?? '').toString();
+      _amountController.text = widget.item!.amount.toString();
+      _descController.text = widget.item!.description;
+      _category = widget.item!.category;
+      _selectedBatchId = widget.item!.batchId;
+      _selectedInventoryId = widget.item!.inventoryItemId;
+      _quantityController.text = widget.item!.quantity?.toString() ?? '';
+      _selectedSupplierId = widget.item!.supplierId;
     }
   }
 
@@ -318,7 +306,7 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     
-    final amount = double.parse(_amountController.text); // Guaranteed safe by validator
+    final amount = double.parse(_amountController.text);
 
     setState(() => _isLoading = true);
     
@@ -326,18 +314,19 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
       'amount': amount,
       'category': _category,
       'description': _descController.text.trim().isEmpty ? 'Expenditure' : _descController.text.trim(),
-      'date': DateTime.now().toIso8601String().split('T').first,
-      'flock_id': _selectedFlockId,
-      'inventory_item_id': _selectedInventoryId,
-      'create_inventory_item': _createInventoryItem,
-      'new_inventory_name': _createInventoryItem ? _newInvNameController.text.trim() : null,
-      'new_inventory_unit': _createInventoryItem ? _newInvUnitController.text.trim() : null,
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd').format(widget.item!.date) : DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'batchId': _selectedBatchId,
+      'inventoryItemId': _selectedInventoryId,
+      'createInventoryItem': _createInventoryItem,
+      'newInventoryName': _createInventoryItem ? _newInvNameController.text.trim() : null,
+      'newInventoryUnit': _createInventoryItem ? _newInvUnitController.text.trim() : null,
       'quantity': double.tryParse(_quantityController.text) ?? 0,
+      'supplierId': _selectedSupplierId,
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.expenditures}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.expenditures}/${widget.item!.id}', data: payload);
       } else {
         await ApiClient.instance.post(ApiEndpoints.expenditures, data: payload);
       }
@@ -360,6 +349,7 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
   Widget build(BuildContext context) {
     final inventoryAsync = ref.watch(inventoryProvider);
     final broilerState = ref.watch(broilerProvider);
+    final suppliersAsync = ref.watch(suppliersProvider);
 
     return AlertDialog(
       title: const Text('Log Expenditure'),
@@ -388,12 +378,31 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
                   labelText: 'Category',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: ['feed', 'medicine', 'equipment', 'labor', 'rent', 'other']
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase())))
+                items: expenseCategories
+                    .map((c) => DropdownMenuItem(value: c['value'] as String, child: Text(c['label'] as String)))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _category = v);
                 },
+              ),
+              const SizedBox(height: 12),
+              suppliersAsync.when(
+                loading: () => const Text('Loading suppliers...'),
+                error: (e, _) => const Text('Error loading suppliers dropdown'),
+                data: (suppliers) {
+                  return DropdownButtonFormField<String>(
+                    initialValue: _selectedSupplierId,
+                    decoration: InputDecoration(
+                      labelText: 'Supplier (Optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String>(value: null, child: Text('None')),
+                      ...suppliers.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name)))
+                    ],
+                    onChanged: (v) => setState(() => _selectedSupplierId = v),
+                  );
+                }
               ),
               const SizedBox(height: 12),
               CustomInput(label: 'Description', controller: _descController),
@@ -401,20 +410,20 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
               
               if (broilerState.batches.isNotEmpty) ...[
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedFlockId,
+                  initialValue: _selectedBatchId,
                   decoration: InputDecoration(
-                    labelText: 'Allocate to Flock (Optional)',
+                    labelText: 'Allocate to Batch (Optional)',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   items: [
                     const DropdownMenuItem<String>(value: null, child: Text('None')),
                     ...broilerState.batches
                         .map((b) => DropdownMenuItem<String>(
-                              value: b['id']?.toString(),
-                              child: Text(b['name'] ?? 'Unnamed'),
+                              value: b.id,
+                              child: Text(b.name),
                             )),
                   ],
-                  onChanged: (v) => setState(() => _selectedFlockId = v),
+                  onChanged: (v) => setState(() => _selectedBatchId = v),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -435,8 +444,8 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
                           items: [
                             const DropdownMenuItem<String>(value: null, child: Text('None')),
                             ...items.map((i) => DropdownMenuItem<String>(
-                                  value: i['id']?.toString(),
-                                  child: Text('${i['name']} (${i['quantity'] ?? 0} ${i['unit'] ?? ''})'),
+                                  value: i.id,
+                                  child: Text('${i.name} (${i.quantity} ${i.unit})'),
                                 )),
                           ],
                           onChanged: (v) => setState(() => _selectedInventoryId = v),

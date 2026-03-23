@@ -13,7 +13,7 @@ import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
-import 'package:uuid/uuid.dart';
+import '../../../../core/models/broiler_models.dart';
 import 'package:dio/dio.dart';
 
 
@@ -29,11 +29,9 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ref = this.ref;
     final theme = Theme.of(context);
     final mortalityAsync = ref.watch(mortalityProvider);
-    final userAsync = ref.watch(profileProvider);
-    final isViewer = userAsync.value?['role'] == 'VIEWER';
+    final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
 
@@ -61,8 +59,8 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
           data: (records) {
             final filteredRecords = _selectedBatchId == null 
               ? records 
-              : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
-            final totalMortality = filteredRecords.fold<int>(0, (prev, e) => prev + (e['count'] as num).toInt());
+              : records.where((e) => e.batchId == _selectedBatchId).toList();
+            final totalMortality = filteredRecords.fold<int>(0, (prev, e) => prev + e.count);
             final spots = <FlSpot>[];
             final now = DateTime.now();
             final labels = <String>[];
@@ -73,12 +71,14 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
               labels.add(DateFormat('EEE').format(day));
               
               final countToday = filteredRecords.where((e) {
-                final dateStr = e['event_date']?.toString() ?? '';
-                return dateStr.startsWith(dayStr);
-              }).fold<int>(0, (prev, e) => prev + (e['count'] as num).toInt());
+                final dateStr = DateFormat('yyyy-MM-dd').format(e.date);
+                return dateStr == dayStr;
+              }).fold<int>(0, (prev, e) => prev + e.count);
               
               spots.add(FlSpot((6 - i).toDouble(), countToday.toDouble()));
             }
+
+            final isViewer = profileAsync.value?.role == 'VIEWER';
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -95,7 +95,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                     ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('All Batches')),
-                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                      ...broilerState.batches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
                     ],
                     onChanged: (v) {
                       setState(() {
@@ -205,8 +205,6 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                       itemCount: filteredRecords.length,
                       itemBuilder: (context, index) {
                          final item = filteredRecords.reversed.toList()[index];
-                        final dateStr = item['event_date']?.toString() ?? DateTime.now().toIso8601String();
-                        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -215,8 +213,8 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                                backgroundColor: theme.colorScheme.error.withAlpha(25),
                                child: Icon(Icons.warning, color: theme.colorScheme.error),
                             ),
-                            title: Text('${item['count']} birds lost', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(DateFormat('MMM dd, yyyy - HH:mm').format(date)),
+                            title: Text('${item.count} birds lost', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(DateFormat('MMM dd, yyyy - HH:mm').format(item.date)),
                             trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
@@ -236,7 +234,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                                   );
                                   if (confirm == true) {
                                     try {
-                                      await ApiClient.instance.delete('${ApiEndpoints.mortality}/${item['id']}');
+                                      await ApiClient.instance.delete('${ApiEndpoints.mortality}/${item.id}');
                                       ref.invalidate(mortalityProvider);
                                     } catch (e) {
                                       if (context.mounted) {
@@ -267,7 +265,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
           },
         ),
       ),
-       floatingActionButton: isViewer ? null : FloatingActionButton(
+       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
         onPressed: () => _showAddEditMortalityDialog(context, ref, currentBatch),
         backgroundColor: Theme.of(context).colorScheme.error,
         foregroundColor: Colors.white,
@@ -276,14 +274,14 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
     );
   }
 
-  void _showAddEditMortalityDialog(BuildContext context, WidgetRef ref, Map<String, dynamic>? currentBatch, {Map<String, dynamic>? item}) {
+  void _showAddEditMortalityDialog(BuildContext context, WidgetRef ref, Batch? currentBatch, {MortalityRecord? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditMortalityDialog(currentBatch: currentBatch, item: item),
     );
   }
 
-  void _showMortalityDetails(BuildContext context, Map<String, dynamic> item) {
+  void _showMortalityDetails(BuildContext context, MortalityRecord item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -293,16 +291,13 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', item['event_date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Count', '${item['count']} birds'),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow('Count', '${item.count} birds'),
+              _detailRow('Type', item.type.toUpperCase()),
               const CustomDivider(),
-              _detailRow('Cause', item['cause']?.toString().isNotEmpty == true ? item['cause'] : 'None Recorded'),
+              _detailRow('Cause', item.cause?.isNotEmpty == true ? item.cause! : 'None Recorded'),
               const CustomDivider(),
-              _detailRow('Symptoms', item['symptoms']?.toString().isNotEmpty == true ? item['symptoms'] : 'None Recorded'),
-              const CustomDivider(),
-              _detailRow('Action Taken', item['action_taken']?.toString().isNotEmpty == true ? item['action_taken'] : 'None Recorded'),
-              const CustomDivider(),
-              _detailRow('Notes', item['notes']?.toString().isNotEmpty == true ? item['notes'] : 'No Notes'),
+              _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -327,8 +322,8 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
 }
 
 class _AddEditMortalityDialog extends StatefulWidget {
-  final Map<String, dynamic>? currentBatch;
-  final Map<String, dynamic>? item;
+  final Batch? currentBatch;
+  final MortalityRecord? item;
 
   const _AddEditMortalityDialog({this.currentBatch, this.item});
 
@@ -340,28 +335,24 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _countController;
   late final TextEditingController _causeController;
-  late final TextEditingController _symptomsController;
-  late final TextEditingController _actionController;
   late final TextEditingController _notesController;
+  String _type = 'death';
 
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _countController = TextEditingController(text: widget.item?['count']?.toString() ?? '');
-    _causeController = TextEditingController(text: widget.item?['cause'] ?? '');
-    _symptomsController = TextEditingController(text: widget.item?['symptoms'] ?? '');
-    _actionController = TextEditingController(text: widget.item?['action_taken'] ?? '');
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
+    _countController = TextEditingController(text: widget.item?.count.toString() ?? '');
+    _causeController = TextEditingController(text: widget.item?.cause ?? '');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _type = widget.item?.type ?? 'death';
   }
 
   @override
   void dispose() {
     _countController.dispose();
     _causeController.dispose();
-    _symptomsController.dispose();
-    _actionController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -372,7 +363,7 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
     final count = int.tryParse(_countController.text) ?? 0;
     if (count <= 0) return;
 
-    final batchId = widget.item?['flock_id'] ?? widget.currentBatch?['id'];
+    final batchId = widget.item?.batchId ?? widget.currentBatch?.id;
     if (batchId == null) {
       if (mounted) ToastService.showError(context, 'No batch selected');
       return;
@@ -382,17 +373,16 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
     final payload = {
       'count': count,
       'cause': _causeController.text.trim().isEmpty ? null : _causeController.text.trim(),
-      'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
-      'action_taken': _actionController.text.trim().isEmpty ? null : _actionController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      'type': _type,
+      'date': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.mortality}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.mortality}/${widget.item!.id}', data: payload);
       } else {
-        payload['event_id'] = const Uuid().v4();
-        await ApiClient.instance.post('${ApiEndpoints.mortality}?flock_id=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.mortality}?batchId=$batchId', data: payload);
       }
 
       if (mounted) {
@@ -425,11 +415,17 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
                   validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter valid count' : null,
                 ),
                 const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _type,
+                  decoration: const InputDecoration(labelText: 'Type'),
+                  items: const [
+                    DropdownMenuItem(value: 'death', child: Text('Death')),
+                    DropdownMenuItem(value: 'cull', child: Text('Cull')),
+                  ],
+                  onChanged: (v) => setState(() => _type = v!),
+                ),
+                const SizedBox(height: 12),
                 CustomInput(label: 'Cause (Optional)', hintText: 'e.g. Illness, Heat', controller: _causeController),
-                const SizedBox(height: 12),
-                CustomInput(label: 'Symptoms (Optional)', hintText: 'e.g. Coughing', controller: _symptomsController),
-                const SizedBox(height: 12),
-                CustomInput(label: 'Action Taken (Optional)', hintText: 'e.g. Quarantined', controller: _actionController),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Notes', controller: _notesController),
               ],

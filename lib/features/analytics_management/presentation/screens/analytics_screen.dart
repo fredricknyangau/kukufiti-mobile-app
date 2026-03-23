@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
+import '../../../../core/models/broiler_models.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
@@ -32,19 +33,17 @@ class AnalyticsScreen extends ConsumerWidget {
 
     final metrics = metricsAsync.value ?? {};
     final financeData = financeAsync.value ?? [];
-    final weightData = weightAsync.value ?? [];
-    final mortalityDataRaw = mortalityAsync.value ?? [];
+    final List<WeightRecord> weightData = weightAsync.value ?? [];
+    final List<MortalityRecord> mortalityDataRaw = mortalityAsync.value ?? [];
 
     // Process Growth Data
-    final sortedWeight = List<dynamic>.from(weightData)
+    final sortedWeight = List<WeightRecord>.from(weightData)
       ..sort((a, b) {
-        final dateA = DateTime.tryParse(a['event_date']?.toString() ?? '') ?? DateTime(2000);
-        final dateB = DateTime.tryParse(b['event_date']?.toString() ?? '') ?? DateTime(2000);
-        return dateA.compareTo(dateB);
+        return a.date.compareTo(b.date);
       });
     final weightSpots = <FlSpot>[];
     for(int i=0; i<sortedWeight.length; i++) {
-        final weight = (sortedWeight[i]['average_weight_grams'] as num?)?.toDouble() ?? 0.0;
+        final weight = sortedWeight[i].averageWeight;
         weightSpots.add(FlSpot(i.toDouble(), weight));
     }
 
@@ -55,9 +54,9 @@ class AnalyticsScreen extends ConsumerWidget {
       final day = now.subtract(Duration(days: i));
       final dayStr = DateFormat('yyyy-MM-dd').format(day);
       final countToday = mortalityDataRaw.where((e) {
-        final dateStr = e['event_date']?.toString() ?? '';
+        final dateStr = e.date.toIso8601String();
         return dateStr.startsWith(dayStr);
-      }).fold<int>(0, (prev, e) => prev + ((e['count'] as num?)?.toInt() ?? 0));
+      }).fold<int>(0, (prev, e) => prev + e.count);
       mortalityData.add(BarChartGroupData(x: 6-i, barRods: [BarChartRodData(toY: countToday.toDouble(), color: theme.colorScheme.error)]));
     }
 
@@ -101,7 +100,7 @@ class AnalyticsScreen extends ConsumerWidget {
                     _buildStatCard(
                       context, 
                       'Avg Weight', 
-                      sortedWeight.isNotEmpty ? '${((sortedWeight.last['average_weight_grams'] as num?)?.toDouble() ?? 0.0) / 1000} kg' : 'N/A',
+                      sortedWeight.isNotEmpty ? '${(sortedWeight.last.averageWeight / 1000).toStringAsFixed(2)} kg' : 'N/A',
                       icon: LucideIcons.scale,
                       color: theme.colorScheme.primary,
                     ),
@@ -179,8 +178,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                    getTitlesWidget: (value, meta) {
                                      final index = value.toInt();
                                      if (index >= 0 && index < sortedWeight.length) {
-                                         final dateStr = sortedWeight[index]['event_date']?.toString() ?? '';
-                                         final date = DateTime.tryParse(dateStr) ?? DateTime.now();
+                                         final date = sortedWeight[index].date;
                                          return Text(DateFormat('dd/MM').format(date), style: const TextStyle(fontSize: 9, color: Colors.grey));
                                      }
                                      return const SizedBox();

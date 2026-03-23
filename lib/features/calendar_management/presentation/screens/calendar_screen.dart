@@ -6,6 +6,7 @@ import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
+import '../../../../core/models/broiler_models.dart';
 import '../../../../core/network/api_client.dart';
 import 'package:flutter/services.dart';
 
@@ -41,59 +42,55 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final allEvents = <Map<String, dynamic>>[];
     
     // Aggregate Mortality
-    for (final e in mortalityAsync.value ?? []) {
-      if (e['event_date'] != null) {
-        allEvents.add({
-          'type': 'mortality',
-          'date': DateTime.parse(e['event_date']),
-          'title': 'Mortality: ${e['count']} birds',
-          'description': e['notes'] ?? '',
-          'icon': LucideIcons.skull,
-          'color': theme.colorScheme.error,
-        });
-      }
+    final List<MortalityRecord> mortalities = mortalityAsync.value ?? [];
+    for (final e in mortalities) {
+      allEvents.add({
+        'type': 'mortality',
+        'date': e.date,
+        'title': 'Mortality: ${e.count} birds',
+        'description': e.notes ?? '',
+        'icon': LucideIcons.skull,
+        'color': theme.colorScheme.error,
+      });
     }
     
     // Aggregate Feed
-    for (final e in feedAsync.value ?? []) {
-      if (e['event_date'] != null) {
-        allEvents.add({
-          'type': 'feed',
-          'date': DateTime.parse(e['event_date']),
-          'title': 'Feed: ${e['quantity_kg']} kg',
-          'description': e['feed_type'] ?? '',
-          'icon': LucideIcons.wheat,
-          'color': Colors.blue,
-        });
-      }
+    final List<FeedRecord> feeds = feedAsync.value ?? [];
+    for (final e in feeds) {
+      allEvents.add({
+        'type': 'feed',
+        'date': e.date,
+        'title': 'Feed: ${e.quantity} kg',
+        'description': e.feedType,
+        'icon': LucideIcons.wheat,
+        'color': Colors.blue,
+      });
     }
     
     // Aggregate Vaccination
-    for (final e in vaccinationAsync.value ?? []) {
-      if (e['event_date'] != null) {
-        allEvents.add({
-          'type': 'vaccination',
-          'date': DateTime.parse(e['event_date']),
-          'title': 'Vaccine: ${e['vaccine_name']}',
-          'description': (e['administration_method'] ?? '').toString().replaceAll('_', ' ').toUpperCase(),
-          'icon': LucideIcons.syringe,
-          'color': Colors.purple,
-        });
-      }
+    final List<VaccinationRecord> vaccinations = vaccinationAsync.value ?? [];
+    for (final e in vaccinations) {
+      allEvents.add({
+        'type': 'vaccination',
+        'date': e.date,
+        'title': 'Vaccine: ${e.vaccineName}',
+        'description': e.administrationMethod.replaceAll('_', ' ').toUpperCase(),
+        'icon': LucideIcons.syringe,
+        'color': Colors.purple,
+      });
     }
     
     // Aggregate Weight
-    for (final e in weightAsync.value ?? []) {
-      if (e['event_date'] != null) {
-        allEvents.add({
-          'type': 'weight',
-          'date': DateTime.parse(e['event_date']),
-          'title': 'Weight Check: ${e['average_weight_grams']}g',
-          'description': '',
-          'icon': LucideIcons.scale,
-          'color': Colors.green,
-        });
-      }
+    final List<WeightRecord> weights = weightAsync.value ?? [];
+    for (final e in weights) {
+      allEvents.add({
+        'type': 'weight',
+        'date': e.date,
+        'title': 'Weight Check: ${e.averageWeight}g',
+        'description': e.notes ?? '',
+        'icon': LucideIcons.scale,
+        'color': Colors.green,
+      });
     }
 
     // Aggregate Tasks
@@ -334,7 +331,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                 decoration: const InputDecoration(labelText: 'Associate Flock (Optional)', border: OutlineInputBorder()),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('None')),
-                  ...flocks.map((f) => DropdownMenuItem(value: f['id'].toString(), child: Text(f['name']))),
+                  ...flocks.map((f) => DropdownMenuItem(value: f.id, child: Text(f.name))),
                 ],
                 onChanged: (v) => setState(() => _selectedFlockId = v),
               ),

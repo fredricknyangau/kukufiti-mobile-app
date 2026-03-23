@@ -2,17 +2,20 @@ class DiseaseRiskRequest {
   final List<String> symptoms;
   final List<String> recentVaccinations;
   final String mortalityAlertLevel;
+  final String? imageBase64;
 
   DiseaseRiskRequest({
     required this.symptoms,
     required this.recentVaccinations,
     this.mortalityAlertLevel = 'NORMAL',
+    this.imageBase64,
   });
 
   Map<String, dynamic> toJson() => {
         'symptoms': symptoms,
         'recent_vaccinations': recentVaccinations,
         'mortality_alert_level': mortalityAlertLevel,
+        'image_base64': imageBase64,
       };
 }
 

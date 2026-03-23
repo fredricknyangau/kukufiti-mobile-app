@@ -15,14 +15,15 @@ import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../presentation/widgets/custom_button.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/constants/broiler_constants.dart';
 
 class BatchesScreen extends ConsumerWidget {
   const BatchesScreen({super.key});
 
-  String _getFriendlyDate(String? dateStr) {
-    if (dateStr == null) return 'N/A';
+  String _getFriendlyDate(DateTime? date) {
+    if (date == null) return 'N/A';
     try {
-      final date = DateTime.parse(dateStr);
       final now = DateTime.now();
       final difference = now.difference(date).inDays;
 
@@ -32,7 +33,7 @@ class BatchesScreen extends ConsumerWidget {
       if (difference < 30) return '${(difference / 7).round()} weeks ago';
       return DateFormat('MMM dd, yyyy').format(date);
     } catch (_) {
-      return dateStr;
+      return 'N/A';
     }
   }
 
@@ -82,20 +83,16 @@ class BatchesScreen extends ConsumerWidget {
                     itemCount: broilerState.batches.length,
                     itemBuilder: (context, index) {
                       final batch = broilerState.batches[index];
-                      final startDateStr = batch['start_date'];
-                      final farmId = batch['farm_id'];
-                      final farm = farms.firstWhere((f) => f['id'].toString() == farmId?.toString(), orElse: () => null);
+                      final startDate = batch.commencementDate;
+                      
+                      // Note: Assuming farm linking still uses dynamic farm list for now
+                      // as farm model wasn't in the provided list
+                      final farm = farms.firstWhere((f) => f['id'].toString() == batch.sourceLocation, orElse: () => null);
                       final farmName = farm != null ? farm['name'] : null;
 
-                      int daysElapsed = 0;
-                      if (startDateStr != null) {
-                        try {
-                          final date = DateTime.parse(startDateStr.toString());
-                          daysElapsed = DateTime.now().difference(date).inDays;
-                        } catch (_) {}
-                      }
+                      int daysElapsed = DateTime.now().difference(startDate).inDays;
 
-                      final status = (batch['status'] ?? 'active').toString().toLowerCase();
+                      final status = batch.status.toLowerCase();
                       Color statusColor;
                       switch (status) {
                         case 'active': statusColor = Colors.green; break;
@@ -135,7 +132,7 @@ class BatchesScreen extends ConsumerWidget {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              batch['name'] ?? 'Batch #${batch['id'] ?? index + 1}',
+                                              batch.name,
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                             ),
                                             if (farmName != null)
@@ -153,7 +150,7 @@ class BatchesScreen extends ConsumerWidget {
                                               ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              'Started: ${_getFriendlyDate(startDateStr)}',
+                                              'Started: ${_getFriendlyDate(startDate)}',
                                               style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(160), fontSize: 13),
                                             ),
                                           ],
@@ -183,7 +180,7 @@ class BatchesScreen extends ConsumerWidget {
                                             );
                                             if (confirm == true) {
                                               try {
-                                                await ApiClient.instance.delete('${ApiEndpoints.batches}${batch['id']}');
+                                                await ApiClient.instance.delete('${ApiEndpoints.batches}${batch.id}');
                                                 ref.read(broilerProvider.notifier).fetchBatches();
                                               } catch (e) {
                                                 if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
@@ -210,7 +207,7 @@ class BatchesScreen extends ConsumerWidget {
                                           Icon(LucideIcons.users, size: 16, color: theme.colorScheme.primary),
                                           const SizedBox(width: 6),
                                           Text(
-                                            '${batch['initial_count'] ?? batch['batch_size'] ?? 'N/A'} Birds',
+                                            '${batch.initialChicks} Birds',
                                             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                                           ),
                                         ],
@@ -261,7 +258,7 @@ class BatchesScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddBatchSheet(BuildContext context, WidgetRef ref, {Map<String, dynamic>? batch}) {
+  void _showAddBatchSheet(BuildContext context, WidgetRef ref, {Batch? batch}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -274,7 +271,7 @@ class BatchesScreen extends ConsumerWidget {
 }
 
 class _AddBatchSheet extends ConsumerStatefulWidget {
-  final Map<String, dynamic>? batch;
+  final Batch? batch;
   const _AddBatchSheet({this.batch});
 
   @override
@@ -285,7 +282,8 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _sizeController = TextEditingController();
-  final _breedController = TextEditingController();
+  final _costController = TextEditingController();
+  String _breed = broilerBreeds.first['value']!;
   String _status = 'active';
   DateTime? _startDate = DateTime.now();
   bool _isLoading = false;
@@ -295,12 +293,13 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
   void initState() {
     super.initState();
     if (widget.batch != null) {
-      _nameController.text = widget.batch!['name'] ?? '';
-      _sizeController.text = (widget.batch!['initial_count'] ?? widget.batch!['batch_size'] ?? '').toString();
-      _breedController.text = widget.batch!['breed'] ?? '';
-      _status = (widget.batch!['status'] ?? 'active').toLowerCase();
-      _startDate = DateTime.tryParse(widget.batch!['start_date'] ?? '') ?? DateTime.now();
-      _selectedFarmId = widget.batch!['farm_id']?.toString();
+      _nameController.text = widget.batch!.name;
+      _sizeController.text = widget.batch!.initialChicks.toString();
+      _costController.text = widget.batch!.costPerChick.toString();
+      _breed = widget.batch!.breed ?? broilerBreeds.first['value']!;
+      _status = widget.batch!.status.toLowerCase();
+      _startDate = widget.batch!.commencementDate;
+      _selectedFarmId = widget.batch!.sourceLocation;
     }
   }
 
@@ -308,37 +307,40 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
   void dispose() {
     _nameController.dispose();
     _sizeController.dispose();
-    _breedController.dispose();
+    _costController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
-      HapticFeedback.vibrate(); // Error feedback
+      HapticFeedback.vibrate(); 
       return;
     }
 
     setState(() => _isLoading = true);
+    final initialChicks = int.parse(_sizeController.text);
+    final costPerChick = double.tryParse(_costController.text) ?? 0.0;
+
     final data = {
       'name': _nameController.text.trim(),
-      'initial_count': int.parse(_sizeController.text),
-      'breed': _breedController.text.trim().isEmpty ? null : _breedController.text.trim(),
-      'start_date': DateFormat('yyyy-MM-dd').format(_startDate!),
+      'initial_chicks': initialChicks,
+      'cost_per_chick': costPerChick,
+      'total_cost': initialChicks * costPerChick,
+      'breed': _breed,
+      'commencement_date': DateFormat('yyyy-MM-dd').format(_startDate!),
       'status': _status,
+      'source_location': _selectedFarmId,
     };
-    if (_selectedFarmId != null) {
-      data['farm_id'] = _selectedFarmId;
-    }
 
     try {
       if (widget.batch != null) {
-        await ApiClient.instance.put('${ApiEndpoints.batches}${widget.batch!['id']}', data: data);
+        await ApiClient.instance.put('${ApiEndpoints.batches}${widget.batch!.id}', data: data);
       } else {
         await ApiClient.instance.post(ApiEndpoints.batches, data: data);
       }
 
       if (mounted) {
-        HapticFeedback.heavyImpact(); // Success feedback
+        HapticFeedback.heavyImpact();
         ToastService.showSuccess(context, widget.batch != null ? 'Batch updated' : 'Batch created');
         ref.read(broilerProvider.notifier).fetchBatches();
         Navigator.pop(context);
@@ -370,7 +372,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       ),
       child: Form(
         key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction, // Real-time validation
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -382,7 +384,6 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              // Farm Dropdown
               ref.watch(farmsProvider).when(
                     data: (farms) {
                       if (farms.isEmpty) return const SizedBox.shrink();
@@ -422,24 +423,50 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                 validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
               ),
               const SizedBox(height: 16),
-              CustomInput(
-                label: 'Initial Count',
-                hintText: 'e.g., 500',
-                controller: _sizeController,
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  final count = int.tryParse(v);
-                  if (count == null) return 'Enter a valid number';
-                  if (count <= 0) return 'Must be greater than 0';
-                  return null;
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomInput(
+                      label: 'Initial Count',
+                      hintText: 'e.g., 500',
+                      controller: _sizeController,
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        final count = int.tryParse(v);
+                        if (count == null) return 'Invalid';
+                        if (count <= 0) return '> 0';
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: CustomInput(
+                      label: 'Cost per Chick',
+                      hintText: 'e.g., 75',
+                      controller: _costController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              CustomInput(
-                label: 'Breed (Optional)',
-                hintText: 'e.g., Cobb 500, Kienyeji',
-                controller: _breedController,
+              DropdownButtonFormField<String>(
+                initialValue: _breed,
+                decoration: InputDecoration(
+                  labelText: 'Breed',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                items: broilerBreeds
+                    .map((b) => DropdownMenuItem(value: b['value'], child: Text(b['label']!)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _breed = v);
+                  }
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -448,7 +475,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                   labelText: 'Status',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: ['active', 'completed', 'sold', 'culled', 'terminated']
+                items: ['active', 'completed', 'sold', 'culled']
                     .map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase())))
                     .toList(),
                 onChanged: (v) {
@@ -461,7 +488,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
               const SizedBox(height: 16),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Start Date'),
+                title: const Text('Commencement Date'),
                 subtitle: Text(DateFormat('yyyy-MM-dd').format(_startDate!)),
                 trailing: const Icon(LucideIcons.calendar),
                 onTap: () async {

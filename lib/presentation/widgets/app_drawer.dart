@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/data_providers.dart';
+import '../../core/models/broiler_models.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -14,7 +15,7 @@ class AppDrawer extends ConsumerWidget {
     final theme = Theme.of(context);
     final userAsync = ref.watch(profileProvider);
     final subscriptionAsync = ref.watch(subscriptionProvider);
-    final user = userAsync.value;
+    final User? user = userAsync.value;
     final currentRoute = GoRouterState.of(context).matchedLocation;
 
     final sub = subscriptionAsync.value;
@@ -264,7 +265,7 @@ class AppDrawer extends ConsumerWidget {
                       '/alerts',
                     ].contains(currentRoute),
                   ),
-                  if (user != null && (user['is_superuser'] == true || user['role'] == 'ADMIN'))
+                  if (user != null && (user.isSuperuser == true || user.role == 'ADMIN'))
                     buildCategory(
                       'ADMIN LINKS',
                       [
@@ -294,7 +295,7 @@ class AppDrawer extends ConsumerWidget {
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                       radius: 18,
                       child: Text(
-                        (user?['full_name'] ?? 'F')[0].toUpperCase(),
+                        (user?.fullName ?? 'F')[0].toUpperCase(),
                         style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -302,7 +303,7 @@ class AppDrawer extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            user?['full_name'] ?? 'Farmer',
+                            user?.fullName ?? 'Farmer',
                             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -340,7 +341,7 @@ class AppDrawer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    subtitle: Text(user?['email'] ?? '', style: const TextStyle(fontSize: 10)),
+                    subtitle: Text(user?.email ?? '', style: const TextStyle(fontSize: 10)),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/profile');

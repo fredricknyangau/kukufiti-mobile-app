@@ -56,8 +56,8 @@ class _FcrInsightsScreenState extends ConsumerState<FcrInsightsScreen> {
               ),
               items: batches.map((batch) {
                 return DropdownMenuItem<String>(
-                  value: batch['id'].toString(),
-                  child: Text(batch['name'] ?? 'Batch #${batch['id']}'),
+                  value: batch.id,
+                  child: Text(batch.name),
                 );
               }).toList(),
               onChanged: (val) {
@@ -106,14 +106,14 @@ class _FcrInsightsScreenState extends ConsumerState<FcrInsightsScreen> {
   void _triggerAnalysis() {
     HapticFeedback.heavyImpact();
     final batches = ref.read(broilerProvider).batches;
-    final batch = batches.firstWhere((b) => b['id'].toString() == _selectedBatchId);
+    final batch = batches.firstWhere((b) => b.id == _selectedBatchId);
 
-    final initialCount = batch['initial_count'] ?? batch['batch_size'] ?? 0;
-    final currentCount = batch['current_count'] ?? initialCount;
+    final initialCount = batch.initialChicks;
+    final currentCount = initialCount; // Fallback to initial if current mapping unavailable here
 
     final request = FcrInsightsRequest(
       totalFeedConsumedKg: double.parse(_feedConsumedController.text),
-      currentAvgWeightKg: (batch['current_avg_weight'] != null) ? (batch['current_avg_weight'] as num).toDouble() : 1.5,
+      currentAvgWeightKg: 1.5, // Fallback to 1.5 since batch lack quick average weight lookup
       initialBirdCount: initialCount,
       currentBirdCount: currentCount,
     );

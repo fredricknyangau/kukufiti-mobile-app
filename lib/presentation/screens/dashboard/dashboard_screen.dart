@@ -21,6 +21,8 @@ import '../../widgets/update_dialog.dart';
 
 import '../../../providers/data_providers.dart';
 import '../../widgets/premium_upgrade_dialog.dart';
+import '../../../core/models/broiler_models.dart';
+import '../../../core/services/sync_service.dart';
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -36,6 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForUpdate();
+      SyncService.startAutoSync(context);
     });
   }
 
@@ -119,7 +122,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildAppBar(
     BuildContext context,
     WidgetRef ref,
-    AsyncValue<Map<String, dynamic>> profileAsync,
+    AsyncValue<User> profileAsync,
   ) {
     final theme = Theme.of(context);
     return SliverAppBar(
@@ -176,7 +179,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: 4),
                     profileAsync.maybeWhen(
                       data: (p) => Text(
-                        p['full_name'] ?? 'Farmer',
+                        p.fullName ?? 'Farmer',
                         style: TextStyle(
                           color: theme.colorScheme.onPrimary,
                           fontSize: 22,
@@ -1083,15 +1086,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildFarmsSummary(BuildContext context, ThemeData theme) {
-    final subAsync = ref.watch(subscriptionProvider);
-    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    if (plan != 'ENTERPRISE') return const SizedBox.shrink();
-
     return ref.watch(farmsProvider).when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => const SizedBox.shrink(),
           data: (farms) {
-            if (farms.isEmpty) return const SizedBox.shrink();
+            if (farms.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: CustomCard(
+                  isPremium: true,
+                  onTap: () => context.push('/farms'),
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          LucideIcons.compass,
+                          color: Colors.orange,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Get Started: Create a Farm',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Create your first farm location to start managing flocks and tracking analytics.',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        LucideIcons.chevronRight,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.only(top: 24),
               child: CustomCard(

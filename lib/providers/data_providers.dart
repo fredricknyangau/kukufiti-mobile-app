@@ -3,6 +3,8 @@ import 'dart:async';
 import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/storage/hive_cache_service.dart';
+import '../core/models/broiler_models.dart';
+import '../core/models/people_models.dart';
 import 'auth_provider.dart';
 
 // Helper to handle both `{ "data": [...] }`, `{ "items": [...] }` and `[...]` response structures safely.
@@ -16,6 +18,40 @@ dynamic _extractData(dynamic responseData) {
     }
   }
   return responseData;
+}
+
+Future<List<T>> _fetchWithFallback<T>({
+  required String endpoint,
+  required T Function(Map<String, dynamic>) fromJson,
+}) async {
+  try {
+    final res = await ApiClient.instance.get(endpoint);
+    final data = List<dynamic>.from(_extractData(res.data) ?? []);
+    await HiveCacheService.cacheData(endpoint, data);
+    return data.map((e) => fromJson(Map<String, dynamic>.from(e))).toList();
+  } catch (e) {
+    final cachedData = HiveCacheService.getCachedData(endpoint);
+    if (cachedData != null) {
+      final data = List<dynamic>.from(cachedData);
+      return data.map((e) => fromJson(Map<String, dynamic>.from(e))).toList();
+    }
+    rethrow;
+  }
+}
+
+Future<List<dynamic>> _fetchListWithFallback({
+  required String endpoint,
+}) async {
+  try {
+    final res = await ApiClient.instance.get(endpoint);
+    final data = List<dynamic>.from(_extractData(res.data) ?? []);
+    await HiveCacheService.cacheData(endpoint, data);
+    return data;
+  } catch (e) {
+    final cachedData = HiveCacheService.getCachedData(endpoint);
+    if (cachedData != null) return List<dynamic>.from(cachedData);
+    rethrow;
+  }
 }
 
 // Add a helper to keep providers alive for a short duration to make the app feel faster
@@ -44,56 +80,72 @@ void _setupKeepAlive(Ref ref) {
 }
 
 // Events
-final mortalityProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final mortalityProvider = FutureProvider.autoDispose<List<MortalityRecord>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.mortality);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.mortality,
+    fromJson: MortalityRecord.fromJson,
+  );
 });
 
-final feedProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final feedProvider = FutureProvider.autoDispose<List<FeedRecord>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.feed);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.feed,
+    fromJson: FeedRecord.fromJson,
+  );
 });
 
-final vaccinationProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final vaccinationProvider = FutureProvider.autoDispose<List<VaccinationRecord>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.vaccination);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.vaccination,
+    fromJson: VaccinationRecord.fromJson,
+  );
 });
 
-final weightProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final weightProvider = FutureProvider.autoDispose<List<WeightRecord>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.weight);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.weight,
+    fromJson: WeightRecord.fromJson,
+  );
 });
 
 // Financials
-final salesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final salesProvider = FutureProvider.autoDispose<List<SaleRecord>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.sales);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.sales,
+    fromJson: SaleRecord.fromJson,
+  );
 });
 
-final expendituresProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final expendituresProvider = FutureProvider.autoDispose<List<Expenditure>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.expenditures);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.expenditures,
+    fromJson: Expenditure.fromJson,
+  );
 });
 
-final inventoryProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final inventoryProvider = FutureProvider.autoDispose<List<InventoryItem>>((ref) async {
   _setupKeepAlive(ref);
   final sub = ref.watch(subscriptionProvider).value;
   if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
 
-  final res = await ApiClient.instance.get(ApiEndpoints.inventory);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.inventory,
+    fromJson: InventoryItem.fromJson,
+  );
 });
 
-final inventoryHistoryProvider = FutureProvider.autoDispose.family<List<dynamic>, String>((ref, itemId) async {
+final inventoryHistoryProvider = FutureProvider.autoDispose.family<List<InventoryHistoryRecord>, String>((ref, itemId) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get('${ApiEndpoints.inventory}$itemId/history');
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: '${ApiEndpoints.inventory}$itemId/history',
+    fromJson: InventoryHistoryRecord.fromJson,
+  );
 });
 
 // Analytics
@@ -117,21 +169,28 @@ final financialChartProvider = FutureProvider.autoDispose<List<dynamic>>((ref) a
   final sub = ref.watch(subscriptionProvider).value;
   if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
 
-  final res = await ApiClient.instance.get(ApiEndpoints.financialChart);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchListWithFallback(endpoint: ApiEndpoints.financialChart);
 });
 
 // Admin
 final adminStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.adminStats);
-  return Map<String, dynamic>.from(_extractData(res.data) ?? {});
+  const cacheKey = 'admin_stats';
+  try {
+    final res = await ApiClient.instance.get(ApiEndpoints.adminStats);
+    final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
+    await HiveCacheService.cacheData(cacheKey, data);
+    return data;
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return Map<String, dynamic>.from(cached);
+    rethrow;
+  }
 });
 
 final adminTransactionsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.adminTransactions);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchListWithFallback(endpoint: ApiEndpoints.adminTransactions);
 });
 
 // Logs and People
@@ -140,44 +199,76 @@ final alertsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final sub = ref.watch(subscriptionProvider).value;
   if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
 
-  final res = await ApiClient.instance.get(ApiEndpoints.alerts);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchListWithFallback(endpoint: ApiEndpoints.alerts);
 });
 
-final marketPricesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final marketPricesProvider = FutureProvider.autoDispose<List<MarketPrice>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.marketPrices);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.marketPrices,
+    fromJson: MarketPrice.fromJson,
+  );
 });
 
-final vetConsultationsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final vetConsultationsProvider = FutureProvider.autoDispose<List<VetConsultation>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.vetConsultations);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.vetConsultations,
+    fromJson: VetConsultation.fromJson,
+  );
 });
 
-final biosecurityProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final biosecurityProvider = FutureProvider.autoDispose<List<BiosecurityCheck>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.biosecurity);
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.biosecurity,
+    fromJson: BiosecurityCheck.fromJson,
+  );
 });
 
 final auditLogsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get('${ApiEndpoints.auditLogs}?action=');
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchListWithFallback(endpoint: '${ApiEndpoints.auditLogs}?action=');
 });
 
-final peopleProvider = FutureProvider.autoDispose.family<List<dynamic>, String>((ref, type) async {
+// People specific providers
+final suppliersProvider = FutureProvider.autoDispose<List<Supplier>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.people(type));
-  return List<dynamic>.from(_extractData(res.data) ?? []);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.people('supplier'),
+    fromJson: Supplier.fromJson,
+  );
 });
 
-final profileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final customersProvider = FutureProvider.autoDispose<List<Customer>>((ref) async {
   _setupKeepAlive(ref);
-  final res = await ApiClient.instance.get(ApiEndpoints.profile);
-  return Map<String, dynamic>.from(_extractData(res.data) ?? {});
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.people('customer'),
+    fromJson: Customer.fromJson,
+  );
+});
+
+final employeesProvider = FutureProvider.autoDispose<List<Employee>>((ref) async {
+  _setupKeepAlive(ref);
+  return _fetchWithFallback(
+    endpoint: ApiEndpoints.people('employee'),
+    fromJson: Employee.fromJson,
+  );
+});
+
+final profileProvider = FutureProvider.autoDispose<User>((ref) async {
+  _setupKeepAlive(ref);
+  const cacheKey = 'profile_data';
+  try {
+    final res = await ApiClient.instance.get(ApiEndpoints.profile);
+    final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
+    await HiveCacheService.cacheData(cacheKey, data);
+    return User.fromJson(data);
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return User.fromJson(Map<String, dynamic>.from(cached));
+    rethrow;
+  }
 });
 
 final resourcesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
@@ -231,6 +322,3 @@ final farmsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final res = await ApiClient.instance.get(ApiEndpoints.farms);
   return List<dynamic>.from(_extractData(res.data) ?? []);
 });
-
-
-

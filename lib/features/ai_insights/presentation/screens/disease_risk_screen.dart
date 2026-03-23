@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../data/models/disease_risk.dart';
 import '../providers/ai_insights_provider.dart';
 
@@ -15,6 +18,31 @@ class _DiseaseRiskScreenState extends ConsumerState<DiseaseRiskScreen> {
   final _symptomsController = TextEditingController();
   final _vaccinesController = TextEditingController();
   String _mortalityAlert = 'NORMAL';
+  File? _imageFile;
+  String? _imageBase64;
+  final _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        final bytes = await File(pickedFile.path).readAsBytes();
+        setState(() {
+          _imageFile = File(pickedFile.path);
+          _imageBase64 = base64Encode(bytes);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -86,8 +114,56 @@ class _DiseaseRiskScreenState extends ConsumerState<DiseaseRiskScreen> {
             ),
             const SizedBox(height: 24),
 
+            const Text('Upload Diagnostic Photo (Droppings/Eyes)', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Camera'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Gallery'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_imageFile != null) ...[
+              const SizedBox(height: 12),
+              Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(_imageFile!, height: 180, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.cancel, color: Colors.white, size: 28),
+                    onPressed: () => setState(() {
+                      _imageFile = null;
+                      _imageBase64 = null;
+                    }),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 24),
+
             ElevatedButton(
-              onPressed: (_symptomsController.text.isEmpty || aiState.isLoading)
+              onPressed: (_symptomsController.text.isEmpty && _imageBase64 == null || aiState.isLoading)
                   ? null
                   : _triggerAnalysis,
               child: aiState.isLoading
@@ -129,6 +205,7 @@ class _DiseaseRiskScreenState extends ConsumerState<DiseaseRiskScreen> {
       symptoms: symptomsList,
       recentVaccinations: vaccinesList,
       mortalityAlertLevel: _mortalityAlert,
+      imageBase64: _imageBase64,
     );
 
     ref.read(aiInsightsProvider.notifier).fetchDiseaseRisk(request);

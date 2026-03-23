@@ -14,6 +14,8 @@ import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_button.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/constants/broiler_constants.dart';
 
 class BiosecurityScreen extends ConsumerStatefulWidget {
   const BiosecurityScreen({super.key});
@@ -23,18 +25,16 @@ class BiosecurityScreen extends ConsumerStatefulWidget {
 }
 
 class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
-  final List<String> _checklistItems = [
-    'Footbath solution changed',
-    'Visitor log checked',
-    'Protective gear worn',
-    'Dead birds removed properly',
-    'House surroundings clean'
-  ];
-
-  final List<bool> _checkedStatus = List.filled(5, false);
+  late final List<bool> _checkedStatus;
   final _completedByController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkedStatus = List.filled(biosecurityChecklist.length, false);
+  }
 
   Future<void> _submitChecklist() async {
     if (_completedByController.text.trim().isEmpty) {
@@ -44,15 +44,15 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final items = List.generate(_checklistItems.length, (index) => {
-        'task': _checklistItems[index],
+      final items = List.generate(biosecurityChecklist.length, (index) => {
+        'task': biosecurityChecklist[index],
         'completed': _checkedStatus[index],
         'notes': '',
       });
       
       await ApiClient.instance.post(ApiEndpoints.biosecurity, data: {
         'items': items,
-        'completed_by': _completedByController.text.trim(),
+        'completedBy': _completedByController.text.trim(),
         'notes': _notesController.text.trim(),
         'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       });
@@ -86,15 +86,15 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
     final biosecurityAsync = ref.watch(biosecurityProvider);
     final records = biosecurityAsync.value ?? [];
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final hasToday = records.any((r) => r['date']?.toString().startsWith(today) == true);
+    final hasToday = records.any((r) => DateFormat('yyyy-MM-dd').format(r.date) == today);
     final todayStatus = hasToday ? 'Completed' : 'Pending';
 
     final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-    final recentRecords = records.where((r) => DateTime.tryParse(r['date']?.toString() ?? '')?.isAfter(thirtyDaysAgo) == true).toList();
+    final recentRecords = records.where((r) => r.date.isAfter(thirtyDaysAgo)).toList();
     final compliance = records.isEmpty ? '0.0%' : '${(recentRecords.length / 30.0 * 100).clamp(0.0, 100.0).toStringAsFixed(1)}%';
 
     final startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
-    final weekRecords = records.where((r) => DateTime.tryParse(r['date']?.toString() ?? '')?.isAfter(startOfWeek) == true).toList();
+    final weekRecords = records.where((r) => r.date.isAfter(startOfWeek)).toList();
     final weekStat = '${weekRecords.length}/7';
 
     return Scaffold(
@@ -121,7 +121,7 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
               children: [
                 _buildStatCard(context, 'Today\'s Status', todayStatus, LucideIcons.calendar, hasToday ? theme.colorScheme.primary : theme.colorScheme.secondary),
                 _buildStatCard(context, '30-Day Compliance', compliance, LucideIcons.shield, theme.colorScheme.primary),
-                _buildStatCard(context, 'Checklist Items', '${_checklistItems.length}', LucideIcons.clipboardCheck, theme.colorScheme.onSurface),
+                _buildStatCard(context, 'Checklist Items', '${biosecurityChecklist.length}', LucideIcons.clipboardCheck, theme.colorScheme.onSurface),
                 _buildStatCard(context, 'This Week', weekStat, LucideIcons.checkCircle, theme.colorScheme.onSurface),
               ],
             ),
@@ -143,13 +143,13 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  ...List.generate(_checklistItems.length, (index) {
+                  ...List.generate(biosecurityChecklist.length, (index) {
                     return CheckboxListTile(
                       title: Text(
-                        _checklistItems[index],
+                        biosecurityChecklist[index],
                         style: TextStyle(
                           decoration: _checkedStatus[index] ? TextDecoration.lineThrough : null,
-                          color: _checkedStatus[index] ? theme.colorScheme.onSurface.withValues(alpha: 0.5) : null,
+                          color: _checkedStatus[index] ? theme.colorScheme.onSurface.withAlpha(128) : null,
                         ),
                       ),
                       value: _checkedStatus[index],
@@ -202,10 +202,10 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
-                          Icon(LucideIcons.clipboardCheck, size: 48, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+                          Icon(LucideIcons.clipboardCheck, size: 48, color: theme.colorScheme.onSurface.withAlpha(51)),
                           const SizedBox(height: 8),
                           const Text('No checklists recorded yet'),
-                          Text('Complete today\'s checklist to start tracking', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                          Text('Complete today\'s checklist to start tracking', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(153))),
                         ],
                       ),
                     ),
@@ -218,21 +218,19 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                   itemCount: records.length,
                   itemBuilder: (context, index) {
                     final item = records.reversed.toList()[index];
-                    final dateStr = item['date']?.toString() ?? '';
-                    final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                     
-                    final items = item['items'] as List? ?? [];
-                    final completedCount = items.where((i) => i['completed'] == true).length;
+                    final items = item.items;
+                    final completedCount = items.where((i) => i.completed == true).length;
                     
                     return CustomCard(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          backgroundColor: theme.colorScheme.primary.withAlpha(25),
                           child: Icon(LucideIcons.clipboardCheck, color: theme.colorScheme.primary, size: 20),
                         ),
                         title: Text('Compliance: $completedCount/${items.length} Checked'),
-                        subtitle: Text('${DateFormat('MMM dd, yyyy').format(date)} - By ${item['completed_by'] ?? 'Unknown'}'),
+                        subtitle: Text('${DateFormat('MMM dd, yyyy').format(item.date)} - By ${item.completedBy ?? 'Unknown'}'),
                         trailing: PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert),
                           itemBuilder: (ctx2) => const [
@@ -253,29 +251,17 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                               );
                               if (confirm == true) {
                                 try {
-
-                                  await ApiClient.instance.delete('${ApiEndpoints.biosecurity}${item['id']}');
-
+                                  await ApiClient.instance.delete('${ApiEndpoints.biosecurity}${item.id}');
                                   ref.invalidate(biosecurityProvider);
-
                                 } catch (e) {
-
                                   if (context.mounted) {
-
                                     String message = 'Failed to delete';
-
                                     if (e is DioException && e.response?.statusCode == 404) {
-
                                       message = 'Record already deleted';
-
                                       ref.invalidate(biosecurityProvider);
-
                                     }
-
                                     ToastService.showError(context, message);
-
                                   }
-
                                 }
                               }
                             }
@@ -294,7 +280,7 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: Colors.orange.withAlpha(25),
                 border: Border.all(color: Colors.orange),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -317,8 +303,8 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
     );
   }
 
-  void _showCheckDetails(BuildContext context, Map<String, dynamic> item) {
-    final items = item['items'] as List? ?? [];
+  void _showCheckDetails(BuildContext context, BiosecurityCheck item) {
+    final items = item.items;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -328,11 +314,11 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Date: ${item['date'] ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text('By: ${item['completed_by'] ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              if (item['notes']?.toString().isNotEmpty == true) ...[
+              Text('Date: ${DateFormat('yyyy-MM-dd').format(item.date)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('By: ${item.completedBy ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              if (item.notes?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
-                Text('Notes: ${item['notes']}'),
+                Text('Notes: ${item.notes}'),
               ],
               const CustomDivider(),
               const Text('Tasks Breakdown:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -342,12 +328,12 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          i['completed'] == true ? Icons.check_circle : Icons.circle_outlined,
-                          color: i['completed'] == true ? Colors.green : Colors.grey,
+                          i.completed == true ? Icons.check_circle : Icons.circle_outlined,
+                          color: i.completed == true ? Colors.green : Colors.grey,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
-                        Expanded(child: Text(i['task'] ?? '')),
+                        Expanded(child: Text(i.task)),
                       ],
                     ),
                   )),
@@ -370,7 +356,7 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), maxLines: 1)),
-              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withAlpha(128)),
             ],
           ),
           Text(

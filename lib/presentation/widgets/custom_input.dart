@@ -10,6 +10,8 @@ class CustomInput extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
+  final int? maxLines;
+  final FocusNode? focusNode;
 
   const CustomInput({
     super.key,
@@ -22,6 +24,8 @@ class CustomInput extends StatelessWidget {
     this.validator,
     this.keyboardType,
     this.onChanged,
+    this.maxLines = 1,
+    this.focusNode,
   });
 
   @override
@@ -48,6 +52,8 @@ class CustomInput extends StatelessWidget {
           validator: validator,
           keyboardType: keyboardType,
           onChanged: onChanged,
+          maxLines: maxLines,
+          focusNode: focusNode,
           style: TextStyle(color: theme.colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: hintText,

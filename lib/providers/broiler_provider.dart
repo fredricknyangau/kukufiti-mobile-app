@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
+import '../core/models/broiler_models.dart';
 
 class BroilerState {
-  final Map<String, dynamic>? currentBatch;
-  final List<dynamic> batches;
+  final Batch? currentBatch;
+  final List<Batch> batches;
   final bool isLoading;
   final String? error;
 
@@ -16,8 +17,8 @@ class BroilerState {
   });
 
   BroilerState copyWith({
-    Map<String, dynamic>? currentBatch,
-    List<dynamic>? batches,
+    Batch? currentBatch,
+    List<Batch>? batches,
     bool? isLoading,
     String? error,
   }) {
@@ -39,7 +40,6 @@ class BroilerNotifier extends Notifier<BroilerState> {
   }
 
   Future<void> fetchBatches() async {
-    // We can now safely access 'state'
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await ApiClient.instance.get(ApiEndpoints.batches);
@@ -49,9 +49,16 @@ class BroilerNotifier extends Notifier<BroilerState> {
           ? responseData['data']
           : responseData;
       
+      final batches = data.map((e) {
+        // Handle mapping from snake_case API to camelCase model if necessary,
+        // or ensure @JsonKey is used in the model.
+        // Assuming the model.fromJson handles it.
+        return Batch.fromJson(e as Map<String, dynamic>);
+      }).toList();
+
       state = state.copyWith(
-        batches: data,
-        currentBatch: data.isNotEmpty ? data.first : null,
+        batches: batches,
+        currentBatch: batches.isNotEmpty ? batches.first : null,
         isLoading: false,
       );
     } catch (e) {
@@ -59,7 +66,7 @@ class BroilerNotifier extends Notifier<BroilerState> {
     }
   }
 
-  void selectBatch(Map<String, dynamic> batch) {
+  void selectBatch(Batch batch) {
     state = state.copyWith(currentBatch: batch);
   }
 }

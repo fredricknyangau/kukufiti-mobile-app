@@ -10,6 +10,7 @@ import '../../../../providers/data_providers.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
+import '../../../../core/models/broiler_models.dart';
 
 class MarketScreen extends ConsumerWidget {
   const MarketScreen({super.key});
@@ -38,8 +39,8 @@ class MarketScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: prices.length,
               itemBuilder: (context, index) {
-                final item = prices[index];
-                final isDown = item['trend'] == 'down';
+                final MarketPrice item = prices[index];
+                final isDown = item.status == 'down';
                 return CustomCard(
                   isPremium: true,
                   margin: const EdgeInsets.only(bottom: 12),
@@ -48,13 +49,13 @@ class MarketScreen extends ConsumerWidget {
                       isDown ? LucideIcons.trendingDown : LucideIcons.trendingUp,
                       color: isDown ? theme.colorScheme.error : theme.colorScheme.primary,
                     ),
-                    title: Text(item['town'] ?? 'General Market', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(item['county'] ?? 'County'),
+                    title: Text(item.town ?? 'General Market', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(item.county),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'KES ${item['price_per_kg'] ?? 0} /kg',
+                          'KES ${item.pricePerKg} /kg',
                           style: TextStyle(
                             color: isDown ? theme.colorScheme.error : theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -92,10 +93,10 @@ class MarketScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddPriceDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? item}) {
-    final priceController = TextEditingController(text: (item?['price_per_kg'] ?? '').toString());
-    final marketController = TextEditingController(text: item?['market'] ?? '');
-    final countyController = TextEditingController(text: item?['county'] ?? '');
+  void _showAddPriceDialog(BuildContext context, WidgetRef ref, {MarketPrice? item}) {
+    final priceController = TextEditingController(text: item != null ? item.pricePerKg.toString() : '');
+    final marketController = TextEditingController(text: item?.town ?? '');
+    final countyController = TextEditingController(text: item?.county ?? '');
     bool isLoading = false;
 
     showDialog(
@@ -131,7 +132,7 @@ class MarketScreen extends ConsumerWidget {
                   };
 
                   if (item != null) {
-                    await ApiClient.instance.put('${ApiEndpoints.marketPrices}/${item['id']}', data: payload);
+                    await ApiClient.instance.put('${ApiEndpoints.marketPrices}/${item.id}', data: payload);
                   } else {
                     await ApiClient.instance.post(ApiEndpoints.marketPrices, data: payload);
                   }

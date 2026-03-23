@@ -11,6 +11,7 @@ import '../../../../providers/data_providers.dart';
 import '../../../../presentation/widgets/custom_button.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
+import '../../../../core/models/broiler_models.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -38,10 +39,10 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (profile) {
-          final name = profile['full_name'] ?? 'User';
-          final email = profile['email'] ?? 'No Email';
-          final phone = profile['phone_number'] ?? 'Not set';
-          final location = profile['location'] ?? 'Not set';
+          final name = profile.fullName ?? 'User';
+          final email = profile.email;
+          final phone = profile.phoneNumber ?? 'Not set';
+          final location = profile.location ?? 'Not set';
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -102,10 +103,10 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditProfileDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
-    final nameController = TextEditingController(text: profile['full_name']);
-    final phoneController = TextEditingController(text: profile['phone_number']);
-    final locationController = TextEditingController(text: profile['location']);
+  void _showEditProfileDialog(BuildContext context, WidgetRef ref, User profile) {
+    final nameController = TextEditingController(text: profile.fullName);
+    final phoneController = TextEditingController(text: profile.phoneNumber);
+    final locationController = TextEditingController(text: profile.location);
     bool isLoading = false;
 
     showDialog(

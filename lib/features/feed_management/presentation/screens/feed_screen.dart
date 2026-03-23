@@ -1,5 +1,6 @@
 import 'package:mobile/presentation/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -13,7 +14,8 @@ import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
-import 'package:uuid/uuid.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/constants/broiler_constants.dart';
 import 'package:dio/dio.dart';
 
 
@@ -31,8 +33,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final feedAsync = ref.watch(feedProvider);
-    final userAsync = ref.watch(profileProvider);
-    final isViewer = userAsync.value?['role'] == 'VIEWER';
+    final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
     final batches = broilerState.batches;
@@ -59,16 +60,18 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
              // Filter Logic
              final filteredRecords = _selectedBatchId == null 
                  ? records 
-                 : records.where((e) => e['flock_id']?.toString() == _selectedBatchId).toList();
+                 : records.where((e) => e.batchId == _selectedBatchId).toList();
 
-             final totalAmount = filteredRecords.fold<double>(0, (prev, e) => prev + (e['quantity_kg'] as num).toDouble());
+             final totalAmount = filteredRecords.fold<double>(0, (prev, e) => prev + e.quantity);
              
              // Feed by Type Breakdown
-             final feedTypes = ['starter', 'grower', 'finisher'];
-             final feedByType = feedTypes.map((type) {
-               final qty = filteredRecords.where((e) => e['feed_type'] == type).fold<double>(0, (prev, e) => prev + (e['quantity_kg'] as num).toDouble());
-               return {'type': type, 'quantity': qty};
+             final feedByType = feedTypes.map((t) {
+               final type = t['value'] as String;
+               final qty = filteredRecords.where((e) => e.feedType == type).fold<double>(0, (prev, e) => prev + e.quantity);
+               return {'type': type, 'label': t['label'] as String, 'quantity': qty};
              }).where((e) => (e['quantity'] as double) > 0).toList();
+
+             final isViewer = profileAsync.value?.role == 'VIEWER';
 
              return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -119,7 +122,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                     ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('All Batches')),
-                      ...batches.map((b) => DropdownMenuItem(value: b['id']?.toString(), child: Text(b['name'] ?? 'Unknown'))),
+                      ...batches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
                     ],
                     onChanged: (v) => setState(() => _selectedBatchId = v),
                   ),
@@ -140,7 +143,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: theme.colorScheme.primary.withAlpha(50)),
                         ),
-                        child: Text('${(t['type'] as String).toUpperCase()}: ${(t['quantity'] as double).toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                        child: Text('${t['label']}: ${(t['quantity'] as double).toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       )).toList(),
                     ),
                     const SizedBox(height: 16),
@@ -149,9 +152,22 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   const CustomDivider(),
                   const SizedBox(height: 16),
 
-                  Text(
-                    'Feed Intake Log',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Feed Intake Log',
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => context.push('/feed-calculator'),
+                        icon: const Icon(LucideIcons.calculator, size: 16),
+                        label: const Text('Formulate Feed', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   if (filteredRecords.isEmpty)
@@ -173,8 +189,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       itemCount: filteredRecords.length,
                       itemBuilder: (context, index) {
                         final item = filteredRecords.reversed.toList()[index];
-                        final dateStr = item['event_date']?.toString() ?? DateTime.now().toIso8601String();
-                        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -183,8 +197,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                                backgroundColor: theme.colorScheme.primary.withAlpha(25),
                                child: Icon(LucideIcons.wheat, color: theme.colorScheme.primary),
                             ),
-                            title: Text('${item['quantity_kg']} kg - ${(item['feed_type'] ?? 'Standard').toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(DateFormat('MMM dd, yyyy').format(date)),
+                            title: Text('${item.quantity} kg - ${item.feedType.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(DateFormat('MMM dd, yyyy').format(item.date)),
                             trailing: isViewer ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
@@ -204,7 +218,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                                   );
                                   if (confirm == true) {
                                     try {
-                                      await ApiClient.instance.delete('${ApiEndpoints.feed}/${item['id']}');
+                                      await ApiClient.instance.delete('${ApiEndpoints.feed}/${item.id}');
                                       ref.invalidate(feedProvider);
                                     } catch (e) {
                                       if (context.mounted) {
@@ -235,7 +249,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           },
         ),
       ),
-       floatingActionButton: isViewer ? null : FloatingActionButton(
+       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
         onPressed: () => _showAddEditFeedDialog(context, ref, currentBatch),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
@@ -244,14 +258,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     );
   }
 
-  void _showAddEditFeedDialog(BuildContext context, WidgetRef ref, Map<String, dynamic>? currentBatch, {Map<String, dynamic>? item}) {
+  void _showAddEditFeedDialog(BuildContext context, WidgetRef ref, Batch? currentBatch, {FeedRecord? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditFeedDialog(currentBatch: currentBatch, item: item),
     );
   }
 
-  void _showFeedDetails(BuildContext context, Map<String, dynamic> item) {
+  void _showFeedDetails(BuildContext context, FeedRecord item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -261,14 +275,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', item['event_date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Feed Type', (item['feed_type'] ?? 'N/A').toString().toUpperCase()),
-              _detailRow('Quantity', '${item['quantity_kg']} kg'),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow('Feed Type', item.feedType.toUpperCase()),
+              _detailRow('Quantity', '${item.quantity} kg'),
               const CustomDivider(),
-              _detailRow('Cost (Ksh)', item['cost_ksh']?.toString() ?? 'N/A'),
-              _detailRow('Supplier', item['supplier']?.toString() ?? 'N/A'),
+              _detailRow('Cost (Ksh)', item.cost.toString()),
+              _detailRow('Supplier', item.supplier ?? 'N/A'),
               const CustomDivider(),
-              _detailRow('Notes', item['notes']?.toString().isNotEmpty == true ? item['notes'] : 'No Notes'),
+              _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -293,8 +307,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 }
 
 class _AddEditFeedDialog extends StatefulWidget {
-  final Map<String, dynamic>? currentBatch;
-  final Map<String, dynamic>? item;
+  final Batch? currentBatch;
+  final FeedRecord? item;
 
   const _AddEditFeedDialog({this.currentBatch, this.item});
 
@@ -309,17 +323,17 @@ class _AddEditFeedDialogState extends State<_AddEditFeedDialog> {
   late final TextEditingController _supplierController;
   late final TextEditingController _notesController;
 
-  String _selectedFeedType = 'starter';
+  String _selectedFeedType = feedTypes.first['value'] as String;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(text: widget.item?['quantity_kg']?.toString() ?? '');
-    _costController = TextEditingController(text: widget.item?['cost_ksh']?.toString() ?? '');
-    _supplierController = TextEditingController(text: widget.item?['supplier'] ?? '');
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
-    _selectedFeedType = widget.item?['feed_type'] ?? 'starter';
+    _amountController = TextEditingController(text: widget.item?.quantity.toString() ?? '');
+    _costController = TextEditingController(text: widget.item?.cost.toString() ?? '');
+    _supplierController = TextEditingController(text: widget.item?.supplier ?? '');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _selectedFeedType = widget.item?.feedType ?? feedTypes.first['value'] as String;
   }
 
   @override
@@ -337,7 +351,7 @@ class _AddEditFeedDialogState extends State<_AddEditFeedDialog> {
     final amount = double.tryParse(_amountController.text) ?? 0.0;
     if (amount <= 0) return;
 
-    final batchId = widget.item?['flock_id'] ?? widget.currentBatch?['id'];
+    final batchId = widget.item?.batchId ?? widget.currentBatch?.id;
     if (batchId == null) {
       if (mounted) ToastService.showError(context, 'No batch selected');
       return;
@@ -345,19 +359,19 @@ class _AddEditFeedDialogState extends State<_AddEditFeedDialog> {
 
     setState(() => _isLoading = true);
     final payload = {
-      'quantity_kg': amount,
+      'quantity': amount,
       'feed_type': _selectedFeedType,
-      'cost_ksh': _costController.text.trim().isEmpty ? null : double.tryParse(_costController.text.trim()),
+      'cost': double.tryParse(_costController.text.trim()) ?? 0.0,
       'supplier': _supplierController.text.trim().isEmpty ? null : _supplierController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.feed}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.feed}/${widget.item!.id}', data: payload);
       } else {
-        payload['event_id'] = const Uuid().v4();
-        await ApiClient.instance.post('${ApiEndpoints.feed}?flock_id=$batchId', data: payload);
+        await ApiClient.instance.post('${ApiEndpoints.feed}?batchId=$batchId', data: payload);
       }
 
       if (mounted) {
@@ -396,8 +410,8 @@ class _AddEditFeedDialogState extends State<_AddEditFeedDialog> {
                     labelText: 'Feed Type',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  items: ['starter', 'grower', 'finisher']
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase())))
+                  items: feedTypes
+                      .map((t) => DropdownMenuItem(value: t['value'] as String, child: Text(t['label'] as String)))
                       .toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _selectedFeedType = v);

@@ -11,6 +11,7 @@ import '../../../../providers/data_providers.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/toast_service.dart';
+import '../../../../core/models/broiler_models.dart';
 import 'package:intl/intl.dart';
 
 class VetScreen extends ConsumerWidget {
@@ -19,7 +20,6 @@ class VetScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
     final vetAsync = ref.watch(vetConsultationsProvider);
 
     return Scaffold(
@@ -62,7 +62,7 @@ class VetScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(24.0),
                         child: Text(
                           'No vet consultation records available.',
-                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                          style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150)),
                         ),
                       ),
                     ),
@@ -78,8 +78,8 @@ class VetScreen extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: const Icon(LucideIcons.fileText),
-                        title: Text(consult['issue'] ?? 'Consultation', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(consult['visit_date']?.toString().split('T').first ?? ''),
+                        title: Text(consult.issue, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(DateFormat('MMM dd, yyyy').format(consult.date)),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -90,7 +90,7 @@ class VetScreen extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                (consult['status'] ?? 'pending').toString().toUpperCase(),
+                                consult.status.toUpperCase(),
                                 style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
                             ),
@@ -124,31 +124,31 @@ class VetScreen extends ConsumerWidget {
       ),
     );
   }
-  void _showAddEditConsultationDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? item}) {
+  void _showAddEditConsultationDialog(BuildContext context, WidgetRef ref, {VetConsultation? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditConsultationDialog(item: item),
     );
   }
 
-  void _showConsultationDetails(BuildContext context, Map<String, dynamic> consult) {
+  void _showConsultationDetails(BuildContext context, VetConsultation consult) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(consult['issue'] ?? 'Consultation'),
+        title: Text(consult.issue),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', consult['visit_date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Status', (consult['status'] ?? 'pending').toString().toUpperCase()),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(consult.date)),
+              _detailRow('Status', consult.status.toUpperCase()),
               const CustomDivider(),
-              _detailRow('Diagnosis', consult['diagnosis']?.toString().isNotEmpty == true ? consult['diagnosis'] : 'None Recorded'),
+              _detailRow('Diagnosis', consult.diagnosis?.isNotEmpty == true ? consult.diagnosis! : 'None Recorded'),
               const CustomDivider(),
-              _detailRow('Treatment / Rec', consult['treatment']?.toString().isNotEmpty == true ? consult['treatment'] : 'None Recorded'),
+              _detailRow('Treatment / Rec', consult.treatment?.isNotEmpty == true ? consult.treatment! : 'None Recorded'),
               const CustomDivider(),
-              _detailRow('Vet Name', consult['vet_name'] ?? 'Not Assigned'),
+              _detailRow('Vet Name', consult.vetName ?? 'Not Assigned'),
             ],
           ),
         ),
@@ -173,7 +173,7 @@ class VetScreen extends ConsumerWidget {
 }
 
 class _AddEditConsultationDialog extends StatefulWidget {
-  final Map<String, dynamic>? item;
+  final VetConsultation? item;
 
   const _AddEditConsultationDialog({this.item});
 
@@ -194,11 +194,11 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
   @override
   void initState() {
     super.initState();
-    _reasonController = TextEditingController(text: widget.item?['issue'] ?? '');
-    _diagnosisController = TextEditingController(text: widget.item?['diagnosis'] ?? '');
-    _treatmentController = TextEditingController(text: widget.item?['treatment'] ?? '');
-    _vetNameController = TextEditingController(text: widget.item?['vet_name'] ?? '');
-    _status = widget.item?['status'] ?? 'pending';
+    _reasonController = TextEditingController(text: widget.item?.issue ?? '');
+    _diagnosisController = TextEditingController(text: widget.item?.diagnosis ?? '');
+    _treatmentController = TextEditingController(text: widget.item?.treatment ?? '');
+    _vetNameController = TextEditingController(text: widget.item?.vetName ?? '');
+    _status = widget.item?.status ?? 'pending';
   }
 
   @override
@@ -219,13 +219,13 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
       'diagnosis': _diagnosisController.text.trim().isEmpty ? null : _diagnosisController.text.trim(),
       'treatment': _treatmentController.text.trim().isEmpty ? null : _treatmentController.text.trim(),
       'vet_name': _vetNameController.text.trim().isEmpty ? null : _vetNameController.text.trim(),
-      'visit_date': widget.item?['visit_date'] ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
       'status': _status,
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.vetConsultations}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.vetConsultations}/${widget.item!.id}', data: payload);
       } else {
         await ApiClient.instance.post(ApiEndpoints.vetConsultations, data: payload);
       }

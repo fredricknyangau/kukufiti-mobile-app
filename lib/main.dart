@@ -33,6 +33,7 @@ void main() async {
   // Initialize Hive for offline storage
   await Hive.initFlutter();
   await Hive.openBox('offline_cache');
+  await Hive.openBox('offline_sync_queue');
 
   runApp(
     const ProviderScope(

@@ -32,6 +32,7 @@ import '../../features/mortality_management/presentation/screens/mortality_scree
 import '../../features/calendar_management/presentation/screens/calendar_screen.dart';
 import '../../features/inventory_management/presentation/screens/inventory_screen.dart';
 import '../../features/reports_management/presentation/screens/reports_screen.dart';
+import '../../features/feed_management/presentation/screens/feed_calculator_screen.dart';
 
 import '../../features/ai_insights/presentation/screens/feed_advisory_screen.dart';
 import '../../features/ai_insights/presentation/screens/mortality_analysis_screen.dart';
@@ -84,6 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: listenable,
     redirect: (context, state) {
       final authState = ref.read(authProvider);
+      if (authState.isLoading) return null; // Wait for token initialization
       final isAuthenticated = authState.isAuthenticated;
       final isAuthPath = state.uri.path == '/login' || state.uri.path == '/register';
       final isPublicPath = state.uri.path == '/' || 
@@ -164,6 +166,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/feed',
                 builder: (context, state) => const FeedScreen(),
+              ),
+              GoRoute(
+                path: '/feed-calculator',
+                builder: (context, state) => const FeedCalculatorScreen(),
               ),
               GoRoute(
                 path: '/weight',

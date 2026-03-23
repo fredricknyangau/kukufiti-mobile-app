@@ -5,6 +5,7 @@ import '../../data/models/mortality_analysis.dart';
 import '../providers/ai_insights_provider.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../providers/data_providers.dart' as data_providers;
+import '../../../../core/models/broiler_models.dart';
 
 class MortalityAdvisoryScreen extends ConsumerStatefulWidget {
   const MortalityAdvisoryScreen({super.key});
@@ -55,8 +56,8 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
               ),
               items: batches.map((batch) {
                 return DropdownMenuItem<String>(
-                  value: batch['id'].toString(),
-                  child: Text(batch['name'] ?? 'Batch #${batch['id']}'),
+                  value: batch.id,
+                  child: Text(batch.name),
                 );
               }).toList(),
               onChanged: (val) {
@@ -103,24 +104,24 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
     );
   }
 
-  Future<void> _triggerAnalysis(List<dynamic> batches, List<dynamic> mortalityLogs) async {
-    final batch = batches.firstWhere((b) => b['id'].toString() == _selectedBatchId);
-    final initialCount = batch['initial_count'] ?? batch['batch_size'] ?? 0;
-    final currentCount = batch['current_count'] ?? initialCount;
+  Future<void> _triggerAnalysis(List<Batch> batches, List<MortalityRecord> mortalityLogs) async {
+    final batch = batches.firstWhere((b) => b.id == _selectedBatchId);
+    final initialCount = batch.initialChicks;
+    final currentCount = initialCount;
 
     // Filter relevant logs for the selected batch
     final filteredLogs = mortalityLogs
-        .where((m) => m['flock_id'].toString() == _selectedBatchId)
+        .where((m) => m.batchId == _selectedBatchId)
         .map((m) => MortalityLogEntry(
-              date: m['date'] ?? '',
-              count: m['count'] ?? 0,
-              cause: m['cause'],
+              date: m.date.toIso8601String(),
+              count: m.count,
+              cause: m.cause,
             ))
         .toList();
 
     final request = MortalityAnalysisRequest(
       flockId: _selectedBatchId,
-      breed: batch['breed'] ?? 'Cobb 500',
+      breed: batch.breed ?? 'Unknown',
       initialBirdCount: initialCount,
       currentBirdCount: currentCount,
       recentMortality: filteredLogs,

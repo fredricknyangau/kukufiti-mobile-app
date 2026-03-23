@@ -29,7 +29,12 @@ class ApiEndpoints {
   static const String biosecurity = '/biosecurity/';
   static const String alerts = '/alerts/';
   static const String auditLogs = '/admin/audit-logs';
-  static String people(String type) => '/people/$type';
+  static String people(String type) {
+    if (type == 'supplier') return '/people/suppliers';
+    if (type == 'customer') return '/people/customers';
+    if (type == 'employee') return '/people/employees';
+    return '/people/$type';
+  }
 
   // Analytics
   static const String dashboardMetrics = '/analytics/dashboard-metrics';

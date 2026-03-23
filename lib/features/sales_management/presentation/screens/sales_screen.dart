@@ -15,6 +15,8 @@ import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../core/utils/toast_service.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
+import '../../../../core/models/broiler_models.dart';
+import '../../../../core/services/sync_service.dart';
 
 class SalesScreen extends ConsumerWidget {
   const SalesScreen({super.key});
@@ -45,18 +47,14 @@ class SalesScreen extends ConsumerWidget {
             ),
           ),
           data: (records) {
-            final sortedRecords = List<dynamic>.from(records)
-              ..sort((a, b) {
-                final dateA = DateTime.tryParse(a['date']?.toString() ?? '') ?? DateTime(2000);
-                final dateB = DateTime.tryParse(b['date']?.toString() ?? '') ?? DateTime(2000);
-                return dateA.compareTo(dateB);
-              });
+            final sortedRecords = List<SaleRecord>.from(records)
+              ..sort((a, b) => a.date.compareTo(b.date));
 
-            final totalRev = records.fold<double>(0, (prev, e) => prev + (double.tryParse(e['total_amount']?.toString() ?? '') ?? 0.0));
+            final totalRev = records.fold<double>(0, (prev, e) => prev + e.totalAmount);
             
             final spots = <FlSpot>[];
             for (int i = 0; i < sortedRecords.length; i++) {
-              spots.add(FlSpot(i.toDouble(), double.tryParse(sortedRecords[i]['total_amount']?.toString() ?? '') ?? 0.0));
+              spots.add(FlSpot(i.toDouble(), sortedRecords[i].totalAmount));
             }
 
             return SingleChildScrollView(
@@ -149,8 +147,6 @@ class SalesScreen extends ConsumerWidget {
                       itemCount: records.length,
                       itemBuilder: (context, index) {
                         final item = records.reversed.toList()[index];
-                        final dateStr = item['date']?.toString() ?? DateTime.now().toIso8601String();
-                        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                         
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -160,10 +156,10 @@ class SalesScreen extends ConsumerWidget {
                                child: Icon(LucideIcons.banknote, color: theme.colorScheme.primary),
                             ),
                             title: Text(
-                              NumberFormat.currency(locale: 'en_KE', symbol: 'KES ').format(double.tryParse(item['total_amount']?.toString() ?? '') ?? 0.0), 
+                              NumberFormat.currency(locale: 'en_KE', symbol: 'KES ').format(item.totalAmount), 
                               style: const TextStyle(fontWeight: FontWeight.bold)
                             ),
-                            subtitle: Text('${item['quantity'] ?? 0} birds - ${DateFormat('MMM dd, yyyy').format(date)}'),
+                            subtitle: Text('${item.quantity} birds - ${DateFormat('MMM dd, yyyy').format(item.date)}'),
                             trailing: PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
@@ -183,29 +179,17 @@ class SalesScreen extends ConsumerWidget {
                                   );
                                   if (confirm == true) {
                                     try {
-
-                                      await ApiClient.instance.delete('${ApiEndpoints.sales}/${item['id']}');
-
+                                      await ApiClient.instance.delete('${ApiEndpoints.sales}/${item.id}');
                                       ref.invalidate(salesProvider);
-
                                     } catch (e) {
-
                                       if (context.mounted) {
-
                                         String message = 'Failed to delete';
-
                                         if (e is DioException && e.response?.statusCode == 404) {
-
                                           message = 'Record already deleted';
-
                                           ref.invalidate(salesProvider);
-
                                         }
-
                                         ToastService.showError(context, message);
-
                                       }
-
                                     }
                                   }
                                 }
@@ -235,14 +219,14 @@ class SalesScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddEditSalesDialog(BuildContext context, WidgetRef ref, Map<String, dynamic>? currentBatch, {Map<String, dynamic>? item}) {
+  void _showAddEditSalesDialog(BuildContext context, WidgetRef ref, Batch? currentBatch, {SaleRecord? item}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditSaleDialog(currentBatch: currentBatch, item: item),
     );
   }
 
-  void _showSaleDetails(BuildContext context, Map<String, dynamic> item) {
+  void _showSaleDetails(BuildContext context, SaleRecord item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -252,17 +236,17 @@ class SalesScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Buyer: ${item['buyer_name'] ?? 'Walk-in'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              if (item['buyer_phone']?.toString().isNotEmpty == true) Text('Phone: ${item['buyer_phone']}'),
+              Text('Buyer: ${item.buyerName ?? 'Walk-in'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              if (item.buyerPhone?.isNotEmpty == true) Text('Phone: ${item.buyerPhone}'),
               const CustomDivider(),
-              _detailRow('Date', item['date']?.toString().split('T').first ?? 'N/A'),
-              _detailRow('Quantity', '${item['quantity'] ?? 0} birds'),
-              _detailRow('Price per Bird', 'KES ${item['price_per_bird'] ?? 0}'),
-              _detailRow('Total Amount', 'KES ${item['total_amount'] ?? 0}', isBold: true),
+              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow('Quantity', '${item.quantity} birds'),
+              _detailRow('Price per Bird', 'KES ${item.pricePerBird}'),
+              _detailRow('Total Amount', 'KES ${item.totalAmount}', isBold: true),
               const CustomDivider(),
-              if (item['average_weight_grams'] != null) _detailRow('Avg Weight', '${item['average_weight_grams']} g'),
-              if (item['mpesa_transaction_id'] != null) _detailRow('M-Pesa ID', '${item['mpesa_transaction_id']}'),
-              if (item['notes']?.toString().isNotEmpty == true) _detailRow('Notes', '${item['notes']}'),
+              if (item.averageWeight != null) _detailRow('Avg Weight', '${item.averageWeight} g'),
+              if (item.mpesaTransactionId != null) _detailRow('M-Pesa ID', '${item.mpesaTransactionId}'),
+              if (item.notes?.isNotEmpty == true) _detailRow('Notes', '${item.notes}'),
             ],
           ),
         ),
@@ -286,8 +270,8 @@ class SalesScreen extends ConsumerWidget {
 }
 
 class _AddEditSaleDialog extends StatefulWidget {
-  final Map<String, dynamic>? currentBatch;
-  final Map<String, dynamic>? item;
+  final Batch? currentBatch;
+  final SaleRecord? item;
 
   const _AddEditSaleDialog({this.currentBatch, this.item});
 
@@ -307,18 +291,20 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
   late final TextEditingController _weightController;
 
   bool _isLoading = false;
+  String? _selectedCustomerId;
 
   @override
   void initState() {
     super.initState();
-    _quantityController = TextEditingController(text: widget.item?['quantity']?.toString() ?? '');
-    _priceController = TextEditingController(text: widget.item?['price_per_bird']?.toString() ?? '');
-    _amountController = TextEditingController(text: widget.item?['total_amount']?.toString() ?? '');
-    _buyerNameController = TextEditingController(text: widget.item?['buyer_name'] ?? '');
-    _buyerPhoneController = TextEditingController(text: widget.item?['buyer_phone'] ?? '');
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
-    _mpesaController = TextEditingController(text: widget.item?['mpesa_transaction_id'] ?? '');
-    _weightController = TextEditingController(text: widget.item?['average_weight_grams']?.toString() ?? '');
+    _quantityController = TextEditingController(text: widget.item?.quantity.toString() ?? '');
+    _priceController = TextEditingController(text: widget.item?.pricePerBird.toString() ?? '');
+    _amountController = TextEditingController(text: widget.item?.totalAmount.toString() ?? '');
+    _buyerNameController = TextEditingController(text: widget.item?.buyerName ?? '');
+    _buyerPhoneController = TextEditingController(text: widget.item?.buyerPhone ?? '');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _mpesaController = TextEditingController(text: widget.item?.mpesaTransactionId ?? '');
+    _weightController = TextEditingController(text: widget.item?.averageWeight?.toString() ?? '');
+    _selectedCustomerId = widget.item?.customerId;
 
     _quantityController.addListener(_calculateTotal);
     _priceController.addListener(_calculateTotal);
@@ -354,7 +340,7 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
 
     if (quantity <= 0 || price <= 0 || amount <= 0) return;
 
-    final batchId = widget.item?['flock_id'] ?? widget.currentBatch?['id'];
+    final batchId = widget.item?.batchId ?? widget.currentBatch?.id;
     if (batchId == null) {
       if (mounted) ToastService.showError(context, 'No batch selected');
       return;
@@ -369,15 +355,16 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
       'buyer_phone': _buyerPhoneController.text.trim().isEmpty ? null : _buyerPhoneController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       'mpesa_transaction_id': _mpesaController.text.trim().isEmpty ? null : _mpesaController.text.trim(),
-      'average_weight_grams': _weightController.text.trim().isEmpty ? null : double.tryParse(_weightController.text.trim()),
-      'date': widget.item?['date'] ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'average_weight': _weightController.text.trim().isEmpty ? null : double.tryParse(_weightController.text.trim()),
+      'customer_id': _selectedCustomerId,
+      'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd').format(widget.item!.date) : DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'flock_id': batchId,
     };
 
     try {
       if (widget.item != null) {
-        await ApiClient.instance.put('${ApiEndpoints.sales}/${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.sales}/${widget.item!.id}', data: payload);
       } else {
-        payload['flock_id'] = batchId;
         await ApiClient.instance.post(ApiEndpoints.sales, data: payload);
       }
 
@@ -387,7 +374,30 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
         ToastService.showSuccess(context, 'Sale saved successfully');
       }
     } catch (e) {
-      if (mounted) ToastService.showError(context, 'Failed to save sale');
+      if (mounted) {
+        if (e is DioException) {
+          final isNetworkIssue = e.type == DioExceptionType.connectionTimeout || 
+                               e.type == DioExceptionType.sendTimeout ||
+                               e.type == DioExceptionType.receiveTimeout ||
+                               e.type == DioExceptionType.connectionError ||
+                               e.response == null;
+
+          if (isNetworkIssue) {
+            await SyncService.enqueueOperation(
+              endpoint: widget.item != null 
+                  ? '${ApiEndpoints.sales}/${widget.item!.id}' 
+                  : ApiEndpoints.sales,
+              method: widget.item != null ? 'PUT' : 'POST',
+              data: payload,
+            );
+            if (!mounted) return;
+            Navigator.pop(context);
+            ToastService.showSuccess(context, 'Saved offline. Will sync when online.');
+            return;
+          }
+        }
+        ToastService.showError(context, 'Failed to save sale');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -396,7 +406,9 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
   @override
   Widget build(BuildContext context) {
     return Consumer(
-      builder: (context, ref, child) => AlertDialog(
+      builder: (context, ref, child) {
+        final customersAsync = ref.watch(customersProvider);
+        return AlertDialog(
         title: Text(widget.item != null ? 'Edit Sale' : 'Log Sale'),
         content: SingleChildScrollView(
           child: Form(
@@ -425,6 +437,25 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
                   validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter valid amount' : null,
                 ),
                 const SizedBox(height: 12),
+                customersAsync.when(
+                  loading: () => const Text('Loading customers...'),
+                  error: (e, _) => const Text('Error loading customers dropdown'),
+                  data: (customers) {
+                    return DropdownButtonFormField<String>(
+                      initialValue: _selectedCustomerId,
+                      decoration: InputDecoration(
+                        labelText: 'Customer (Optional)',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(value: null, child: Text('None')),
+                        ...customers.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                      ],
+                      onChanged: (v) => setState(() => _selectedCustomerId = v),
+                    );
+                  }
+                ),
+                const SizedBox(height: 12),
                 CustomInput(label: 'Buyer Name', controller: _buyerNameController),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Buyer Phone', controller: _buyerPhoneController, keyboardType: TextInputType.phone),
@@ -446,7 +477,7 @@ class _AddEditSaleDialogState extends State<_AddEditSaleDialog> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           CustomButton(text: 'Save', isLoading: _isLoading, onPressed: () => _submit(ref)),
         ],
-      ),
-    );
+      );
+    });
   }
 }

@@ -13,6 +13,7 @@ import '../../../../presentation/widgets/custom_button.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/custom_input.dart';
 import '../../../../providers/data_providers.dart';
+import '../../../../core/models/broiler_models.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -67,7 +68,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
              }
 
              final filteredItems = items.where((item) {
-               final name = (item['name'] ?? item['item_name'] ?? '').toString().toLowerCase();
+               final name = item.name.toLowerCase();
                return name.contains(_searchQuery.toLowerCase());
              }).toList();
 
@@ -92,8 +93,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       itemCount: filteredItems.length,
                       itemBuilder: (context, index) {
                         final item = filteredItems[index];
-                        final status = item['status']?.toString() ?? 'Stocked';
-                        final isLow = status.toLowerCase().contains('low') || status.toLowerCase().contains('out');
+                        final isLow = item.quantity <= item.minimumStock;
+                        final status = isLow ? 'Low Stock' : 'Stocked';
                         
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
@@ -102,18 +103,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               leading: CircleAvatar(
-                                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                backgroundColor: theme.colorScheme.primary.withAlpha(25),
                                 child: Icon(LucideIcons.package2, color: theme.colorScheme.primary),
                               ),
-                              title: Text(item['name'] ?? item['item_name'] ?? 'Unknown Item', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('Quantity: ${item['quantity'] ?? 0} ${item['unit'] ?? 'units'}'),
+                              title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('Quantity: ${item.quantity} ${item.unit}'),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: isLow ? theme.colorScheme.error.withValues(alpha: 0.1) : theme.colorScheme.primary.withValues(alpha: 0.1),
+                                      color: isLow ? theme.colorScheme.error.withAlpha(25) : theme.colorScheme.primary.withAlpha(25),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -148,7 +149,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                         );
                                         if (confirm == true) {
                                           try {
-                                            await ApiClient.instance.delete('${ApiEndpoints.inventory}${item['id']}');
+                                            await ApiClient.instance.delete('${ApiEndpoints.inventory}${item.id}');
                                             ref.invalidate(inventoryProvider);
                                           } catch (e) {
                                             if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
@@ -185,21 +186,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  void _showAddEditItemDialog(BuildContext context, WidgetRef ref, {Map<String, dynamic>? item, bool isRestock = false}) {
+  void _showAddEditItemDialog(BuildContext context, WidgetRef ref, {InventoryItem? item, bool isRestock = false}) {
     showDialog(
       context: context,
       builder: (ctx) => _AddEditItemDialog(item: item, isRestock: isRestock),
     );
   }
 
-  void _showItemHistory(BuildContext context, WidgetRef ref, Map<String, dynamic> item) {
+  void _showItemHistory(BuildContext context, WidgetRef ref, InventoryItem item) {
     showDialog(
       context: context,
       builder: (ctx) => Consumer(
         builder: (context, ref, child) {
-          final historyAsync = ref.watch(inventoryHistoryProvider(item['id'].toString()));
+          final historyAsync = ref.watch(inventoryHistoryProvider(item.id));
           return AlertDialog(
-            title: Text('${item['name'] ?? 'Item'} History'),
+            title: Text('${item.name} History'),
             content: SizedBox(
               width: double.maxFinite,
               height: 300,
@@ -213,29 +214,26 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     separatorBuilder: (_, _) => const CustomDivider(),
                     itemBuilder: (ctx, i) {
                       final log = logs[i];
-                      final dateStr = log['date']?.toString() ?? log['created_at']?.toString() ?? '';
-                      final date = DateTime.tryParse(dateStr) ?? DateTime.now();
-                      final change = (log['quantity_change'] as num?)?.toDouble() ?? 0.0;
-                      final isPositive = change > 0;
+                      final isPositive = log.quantityChange > 0;
                       
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(log['action']?.toString().toUpperCase() ?? 'ADJUSTMENT', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                        subtitle: Text(log['notes'] ?? 'No notes', style: const TextStyle(fontSize: 12)),
+                        title: Text(log.action.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        subtitle: Text(log.notes ?? 'No notes', style: const TextStyle(fontSize: 12)),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${isPositive ? '+' : ''}$change',
+                              '${isPositive ? '+' : ''}${log.quantityChange}',
                               style: TextStyle(
                                 color: isPositive ? Colors.green : Colors.red,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
                             ),
-                            Text(DateFormat('MMM dd, yyyy').format(date), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                            Text(DateFormat('MMM dd, yyyy').format(log.date), style: const TextStyle(fontSize: 11, color: Colors.grey)),
                           ],
                         ),
                       );
@@ -253,7 +251,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 }
 
 class _AddEditItemDialog extends StatefulWidget {
-  final Map<String, dynamic>? item;
+  final InventoryItem? item;
   final bool isRestock;
 
   const _AddEditItemDialog({this.item, this.isRestock = false});
@@ -277,13 +275,13 @@ class _AddEditItemDialogState extends State<_AddEditItemDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.item?['name'] ?? widget.item?['item_name'] ?? '');
-    _quantityController = TextEditingController(text: widget.isRestock ? '' : (widget.item?['quantity'] ?? '').toString());
-    _unitController = TextEditingController(text: widget.item?['unit'] ?? '');
-    _minStockController = TextEditingController(text: (widget.item?['minimum_stock'] ?? '0').toString());
-    _costController = TextEditingController(text: (widget.item?['cost_per_unit'] ?? '0').toString());
-    _notesController = TextEditingController(text: widget.item?['notes'] ?? '');
-    _category = widget.item?['category'] ?? 'other';
+    _nameController = TextEditingController(text: widget.item?.name ?? '');
+    _quantityController = TextEditingController(text: widget.isRestock ? '' : (widget.item?.quantity ?? '').toString());
+    _unitController = TextEditingController(text: widget.item?.unit ?? '');
+    _minStockController = TextEditingController(text: (widget.item?.minimumStock ?? '0').toString());
+    _costController = TextEditingController(text: (widget.item?.costPerUnit ?? '0').toString());
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
+    _category = widget.item?.category ?? 'other';
   }
 
   @override
@@ -311,8 +309,7 @@ class _AddEditItemDialogState extends State<_AddEditItemDialog> {
         // Edit or Restock
         final payload = <String, dynamic>{};
         if (widget.isRestock) {
-          final oldQty = double.tryParse(widget.item!['quantity']?.toString() ?? '0') ?? 0.0;
-          payload['quantity'] = oldQty + qty;
+          payload['quantity'] = widget.item!.quantity + qty;
           payload['notes'] = _notesController.text.trim().isEmpty ? 'Restocked' : _notesController.text.trim();
         } else {
           payload['name'] = _nameController.text.trim();
@@ -324,7 +321,7 @@ class _AddEditItemDialogState extends State<_AddEditItemDialog> {
           payload['notes'] = _notesController.text.trim();
         }
 
-        await ApiClient.instance.put('${ApiEndpoints.inventory}${widget.item!['id']}', data: payload);
+        await ApiClient.instance.put('${ApiEndpoints.inventory}${widget.item!.id}', data: payload);
       } else {
         // Create
         await ApiClient.instance.post(ApiEndpoints.inventory, data: {
