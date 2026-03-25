@@ -47,9 +47,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   void _navigate() {
     final authState = ref.read(authProvider);
     
-    // If auth is still loading, wait another 500ms and try again
+    // If auth is still loading, wait another 500ms and try again.
+    // Use a stored Timer so dispose() can cancel it and avoid test leaks.
     if (authState.isLoading) {
-      Future.delayed(const Duration(milliseconds: 500), _navigate);
+      _splashTimer = Timer(const Duration(milliseconds: 500), _navigate);
       return;
     }
 
