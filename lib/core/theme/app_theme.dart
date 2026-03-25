@@ -5,38 +5,39 @@ class AppTheme {
   static ThemeData get lightTheme {
     final baseTheme = ThemeData.light();
     return baseTheme.copyWith(
-      scaffoldBackgroundColor: HSLColor.fromAHSL(1.0, 40, 0.33, 0.98).toColor(),
+      scaffoldBackgroundColor: const Color(0xFFFBFDFA), // Very light mint-tinted gray
       colorScheme: const ColorScheme.light().copyWith(
-        surface: HSLColor.fromAHSL(1.0, 0, 0, 1.0).toColor(),
-        onSurface: HSLColor.fromAHSL(1.0, 20, 0.14, 0.04).toColor(),
-        primary: HSLColor.fromAHSL(1.0, 142, 0.71, 0.29).toColor(),
-        onPrimary: HSLColor.fromAHSL(1.0, 0, 0, 1.0).toColor(),
-        secondary: HSLColor.fromAHSL(1.0, 36, 0.33, 0.97).toColor(),
-        onSecondary: HSLColor.fromAHSL(1.0, 142, 0.71, 0.29).toColor(),
-        error: HSLColor.fromAHSL(1.0, 0, 0.84, 0.60).toColor(),
-        onError: HSLColor.fromAHSL(1.0, 0, 0, 1.0).toColor(),
-        outline: HSLColor.fromAHSL(1.0, 36, 0.15, 0.88).toColor(),
+        surface: Colors.white,
+        onSurface: const Color(0xFF1B1C17), // Deep charcoal
+        primary: const Color(0xFF22C55E), // Vibrant Green (Lucid Green)
+        onPrimary: Colors.white,
+        secondary: const Color(0xFFECFDF5), // Soft Mint
+        onSecondary: const Color(0xFF065F46), // Emerald Forest
+        error: const Color(0xFFEF4444),
+        onError: Colors.white,
+        outline: const Color(0xFFE2E8F0),
       ),
-      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
+      textTheme: GoogleFonts.outfitTextTheme(baseTheme.textTheme), // Outfit is more modern/tech
     );
   }
 
   static ThemeData get darkTheme {
     final baseTheme = ThemeData.dark();
     return baseTheme.copyWith(
-      scaffoldBackgroundColor: HSLColor.fromAHSL(1.0, 20, 0.14, 0.04).toColor(),
+      scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
       colorScheme: const ColorScheme.dark().copyWith(
-        surface: HSLColor.fromAHSL(1.0, 24, 0.10, 0.08).toColor(),
-        onSurface: HSLColor.fromAHSL(1.0, 40, 0.33, 0.98).toColor(),
-        primary: HSLColor.fromAHSL(1.0, 142, 0.60, 0.45).toColor(),
-        onPrimary: HSLColor.fromAHSL(1.0, 0, 0, 1.0).toColor(),
-        secondary: HSLColor.fromAHSL(1.0, 24, 0.10, 0.12).toColor(),
-        onSecondary: HSLColor.fromAHSL(1.0, 40, 0.33, 0.98).toColor(),
-        error: HSLColor.fromAHSL(1.0, 0, 0.628, 0.306).toColor(),
-        onError: HSLColor.fromAHSL(1.0, 40, 0.33, 0.98).toColor(),
-        outline: HSLColor.fromAHSL(1.0, 24, 0.10, 0.12).toColor(),
+        surface: const Color(0xFF1E293B), // Slate 800
+        onSurface: const Color(0xFFF1F5F9), // Slate 100
+        primary: const Color(0xFF22C55E),
+        onPrimary: Colors.white,
+        secondary: const Color(0xFF334155), // Slate 700
+        onSecondary: const Color(0xFFF8FAFC),
+        error: const Color(0xFFF87171),
+        onError: Colors.white,
+        outline: const Color(0xFF334155),
       ),
-      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
+      textTheme: GoogleFonts.outfitTextTheme(baseTheme.textTheme),
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+
 enum CustomButtonVariant {
   primary,
   secondary,
@@ -55,18 +56,19 @@ class CustomButton extends StatelessWidget {
         break;
       case CustomButtonVariant.outline:
         backgroundColor = Colors.transparent;
-        foregroundColor = colorScheme.onSurface;
-        borderSide = BorderSide(color: colorScheme.outline);
+        foregroundColor = colorScheme.primary;
+        borderSide = BorderSide(color: colorScheme.primary.withValues(alpha: 0.5), width: 1.5);
         break;
       case CustomButtonVariant.ghost:
         backgroundColor = Colors.transparent;
-        foregroundColor = colorScheme.onSurface;
+        foregroundColor = colorScheme.primary;
         break;
       case CustomButtonVariant.destructive:
         backgroundColor = colorScheme.error;
         foregroundColor = colorScheme.onError;
         break;
     }
+
 
     final content = isLoading
         ? SizedBox(
@@ -107,20 +109,47 @@ class CustomButton extends StatelessWidget {
       );
     }
 
-    return ElevatedButton(
-      onPressed: isLoading ? null : _handlePress,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
-        shadowColor: variant == CustomButtonVariant.primary ? colorScheme.primary.withValues(alpha: 0.2) : Colors.transparent,
-        elevation: variant == CustomButtonVariant.primary ? 4 : 0,
-        side: borderSide,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: variant == CustomButtonVariant.primary
+            ? [
+                BoxShadow(
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                )
+              ]
+            : null,
       ),
-      child: content,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : _handlePress,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          elevation: 0,
+          side: borderSide,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+        ),
+        child: Ink(
+          decoration: variant == CustomButtonVariant.primary
+              ? BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primary.withValues(alpha: 0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : null,
+          child: content,
+        ),
+      ),
     );
+
   }
 }

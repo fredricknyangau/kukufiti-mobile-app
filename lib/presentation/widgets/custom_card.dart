@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+
 
 class CustomCard extends StatelessWidget {
   final Widget child;
@@ -21,27 +23,37 @@ class CustomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // .glass-panel corresponding styling
     if (isGlass) {
       return GestureDetector(
         onTap: onTap,
-        child: Container(
-          margin: margin,
-          padding: padding,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              margin: margin,
+              padding: padding,
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.3 : 0.7),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  )
+                ],
+              ),
+              child: child,
+            ),
           ),
-          child: child,
         ),
       );
     }
@@ -55,14 +67,19 @@ class CustomCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              )
+                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+                spreadRadius: -4,
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: child,
@@ -78,13 +95,13 @@ class CustomCard extends StatelessWidget {
         padding: padding,
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
             )
           ],
         ),
@@ -93,3 +110,4 @@ class CustomCard extends StatelessWidget {
     );
   }
 }
+

@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../controllers/settings_controller.dart';
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
+import 'terms_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -115,14 +116,16 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(LucideIcons.info),
                 title: const Text('Version'),
-                trailing: const Text('1.0.0'),
+                trailing: const Text('1.2.4'),
               ),
               ListTile(
                 leading: const Icon(LucideIcons.fileText),
                 title: const Text('Terms of Service'),
+                trailing: const Icon(LucideIcons.chevronRight),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Terms of Service: Coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TermsScreen()),
                   );
                 },
               ),

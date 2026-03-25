@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_button.dart';
@@ -82,7 +83,6 @@ class _AddPersonSheetState extends State<_AddPersonSheet> {
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
   
-  // Specific fields
   final _contactNameController = TextEditingController();
   final _locationController = TextEditingController();
   final _salaryController = TextEditingController();
@@ -243,7 +243,6 @@ class _AddPersonSheetState extends State<_AddPersonSheet> {
                 keyboardType: TextInputType.emailAddress,
               ),
               
-              // Type Specific Fields
               if (_selectedType == 'Supplier') ...[
                 const SizedBox(height: 16),
                 CustomInput(label: 'Contact Person', controller: _contactNameController),
@@ -325,7 +324,6 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
     final theme = Theme.of(context);
     final endpointType = '${widget.type.toLowerCase()}s';
     
-    // Choose provider based on generic type
     late final AsyncValue<List<dynamic>> asyncPeople;
     if (T == Supplier) {
       asyncPeople = ref.watch(suppliersProvider);
@@ -378,13 +376,12 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
               else
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: filteredPeople.length,
                     itemBuilder: (context, index) {
                       final person = filteredPeople[index];
                       String subtitle = person.phoneNumber ?? person.email ?? 'No contact info';
                       
-                      // Extra info for subtitle based on type
                       if (person is Supplier) subtitle += ' | ${person.category.toUpperCase()}';
                       if (person is Customer) subtitle += ' | ${person.customerType.toUpperCase()}';
                       if (person is Employee) subtitle += ' | ${person.role.toUpperCase()}';
@@ -394,13 +391,20 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
                         child: CustomCard(
                           isPremium: true,
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            leading: CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary.withAlpha(25),
-                              child: Icon(LucideIcons.user, color: theme.colorScheme.primary),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(LucideIcons.user, color: theme.colorScheme.primary, size: 24),
                             ),
-                            title: Text(person.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(subtitle),
+                            title: Text(person.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                            ),
                             trailing: PopupMenuButton<String>(
                               icon: const Icon(LucideIcons.moreVertical, size: 20),
                               onSelected: (value) async {
@@ -437,7 +441,7 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
                             ),
                           ),
                         ),
-                      );
+                      ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.1, end: 0);
                     },
                   ),
                 ),

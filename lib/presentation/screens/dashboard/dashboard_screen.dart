@@ -10,8 +10,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:fl_chart/fl_chart.dart';
+
 import '../../../providers/auth_provider.dart';
 import '../../widgets/app_drawer.dart';
 import '../../widgets/custom_card.dart';
@@ -89,17 +91,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildCriticalAlertsHeader(context, alertsAsync, theme),
+                        _buildCriticalAlertsHeader(context, alertsAsync, theme)
+                            .animate()
+                            .fadeIn(duration: 600.ms)
+                            .slideY(begin: 0.2, end: 0),
                         const SizedBox(height: 16),
-                        _buildFinancialSummary(context, ref, theme, metrics),
-                        _buildFarmsSummary(context, theme),
-                        _buildTasksOverview(context, theme),
+                        _buildFinancialSummary(context, ref, theme, metrics)
+                            .animate()
+                            .fadeIn(delay: 100.ms)
+                            .slideY(begin: 0.1, end: 0),
+                        const SizedBox(height: 20),
+                        _buildFarmsSummary(context, theme)
+                            .animate()
+                            .fadeIn(delay: 200.ms),
+                        _buildTasksOverview(context, theme)
+                            .animate()
+                            .fadeIn(delay: 300.ms),
                         const SizedBox(height: 24),
-                        _buildSectionTitle(theme, 'Quick Overview'),
+                        _buildSectionTitle(theme, 'Quick Overview')
+                            .animate()
+                            .fadeIn(delay: 400.ms),
                         const SizedBox(height: 12),
                         _buildStatsGrid(context, metrics),
                         const SizedBox(height: 24),
                         _buildSectionTitle(theme, 'Quick Actions'),
+
                         const SizedBox(height: 12),
                         _buildQuickActions(context),
                         const SizedBox(height: 24),
@@ -797,8 +813,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-    );
+    ).animate().scale(delay: (200).ms, duration: 400.ms, curve: Curves.easeOutBack);
   }
+
+
 
   Widget _buildQuickActions(BuildContext context) {
     final subAsync = ref.watch(subscriptionProvider);
