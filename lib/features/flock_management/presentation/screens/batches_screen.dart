@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -110,6 +111,7 @@ class BatchesScreen extends ConsumerWidget {
                             onTap: () {
                               HapticFeedback.selectionClick();
                               ref.read(broilerProvider.notifier).selectBatch(batch);
+                              context.push('/batch/${batch.id}');
                             },
                             borderRadius: BorderRadius.circular(16),
                             child: Padding(
@@ -284,7 +286,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
   final _nameController = TextEditingController();
   final _sizeController = TextEditingController();
   final _costController = TextEditingController();
-  String _breed = broilerBreeds.first['value']!;
+  String _breed = breedsWithWeightStandards.first['value']!;
   String _status = 'active';
   DateTime? _startDate = DateTime.now();
   bool _isLoading = false;
@@ -297,7 +299,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       _nameController.text = widget.batch!.name;
       _sizeController.text = widget.batch!.initialChicks.toString();
       _costController.text = widget.batch!.costPerChick.toString();
-      _breed = widget.batch!.breed ?? broilerBreeds.first['value']!;
+      _breed = widget.batch!.breed ?? breedsWithWeightStandards.first['value']!;
       _status = widget.batch!.status.toLowerCase();
       _startDate = widget.batch!.commencementDate;
       _selectedFarmId = widget.batch!.sourceLocation;
@@ -459,7 +461,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                   labelText: 'Breed',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: broilerBreeds
+                items: breedsWithWeightStandards
                     .map((b) => DropdownMenuItem(value: b['value'], child: Text(b['label']!)))
                     .toList(),
                 onChanged: (v) {

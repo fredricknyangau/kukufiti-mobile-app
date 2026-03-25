@@ -647,22 +647,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: Colors.amber.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text('Live', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: const Text('Demo', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.thermometer, label: 'Temp', value: '24.5 °C', color: Colors.orange)),
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.thermometer, label: 'Temp', value: '— °C', color: Colors.orange)),
                 Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.droplet, label: 'Humidity', value: '65%', color: Colors.blue)),
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.droplet, label: 'Humidity', value: '—%', color: Colors.blue)),
                 Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.wind, label: 'Status', value: 'Stable', color: Colors.green)),
+                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.wifi, label: 'Sensor', value: 'None', color: Colors.grey)),
               ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '🔌 Connect an IoT sensor to see live climate data.',
+              style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

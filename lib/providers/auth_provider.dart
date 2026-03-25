@@ -58,8 +58,9 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(hasSeenIntro: value);
   }
 
-  /// Manually set authentication state (used for biometric login)
-  void loginWithToken(String token) {
+  /// Manually set authentication state with a provided token (used for SSO and biometric login)
+  Future<void> loginWithToken(String token) async {
+    await SecureStorageService.setAuthToken(token);
     state = state.copyWith(isAuthenticated: true, isLoading: false, error: null);
   }
 

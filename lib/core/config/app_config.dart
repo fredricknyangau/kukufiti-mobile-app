@@ -20,13 +20,21 @@ class AppConfig {
       debugPrint('AppConfig: Failed to read from Hive: $e');
     }
 
-    // In release mode, if not set, return empty string or fallback so main.dart can catch it.
+    // Fall back to the production Render URL. This is intentional — it means
+    // `isUsingDefaultApiUrl` will return false and the ConfigErrorApp overlay
+    // will NOT show. The app will connect to the hosted backend directly.
     return 'https://kukufiti-backend.onrender.com/api/v1';
   }
 
-  /// Returns `true` when the app is currently using the local development API URL.
+  /// Returns `true` only if the app is pointed at a known local-only dev URL
+  /// that would be unreachable in production (e.g. a private LAN IP or Android
+  /// emulator loopback). This is used by [ConfigErrorApp] to prompt the user
+  /// to enter the correct backend URL before proceeding.
+  ///
+  /// NOTE: The production Render URL fallback is NOT flagged here — it is a
+  /// valid public URL and the app should connect to it normally.
   static bool get isUsingDefaultApiUrl {
-    // If we have a saved URL in Hive, we are NOT using the default build-time fallback.
+    // If the user has saved a custom URL in Hive, always trust it.
     try {
       final box = Hive.box('offline_cache');
       final savedUrl = box.get('API_URL');
@@ -35,6 +43,7 @@ class AppConfig {
       }
     } catch (_) {}
 
+    // Only flag legacy local-only development URLs.
     return apiUrl == 'http://192.168.100.45:8000/api/v1' ||
         apiUrl == 'http://10.0.2.2:8000/api/v1';
   }

@@ -17,7 +17,7 @@ Batch _$BatchFromJson(Map<String, dynamic> json) => Batch(
   notes: json['notes'] as String?,
   breed: json['breed'] as String?,
   supplier: json['supplier'] as String?,
-  sourceLocation: json['sourceLocation'] as String?,
+  sourceLocation: json['source_location'] as String?,
 );
 
 Map<String, dynamic> _$BatchToJson(Batch instance) => <String, dynamic>{

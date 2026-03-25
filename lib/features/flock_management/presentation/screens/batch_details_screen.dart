@@ -220,10 +220,11 @@ class _BatchDetailsScreenState extends ConsumerState<BatchDetailsScreen> {
   }
 
   Widget _infoRow(IconData icon, String label, String value) {
+    final theme = Theme.of(context);
     return ListTile(
       leading: Icon(icon, size: 20, color: Colors.grey),
       title: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.black87)),
+      subtitle: Text(value, style: TextStyle(fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface)),
       dense: true,
     );
   }

@@ -35,6 +35,9 @@ dependencies:
   http: ^1.6.0
   flutter_local_notifications: ^21.0.0
   timezone: ^0.11.0
+  smooth_page_indicator: ^2.0.1
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.2
 
 dev_dependencies:
   flutter_test:

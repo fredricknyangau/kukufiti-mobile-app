@@ -126,7 +126,7 @@ class PublicDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  buildDrawerItem('Home', '/', LucideIcons.home),
+                  buildDrawerItem('Home', '/welcome', LucideIcons.home),
                   buildDrawerItem('Features', '/features', LucideIcons.layoutGrid),
                   buildDrawerItem('Pricing', '/pricing', LucideIcons.creditCard),
                   buildDrawerItem('About Us', '/about', LucideIcons.info),

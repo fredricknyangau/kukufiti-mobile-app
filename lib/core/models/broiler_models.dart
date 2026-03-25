@@ -23,6 +23,7 @@ class Batch {
   final String? notes;
   final String? breed;
   final String? supplier;
+  @JsonKey(name: 'source_location')
   final String? sourceLocation;
 
   Batch({

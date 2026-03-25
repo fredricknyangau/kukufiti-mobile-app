@@ -165,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 'assets/images/chicken_logo.jpeg',
                                 width: 56,
                                 height: 56,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           ),

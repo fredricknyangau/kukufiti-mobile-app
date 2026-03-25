@@ -68,9 +68,10 @@ class AlertsScreen extends ConsumerWidget {
                            tooltip: 'Acknowledge',
                            onPressed: () async {
                              try {
-                               await ApiClient.instance.put('${ApiEndpoints.alerts}${alert['id']}', data: {
-                                 'status': 'acknowledged',
-                               });
+                               await ApiClient.instance.put(
+                                 '${ApiEndpoints.alerts}${alert['id']}/acknowledge',
+                                 data: {},
+                               );
                                ref.invalidate(alertsProvider);
                              } catch (e) {
                                if (context.mounted) ToastService.showError(context, 'Failed to update alert status');

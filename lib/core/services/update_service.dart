@@ -19,10 +19,12 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  // GitHub username and repo name ──────────
+  // ⚠️  IMPORTANT: These must match the GitHub account and repository
+  //    where APK release assets are published. If the repo name is wrong,
+  //    the update check will silently return null and users won't see updates.
+  //    Verify at: https://github.com/$_owner/$_repo/releases
   static const String _owner = 'fredricknyangau';
-  static const String _repo  = 'kukufiti-mobile-app'; 
-  // ────────────────────────────────────────────────────────────────────
+  static const String _repo  = 'kukufiti-mobile-app';
 
   static const String _apiUrl =
       'https://api.github.com/repos/$_owner/$_repo/releases/latest';

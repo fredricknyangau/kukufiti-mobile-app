@@ -4,18 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 
 // Public
-import '../../presentation/screens/public/landing_screen.dart';
 import '../../presentation/screens/public/features_screen.dart';
 import '../../presentation/screens/public/pricing_screen.dart';
 import '../../presentation/screens/public/about_screen.dart';
 import '../../presentation/screens/public/contact_screen.dart';
 
+// Onboarding
+import '../../presentation/screens/onboarding/welcome_screen.dart';
+import '../../presentation/screens/onboarding/benefits_carousel_screen.dart';
+
 // Auth
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
-
-// Layout
+import '../../presentation/screens/auth/otp_verification_screen.dart';
+import '../../presentation/screens/auth/profile_setup_screen.dart';
+import '../../presentation/screens/public/splash_screen.dart';
 import '../../presentation/screens/main_layout_screen.dart';
+
 
 // Features / Dashboard
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
@@ -88,27 +93,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (authState.isLoading) return null; // Wait for token initialization
 
       final isAuthenticated = authState.isAuthenticated;
-      final hasSeenIntro = authState.hasSeenIntro;
 
       final isAuthPath = state.uri.path == '/login' || state.uri.path == '/register';
       final isPublicPath = state.uri.path == '/' || 
+                          state.uri.path == '/welcome' ||
                           state.uri.path == '/features' || 
                           state.uri.path == '/pricing' ||
                           state.uri.path == '/about' ||
                           state.uri.path == '/contact';
 
       if (isAuthenticated) {
-        if (isAuthPath || state.uri.path == '/') {
+        if (isAuthPath || isPublicPath) {
           return '/dashboard';
         }
         return null;
       }
 
       // Unauthenticated
-      if (state.uri.path == '/' && hasSeenIntro) {
-        return '/login';
-      }
-
       if (!isAuthPath && !isPublicPath) {
         return '/login';
       }
@@ -116,10 +117,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Public Routes
       GoRoute(
         path: '/',
-        builder: (context, state) => const LandingScreen(),
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/benefits-carousel',
+        builder: (context, state) => const BenefitsCarouselScreen(),
       ),
       GoRoute(
         path: '/features',
@@ -146,6 +154,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/otp-verify',
+        builder: (context, state) {
+          final phone = state.uri.queryParameters['phone'] ?? '';
+          return OtpVerificationScreen(phoneNumber: phone);
+        },
+      ),
+      GoRoute(
+        path: '/profile-setup',
+        builder: (context, state) => const ProfileSetupScreen(),
       ),
 
       // Protected App Routes (Stateful Shell Route)

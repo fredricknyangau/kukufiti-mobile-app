@@ -6,11 +6,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/utils/toast_service.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_card.dart';
-import '../../widgets/custom_input.dart';
-
 import '../../../core/utils/error_handler.dart';
+import '../../../core/services/sso_service.dart';
+import '../../../core/notifications/notification_service.dart';
+import '../../../providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,43 +21,41 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  bool _obscurePassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
+  Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    final registrationData = {
-      'email': _emailController.text.trim(),
-      'password': _passwordController.text,
-      'full_name': _fullNameController.text.trim(),
-      'phone_number': _phoneController.text.trim(),
-      'location': _locationController.text.trim(),
-    };
+    final phone = _phoneController.text.trim();
+    final fullPhone = '+254$phone';
 
     try {
-      await ApiClient.instance.post(ApiEndpoints.register, data: registrationData);
+      final response = await ApiClient.instance.post(
+        ApiEndpoints.sendOtp,
+        data: {'phone_number': fullPhone},
+      );
+
+      final otpCode = response.data['code']?.toString();
+      if (otpCode != null) {
+        await NotificationService.showNotification(
+          id: 0,
+          title: 'KukuFiti OTP',
+          body: 'Your verification code is: $otpCode',
+        );
+      }
+
       if (mounted) {
-        ToastService.showSuccess(context, 'Account created! Please sign in.');
-        context.go('/login');
+        // Navigate with parameter
+        context.push('/otp-verify?phone=$fullPhone');
       }
     } on DioException catch (e) {
       if (mounted) {
@@ -65,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ToastService.showError(context, getFriendlyErrorMessage(e));
+        ToastService.showError(context, 'An unexpected error occurred');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -75,155 +73,275 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Background mesh glows
-          Positioned(
-            top: -100,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // ─── PROGRESS BAR ───
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                value: 0.75, // Step 3 of Onboarding
+                backgroundColor: theme.colorScheme.outline,
+                color: theme.colorScheme.primary,
+                minHeight: 2,
               ),
             ),
-          ),
-          Positioned(
-            bottom: -150,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.04),
-              ),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: CustomCard(
-                  isPremium: true,
-                  padding: const EdgeInsets.all(32),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                'assets/images/chicken_logo.jpeg',
-                                width: 52,
-                                height: 52,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Create Account',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Get started with KukuFiti farm intelligence',
-                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-                        CustomInput(
-                          label: 'Full Name',
-                          hintText: 'John Doe',
-                          controller: _fullNameController,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter name' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        CustomInput(
-                          label: 'Email',
-                          hintText: 'yourname@example.com',
-                          keyboardType: TextInputType.emailAddress,
-                          controller: _emailController,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter email' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        CustomInput(
-                          label: 'Phone Number',
-                          hintText: '0712...',
-                          keyboardType: TextInputType.phone,
-                          controller: _phoneController,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter phone' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        CustomInput(
-                          label: 'Farm Location',
-                          hintText: 'Nairobi, Kenya',
-                          controller: _locationController,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter location' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        CustomInput(
-                          label: 'Password',
-                          hintText: 'Choose password',
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff, size: 18),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
-                          validator: (v) => v == null || v.length < 6 ? 'Min 6 chars' : null,
-                        ),
-                        const SizedBox(height: 32),
-                        CustomButton(
-                          text: 'Sign Up',
-                          onPressed: _handleRegister,
-                          isLoading: _isLoading,
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Already have an account?",
-                              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                            ),
-                            TextButton(
-                              onPressed: () => context.go('/login'),
-                              child: Text(
-                                'Sign in',
-                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+
+
+
+            // ─── MAIN CONTENT ───
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: theme.colorScheme.outline),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Logo / App Name
+                          Text(
+                            'KukuFiti',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                              letterSpacing: -0.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Create your account to continue',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 32),
+
+                          // ─── SSO BUTTONS ───
+                          Consumer(
+                            builder: (context, ref, child) => Column(
+                              children: [
+                                SizedBox(
+                                  height: 56,
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      try {
+                                        final result = await SsoService.signInWithGoogle();
+                                        await ref.read(authProvider.notifier).loginWithToken(result.accessToken);
+                                        if (context.mounted) {
+                                          ToastService.showSuccess(context, 'Signed in with Google');
+                                          if (result.isNewUser) {
+                                            context.go('/profile-setup');
+                                          } else {
+                                            context.go('/dashboard');
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) ToastService.showError(context, e.toString());
+                                      }
+                                    },
+                                    icon: const Icon(LucideIcons.chrome, size: 20),
+                                    label: const Text('Continue with Google'),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: theme.colorScheme.outline),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      foregroundColor: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                if (SsoService.isAppleSignInAvailable)
+                                  SizedBox(
+                                    height: 56,
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () async {
+                                        try {
+                                          final result = await SsoService.signInWithApple();
+                                          await ref.read(authProvider.notifier).loginWithToken(result.accessToken);
+                                          if (context.mounted) {
+                                            ToastService.showSuccess(context, 'Signed in with Apple');
+                                            if (result.isNewUser) {
+                                              context.go('/profile-setup');
+                                            } else {
+                                              context.go('/dashboard');
+                                            }
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) ToastService.showError(context, e.toString());
+                                        }
+                                      },
+                                      icon: const Icon(LucideIcons.apple, size: 20),
+                                      label: const Text('Continue with Apple'),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(color: theme.colorScheme.outline),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        foregroundColor: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // ─── DIVIDER ───
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: theme.colorScheme.outline)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  'or',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: theme.colorScheme.outline)),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // ─── PHONE INPUT ───
+                          TextFormField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              labelText: 'Phone Number',
+                              hintText: '712345678',
+                              prefixText: '+254 ',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: theme.colorScheme.outline),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: theme.colorScheme.outline),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
+                            ),
+                            validator: (v) => v == null || v.isEmpty ? 'Enter phone number' : null,
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // ─── SEND OTP BUTTON ───
+                          SizedBox(
+                            height: 56,
+                            child: FilledButton(
+                              onPressed: _isLoading ? null : _sendOtp,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Send OTP',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // ─── TRUST SIGNAL ───
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.lock,
+                                size: 14,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Your farm data is private and never shared.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // ─── GOTO LOGIN ───
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Already have an account?",
+                                style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                              ),
+                              TextButton(
+                                onPressed: () => context.go('/login'),
+                                child: Text(
+                                  'Sign in',
+                                  style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+
   }
 }

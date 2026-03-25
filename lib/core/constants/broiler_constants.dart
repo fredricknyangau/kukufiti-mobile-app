@@ -61,6 +61,12 @@ const List<Map<String, String>> broilerBreeds = [
   {'value': 'other', 'label': 'Other'},
 ];
 
+/// Breeds that have valid weight growth curves defined in [breedWeightStandards].
+/// Used to prevent null-errors in charts/comparisons.
+final List<Map<String, String>> breedsWithWeightStandards = broilerBreeds
+    .where((b) => breedWeightStandards.containsKey(b['value']) || b['value'] == 'other')
+    .toList();
+
 // Standard weight curves for breeds (in grams per day of age)
 const Map<String, List<Map<String, dynamic>>> breedWeightStandards = {
   'ross_308': [
