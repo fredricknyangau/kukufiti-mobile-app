@@ -243,9 +243,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ThemeData theme,
     Map<String, dynamic> metrics,
   ) {
-    final subAsync = ref.watch(subscriptionProvider);
-    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    final isPremium = plan != 'STARTER';
+    final planDetails = ref.watch(planDetailsProvider).value;
+    final isPremium = List<String>.from(planDetails?['features'] ?? []).contains('financials');
 
     final totalRev = (metrics['total_revenue'] as num?)?.toDouble() ?? 0.0;
     final totalExp = (metrics['total_expenses'] as num?)?.toDouble() ?? 0.0;
@@ -542,9 +541,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildStatsGrid(BuildContext context, Map<String, dynamic> metrics) {
-    final subAsync = ref.watch(subscriptionProvider);
-    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    final isPremium = plan != 'STARTER';
+    final subDetailsAsync = ref.watch(planDetailsProvider);
+    final features = List<String>.from(subDetailsAsync.value?['features'] ?? []);
+    final isPremium = features.contains('fcr_analytics');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -639,7 +638,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        if (isPremium)
+        if (features.contains('iot_sensors'))
           _buildClimateCard(context, Theme.of(context))
         else
           _buildLockedClimateCard(context, Theme.of(context)),
@@ -833,6 +832,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             label: 'AI Advisory',
             route: '/ai-insights-hub',
             color: Colors.deepPurple,
+            isLocked: plan != 'ENTERPRISE',
           ),
           _buildActionItem(
             context,
@@ -847,6 +847,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             label: 'Market',
             route: '/market',
             color: Colors.teal,
+            isLocked: isStarter,
           ),
           _buildActionItem(
             context,
@@ -862,6 +863,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             label: 'Vet',
             route: '/vet',
             color: Colors.redAccent,
+            isLocked: isStarter,
           ),
         ],
       ),
@@ -1110,6 +1112,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildFarmsSummary(BuildContext context, ThemeData theme) {
+    final subAsync = ref.watch(subscriptionProvider);
+    final plan = subAsync.value?['plan_type'] ?? 'STARTER';
+    if (plan != 'ENTERPRISE') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: CustomCard(
+          isPremium: false,
+          onTap: () => showPremiumUpgradeDialog(context, 'Multi-Farm Management'),
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  LucideIcons.home,
+                  color: Colors.blue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Multi-Farm Dashboard',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Managing multiple farm locations is an Enterprise feature.',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(LucideIcons.lock, size: 16, color: Colors.grey),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ref.watch(farmsProvider).when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => const SizedBox.shrink(),

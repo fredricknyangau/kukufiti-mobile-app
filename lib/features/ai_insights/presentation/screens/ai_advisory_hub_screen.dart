@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../presentation/widgets/custom_card.dart';
+import '../../../../presentation/widgets/premium_gate.dart';
 import 'package:go_router/go_router.dart';
 
 class AiAdvisoryHubScreen extends ConsumerWidget {
@@ -61,62 +62,66 @@ class AiAdvisoryHubScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('AI Advisory Hub', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.78,
-        ),
-        itemCount: modules.length,
-        itemBuilder: (context, index) {
-          final mod = modules[index];
-          final Color modColor = mod['color'];
+      body: PremiumGate(
+        featureKey: 'ai_advisory',
+        featureName: 'AI Advisory',
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.78,
+          ),
+          itemCount: modules.length,
+          itemBuilder: (context, index) {
+            final mod = modules[index];
+            final Color modColor = mod['color'];
 
-          return CustomCard(
-            isPremium: true,
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                context.push(mod['route']);
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: modColor.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+            return CustomCard(
+              isPremium: true,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.push(mod['route']);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: modColor.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(mod['icon'], color: modColor, size: 36),
                       ),
-                      child: Icon(mod['icon'], color: modColor, size: 36),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      mod['title'],
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      mod['desc'],
-                      style: TextStyle(
-                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                        fontSize: 12,
+                      const SizedBox(height: 16),
+                      Text(
+                        mod['title'],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(
+                        mod['desc'],
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

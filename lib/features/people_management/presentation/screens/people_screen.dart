@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_button.dart';
@@ -44,7 +45,39 @@ class PeopleScreen extends StatelessWidget {
         floatingActionButton: Consumer(
           builder: (context, ref, child) {
             return FloatingActionButton(
-              onPressed: () => _showAddPersonSheet(context, ref),
+              onPressed: () {
+                final sub = ref.read(subscriptionProvider).value;
+                final plan = sub?['plan_type'] ?? 'STARTER';
+                
+                if (plan == 'STARTER') {
+                   final suppliers = ref.read(suppliersProvider).value?.length ?? 0;
+                   final customers = ref.read(customersProvider).value?.length ?? 0;
+                   final employees = ref.read(employeesProvider).value?.length ?? 0;
+                   final total = suppliers + customers + employees;
+                   
+                   if (total >= 5) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('People Limit Reached', style: TextStyle(fontWeight: FontWeight.bold)),
+                          content: const Text('Starter plans are limited to 5 records. Upgrade to Professional to add unlimited suppliers, customers, and staff.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later')),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                context.push('/pricing');
+                              },
+                              child: const Text('Upgrade'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                   }
+                }
+                _showAddPersonSheet(context, ref);
+              },
               child: const Icon(LucideIcons.userPlus),
             );
           },

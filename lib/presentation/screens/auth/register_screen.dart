@@ -9,9 +9,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/utils/toast_service.dart';
 import '../../../core/utils/error_handler.dart';
-import '../../../core/services/sso_service.dart';
 import '../../../core/notifications/notification_service.dart';
-import '../../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/custom_input.dart';
@@ -38,7 +36,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    final phone = _phoneController.text.trim();
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
     final fullPhone = '+254$phone';
 
     try {
@@ -57,7 +58,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
 
       if (mounted) {
-        context.push('/otp-verify?phone=$fullPhone');
+        final encodedPhone = Uri.encodeComponent(fullPhone);
+        context.go('/otp-verify?phone=$encodedPhone');
       }
     } on DioException catch (e) {
       if (mounted) ToastService.showError(context, getFriendlyErrorMessage(e));
@@ -122,75 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           const SizedBox(height: 32),
 
-                          Column(
-                            children: [
-                              CustomButton(
-                                variant: CustomButtonVariant.outline,
-                                icon: const Icon(LucideIcons.chrome, size: 20),
-                                text: 'Continue with Google',
-                                onPressed: () async {
-                                  try {
-                                    final result = await SsoService.signInWithGoogle();
-                                    await ref.read(authProvider.notifier).loginWithToken(result.accessToken);
-                                    if (context.mounted) {
-                                      ToastService.showSuccess(context, 'Signed in with Google');
-                                      if (result.isNewUser) {
-                                        context.go('/profile-setup');
-                                      } else {
-                                        context.go('/dashboard');
-                                      }
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) ToastService.showError(context, e.toString());
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              if (SsoService.isAppleSignInAvailable)
-                                CustomButton(
-                                  variant: CustomButtonVariant.outline,
-                                  icon: const Icon(LucideIcons.apple, size: 20),
-                                  text: 'Continue with Apple',
-                                  onPressed: () async {
-                                    try {
-                                      final result = await SsoService.signInWithApple();
-                                      await ref.read(authProvider.notifier).loginWithToken(result.accessToken);
-                                      if (context.mounted) {
-                                        ToastService.showSuccess(context, 'Signed in with Apple');
-                                        if (result.isNewUser) {
-                                          context.go('/profile-setup');
-                                        } else {
-                                          context.go('/dashboard');
-                                        }
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, e.toString());
-                                    }
-                                  },
-                                ),
-                            ],
-                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-
-                          const SizedBox(height: 24),
-
-                          Row(
-                            children: [
-                              Expanded(child: Divider(color: theme.colorScheme.outline.withValues(alpha: 0.5))),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  'or',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              Expanded(child: Divider(color: theme.colorScheme.outline.withValues(alpha: 0.5))),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 32),
 
                           CustomInput(
                             label: 'Phone Number',
@@ -220,10 +154,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               Icon(LucideIcons.lock, size: 14, color: theme.colorScheme.primary.withValues(alpha: 0.6)),
                               const SizedBox(width: 8),
                               Text(
-                                'Your data is private & encrypted.',
+                                'Secure & Private. By signing up, you agree to our ',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => context.push('/terms'),
+                                child: Text(
+                                  'Terms.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
                                 ),
                               ),
                             ],

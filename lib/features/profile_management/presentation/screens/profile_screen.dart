@@ -69,7 +69,7 @@ class ProfileScreen extends ConsumerWidget {
                       ListTile(
                         leading: const Icon(LucideIcons.mail),
                         title: const Text('Email'),
-                        subtitle: Text(email),
+                        subtitle: Text(email ?? 'Not set'),
                       ),
                       const CustomDivider(),
                       ListTile(

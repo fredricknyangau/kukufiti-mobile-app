@@ -8,6 +8,7 @@ import '../../data/models/ai_chat.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../providers/data_providers.dart';
 
 class AiInsightsState {
   final bool isLoading;
@@ -60,6 +61,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> fetchFeedRecommendation(FeedRecommendationRequest request) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_advisory')) {
+      state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
+      return;
+    }
+    
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await ApiClient.instance.post(
@@ -74,6 +81,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> fetchMortalityAnalysis(MortalityAnalysisRequest request) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_advisory')) {
+      state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null, mortalityAnalysis: null);
     try {
       final response = await ApiClient.instance.post(
@@ -88,6 +101,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> fetchHarvestPrediction(HarvestPredictionRequest request) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_advisory')) {
+      state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null, harvestPrediction: null);
     try {
       final response = await ApiClient.instance.post(
@@ -102,6 +121,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> fetchDiseaseRisk(DiseaseRiskRequest request) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_advisory')) {
+      state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null, diseaseRisk: null);
     try {
       final response = await ApiClient.instance.post(
@@ -116,6 +141,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> fetchFcrInsights(FcrInsightsRequest request) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_advisory')) {
+      state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null, fcrInsights: null);
     try {
       final response = await ApiClient.instance.post(
@@ -130,6 +161,12 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
   }
 
   Future<void> sendMessage(String text) async {
+    final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
+    if (!features.contains('ai_chat')) {
+      state = state.copyWith(error: 'AI Chat requires an Enterprise Plan');
+      return;
+    }
+
     final userMessage = ChatMessage(role: 'user', content: text);
     final updatedHistory = [...state.chatHistory, userMessage];
     state = state.copyWith(isLoading: true, error: null, chatHistory: updatedHistory);

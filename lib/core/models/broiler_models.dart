@@ -47,7 +47,7 @@ class Batch {
 @JsonSerializable(fieldRename: FieldRename.snake)
 class User {
   final String id;
-  final String email;
+  final String? email;
   final String? fullName;
   final String? phoneNumber;
   final String? location;
@@ -58,7 +58,7 @@ class User {
 
   User({
     required this.id,
-    required this.email,
+    this.email,
     this.fullName,
     this.phoneNumber,
     this.location,

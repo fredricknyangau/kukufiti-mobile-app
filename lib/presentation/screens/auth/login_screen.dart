@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/utils/toast_service.dart';
-import '../../../core/services/biometric_service.dart';
-import '../../../core/storage/secure_storage_service.dart';
-import '../../../providers/auth_provider.dart';
+import '../../../core/utils/error_handler.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/custom_input.dart';
@@ -20,100 +19,61 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _obscurePassword = true;
-  bool _canCheckBiometrics = false;
-  bool _rememberMe = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRememberedEmail();
-    _checkBiometrics();
-  }
-
-  Future<void> _loadRememberedEmail() async {
-    final email = await SecureStorageService.getRememberedEmail();
-    if (email != null && mounted) {
-      _emailController.text = email;
-    }
-  }
-
-  Future<void> _checkBiometrics() async {
-    final canCheck = await BiometricService.canCheckBiometrics();
-    if (mounted) {
-      setState(() => _canCheckBiometrics = canCheck);
-    }
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleBiometricLogin() async {
-    final token = await SecureStorageService.getAuthToken();
-    if (token == null || token.isEmpty) {
-      if (mounted) {
-        ToastService.showError(context, 'Please sign in with password first');
-      }
-      return;
-    }
-
-    final success = await BiometricService.authenticate();
-    if (success && mounted) {
-      HapticFeedback.heavyImpact();
-      ref.read(authProvider.notifier).loginWithToken(token);
-      ToastService.showSuccess(context, "Welcome back!");
-      context.go('/dashboard');
-    }
-  }
-
-  void _handleLogin() async {
+  Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
 
-    final email = _emailController.text.trim();
+    var phone = _phoneController.text.trim();
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+    final fullPhone = '+254$phone';
 
-    await ref.read(authProvider.notifier).login(
-          email,
-          _passwordController.text,
+    try {
+      final response = await ApiClient.instance.post(
+        ApiEndpoints.sendOtp,
+        data: {'phone_number': fullPhone},
+      );
+
+      final otpCode = response.data['code']?.toString();
+      if (otpCode != null) {
+        await NotificationService.showNotification(
+          id: 10,
+          title: 'KukuFiti OTP',
+          body: 'Your verification code is: $otpCode',
         );
-        
-    if (!mounted) return;
-
-    final authState = ref.read(authProvider);
-    if (authState.isAuthenticated) {
-      // Handle Remember Me persistence
-      if (_rememberMe) {
-        await SecureStorageService.saveRememberedEmail(email);
-      } else {
-        await SecureStorageService.clearRememberedEmail();
       }
 
-      if (!mounted) return;
-
-      ToastService.showSuccess(context, "Welcome back!");
-      context.go('/dashboard');
-    } else if (authState.error != null) {
-      ToastService.showError(context, authState.error!);
+      if (mounted) {
+        final encodedPhone = Uri.encodeComponent(fullPhone);
+        context.go('/otp-verify?phone=$encodedPhone');
+      }
+    } catch (e) {
+      if (mounted) ToastService.showError(context, getFriendlyErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Background mesh glows
+          // Background mesh flows
           Positioned(
             top: -100,
             right: -50,
@@ -123,18 +83,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -150,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.04),
               ),
             ),
           ),
@@ -153,20 +101,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                'assets/images/chicken_logo.jpeg',
-                                width: 56,
-                                height: 56,
-                                fit: BoxFit.contain,
-                              ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/chicken_logo.jpeg',
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -182,7 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Sign in to your KukuFiti command panel',
+                          'Enter your phone number to sign in',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
@@ -190,61 +131,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 32),
                         CustomInput(
-                          label: 'Email',
-                          hintText: 'yourname@example.com',
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: const Icon(LucideIcons.mail, size: 20),
-                          validator: (value) => value == null || value.isEmpty ? 'Enter email' : null,
+                          label: 'Phone Number',
+                          hintText: '712345678',
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          prefixIcon: Text('+254', style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.bold,
+                          )),
+                          validator: (v) => v == null || v.isEmpty ? 'Enter phone number' : null,
                         ),
-                        const SizedBox(height: 20),
-                        CustomInput(
-                          label: 'Password',
-                          hintText: 'Enter password',
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          prefixIcon: const Icon(LucideIcons.lock, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
-                              size: 18,
-                            ),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
-                          validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text('Remember Me', style: TextStyle(fontSize: 13)),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
                         CustomButton(
-                          text: 'Sign In',
-                          onPressed: _handleLogin,
-                          isLoading: authState.isLoading,
+                          text: 'Continue with OTP',
+                          onPressed: _sendOtp,
+                          isLoading: _isLoading,
                         ),
-                        if (_canCheckBiometrics) ...[
-                          const SizedBox(height: 12),
-                          CustomButton(
-                            variant: CustomButtonVariant.outline,
-                            text: 'Unlock with Biometrics',
-                            icon: const Icon(LucideIcons.fingerprint, size: 20),
-                            onPressed: _handleBiometricLogin,
-                          ),
-                        ],
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

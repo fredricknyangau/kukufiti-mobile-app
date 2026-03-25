@@ -10,7 +10,6 @@ import '../../presentation/screens/public/about_screen.dart';
 import '../../presentation/screens/public/contact_screen.dart';
 
 // Onboarding
-import '../../presentation/screens/onboarding/welcome_screen.dart';
 import '../../presentation/screens/onboarding/benefits_carousel_screen.dart';
 
 // Auth
@@ -20,6 +19,7 @@ import '../../presentation/screens/auth/otp_verification_screen.dart';
 import '../../presentation/screens/auth/profile_setup_screen.dart';
 import '../../presentation/screens/public/splash_screen.dart';
 import '../../presentation/screens/main_layout_screen.dart';
+import '../../features/settings_management/presentation/screens/terms_screen.dart';
 
 
 // Features / Dashboard
@@ -94,18 +94,28 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final isAuthenticated = authState.isAuthenticated;
 
-      final isAuthPath = state.uri.path == '/login' || state.uri.path == '/register';
+      final isAuthPath = state.uri.path == '/login' || 
+                        state.uri.path == '/register' || 
+                        state.uri.path == '/otp-verify';
+                        
       final isPublicPath = state.uri.path == '/' || 
                           state.uri.path == '/welcome' ||
+                          state.uri.path == '/benefits-carousel' ||
                           state.uri.path == '/features' || 
                           state.uri.path == '/pricing' ||
                           state.uri.path == '/about' ||
-                          state.uri.path == '/contact';
+                          state.uri.path == '/contact' ||
+                          state.uri.path == '/terms';
 
       if (isAuthenticated) {
-        if (isAuthPath || isPublicPath) {
+        debugPrint('Router: Authenticated user on path: ${state.uri.path}');
+        // Only redirect to dashboard if on primary login/register screens
+        // and NOT on otp-verify (which needs to handle its own navigation to profile-setup)
+        if (state.uri.path == '/login' || state.uri.path == '/register') {
+          debugPrint('Router: Redirecting to /dashboard (Auth Entry Point)');
           return '/dashboard';
         }
+        // Allow /otp-verify and /profile-setup to stay
         return null;
       }
 
@@ -123,7 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomeScreen(),
+        builder: (context, state) => const BenefitsCarouselScreen(),
       ),
       GoRoute(
         path: '/benefits-carousel',
@@ -144,6 +154,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/contact',
         builder: (context, state) => const ContactScreen(),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, state) => const TermsScreen(),
       ),
 
       // Auth Routes

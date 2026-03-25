@@ -17,13 +17,23 @@ class AppDrawer extends ConsumerWidget {
     final subscriptionAsync = ref.watch(subscriptionProvider);
     final User? user = userAsync.value;
     final currentRoute = GoRouterState.of(context).matchedLocation;
-
     final sub = subscriptionAsync.value;
     final plan = sub?['plan_type'] ?? 'STARTER';
-    final isStarter = plan == 'STARTER';
 
-    bool isPremiumRoute(String route) {
-      return ['/inventory', '/alerts', '/analytics'].contains(route);
+    String? getRequiredPlan(String route) {
+      if (['/audit-logs', '/farms', '/admin'].contains(route)) return 'ENTERPRISE';
+      if (['/inventory', '/alerts', '/analytics', '/reports', '/market', '/vet', '/biosecurity', '/calendar'].contains(route)) {
+        return 'PROFESSIONAL';
+      }
+      return null;
+    }
+
+    bool hasAccess(String route) {
+      final required = getRequiredPlan(route);
+      if (required == null) return true;
+      if (plan == 'ENTERPRISE') return true;
+      if (plan == 'PROFESSIONAL' && required == 'PROFESSIONAL') return true;
+      return false;
     }
 
     void showUpgradeDialog(BuildContext context, String feature) {
@@ -48,7 +58,8 @@ class AppDrawer extends ConsumerWidget {
 
     Widget buildDrawerItem(String title, String route, IconData icon) {
       final isSelected = currentRoute == route;
-      final locked = isStarter && isPremiumRoute(route);
+      final requiredPlan = getRequiredPlan(route);
+      final locked = !hasAccess(route);
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -69,14 +80,18 @@ class AppDrawer extends ConsumerWidget {
             ),
           ),
           trailing: locked 
-              ? Icon(LucideIcons.lock, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)) 
+              ? Icon(
+                  requiredPlan == 'ENTERPRISE' ? LucideIcons.gem : LucideIcons.lock, 
+                  size: 14, 
+                  color: requiredPlan == 'ENTERPRISE' ? Colors.purple.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.4)
+                ) 
               : null,
           selected: isSelected,
           selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.08),
           onTap: () {
             Navigator.pop(context);
             if (locked) {
-              showUpgradeDialog(context, title);
+              showUpgradeDialog(context, title + (requiredPlan == 'ENTERPRISE' ? ' (Enterprise)' : ' (Professional)'));
               return;
             }
             const branchRoutes = ['/dashboard', '/batches', '/analytics', '/settings', '/farms'];

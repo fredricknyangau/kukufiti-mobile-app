@@ -9,15 +9,17 @@ import '../../../core/utils/toast_service.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_input.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/data_providers.dart';
 
-class ProfileSetupScreen extends StatefulWidget {
+class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
 
   @override
-  State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+  ConsumerState<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
 }
 
-class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
+class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
@@ -48,14 +50,19 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       payload['email'] = email;
     }
 
+    debugPrint('ProfileSetupScreen: Payload: $payload');
+
     try {
-      await ApiClient.instance.put(
+      debugPrint('ProfileSetupScreen: Sending PUT to ${ApiEndpoints.profile}');
+      final response = await ApiClient.instance.put(
         ApiEndpoints.profile, // /auth/me
         data: payload,
       );
+      debugPrint('ProfileSetupScreen: Success Response: ${response.data}');
 
       if (mounted) {
         ToastService.showSuccess(context, "Profile setup complete!");
+        ref.invalidate(profileProvider); 
         context.go('/dashboard');
       }
     } on DioException catch (e) {

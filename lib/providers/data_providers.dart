@@ -131,8 +131,12 @@ final expendituresProvider = FutureProvider.autoDispose<List<Expenditure>>((ref)
 
 final inventoryProvider = FutureProvider.autoDispose<List<InventoryItem>>((ref) async {
   _setupKeepAlive(ref);
-  final sub = ref.watch(subscriptionProvider).value;
-  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('inventory')) {
+    throw Exception('Inventory requires a Professional Plan');
+  }
 
   return _fetchWithFallback(
     endpoint: ApiEndpoints.inventory,
@@ -166,8 +170,12 @@ final dashboardMetricsProvider = FutureProvider.autoDispose<Map<String, dynamic>
 
 final financialChartProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final sub = ref.watch(subscriptionProvider).value;
-  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('financials')) {
+    throw Exception('Financial Analytics require a Professional Plan');
+  }
 
   return _fetchListWithFallback(endpoint: ApiEndpoints.financialChart);
 });
@@ -196,14 +204,25 @@ final adminTransactionsProvider = FutureProvider.autoDispose<List<dynamic>>((ref
 // Logs and People
 final alertsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final sub = ref.watch(subscriptionProvider).value;
-  if ((sub?['plan_type'] ?? 'STARTER') == 'STARTER') throw Exception('requires a Professional Plan');
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('alerts')) {
+    throw Exception('Alerts require a Professional Plan');
+  }
 
   return _fetchListWithFallback(endpoint: ApiEndpoints.alerts);
 });
 
 final marketPricesProvider = FutureProvider.autoDispose<List<MarketPrice>>((ref) async {
   _setupKeepAlive(ref);
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('market_prices')) {
+    throw Exception('Market Prices require a Professional Plan');
+  }
+
   return _fetchWithFallback(
     endpoint: ApiEndpoints.marketPrices,
     fromJson: MarketPrice.fromJson,
@@ -212,6 +231,13 @@ final marketPricesProvider = FutureProvider.autoDispose<List<MarketPrice>>((ref)
 
 final vetConsultationsProvider = FutureProvider.autoDispose<List<VetConsultation>>((ref) async {
   _setupKeepAlive(ref);
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('vet_consults')) {
+    throw Exception('Vet Consultations require a Professional Plan');
+  }
+
   return _fetchWithFallback(
     endpoint: ApiEndpoints.vetConsultations,
     fromJson: VetConsultation.fromJson,
@@ -228,6 +254,13 @@ final biosecurityProvider = FutureProvider.autoDispose<List<BiosecurityCheck>>((
 
 final auditLogsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('audit_logs')) {
+    throw Exception('Audit Logs require an Enterprise Plan');
+  }
+
   return _fetchListWithFallback(endpoint: '${ApiEndpoints.auditLogs}?action=');
 });
 
@@ -302,7 +335,22 @@ final subscriptionProvider = FutureProvider.autoDispose<Map<String, dynamic>>((r
   _setupKeepAlive(ref);
   const cacheKey = 'subscription';
   try {
-    final res = await ApiClient.instance.get('/billing/my-subscription');
+    final res = await ApiClient.instance.get(ApiEndpoints.mySubscription);
+    final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
+    await HiveCacheService.cacheData(cacheKey, data);
+    return data;
+  } catch (e) {
+    final cached = HiveCacheService.getCachedData(cacheKey);
+    if (cached != null) return Map<String, dynamic>.from(cached);
+    rethrow;
+  }
+});
+
+final planDetailsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  _setupKeepAlive(ref);
+  const cacheKey = 'plan_details';
+  try {
+    final res = await ApiClient.instance.get(ApiEndpoints.planDetails);
     final data = Map<String, dynamic>.from(_extractData(res.data) ?? {});
     await HiveCacheService.cacheData(cacheKey, data);
     return data;
@@ -315,8 +363,10 @@ final subscriptionProvider = FutureProvider.autoDispose<Map<String, dynamic>>((r
 
 final farmsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   _setupKeepAlive(ref);
-  final sub = ref.watch(subscriptionProvider).value;
-  if ((sub?['plan_type'] ?? 'STARTER') != 'ENTERPRISE') {
+  final planDetails = ref.watch(planDetailsProvider).value;
+  final features = List<String>.from(planDetails?['features'] ?? []);
+  
+  if (!features.contains('multi_farm')) {
     return [];
   }
   final res = await ApiClient.instance.get(ApiEndpoints.farms);

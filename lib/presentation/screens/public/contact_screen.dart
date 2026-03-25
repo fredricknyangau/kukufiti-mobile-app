@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
-import '../../widgets/custom_input.dart';
 import '../../widgets/public_drawer.dart';
+import '../../widgets/public_mesh_background.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -12,132 +12,130 @@ class ContactScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       drawer: const PublicDrawer(),
       appBar: AppBar(
-        title: const Text('Contact Sales', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
       ),
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Background Glows
-          Positioned(
-            bottom: -50,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+      body: PublicMeshBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                const Text(
+                  'Get in Touch',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 8),
+                Text(
+                  'Have questions? We\'d love to hear from you.',
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
+                const SizedBox(height: 32),
+
+                // ─── CONTACT FORM ───
+                CustomCard(
+                  padding: const EdgeInsets.all(24),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(LucideIcons.messageCircle, size: 48, color: Colors.blueAccent),
+                      _buildTextField('Full Name', 'e.g. John Doe'),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Have a question?',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'We would love to hear from you or help scale layout.',
-                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      // ─── CONTACT INFORMATION ───
-                      _buildContactDetailItem(LucideIcons.mail, 'Email', 'support@kukufiti.com', theme),
-                      const SizedBox(height: 12),
-                      _buildContactDetailItem(LucideIcons.phone, 'Phone', '+254 700 000 000', theme),
-                      const SizedBox(height: 12),
-                      _buildContactDetailItem(LucideIcons.mapPin, 'Office', 'Nairobi Garage, Westlands', theme),
-                      const SizedBox(height: 32),
-                      CustomCard(
-                        isPremium: true,
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            CustomInput(
-                              label: 'Name',
-                              hintText: 'Your name',
-                              controller: TextEditingController(),
-                            ),
-                            const SizedBox(height: 16),
-                            CustomInput(
-                              label: 'Email',
-                              hintText: 'your@email.com',
-                              keyboardType: TextInputType.emailAddress,
-                              controller: TextEditingController(),
-                            ),
-                            const SizedBox(height: 16),
-                            CustomInput(
-                              label: 'Message',
-                              hintText: 'How can we help?',
-                              controller: TextEditingController(),
-                            ),
-                            const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              child: CustomButton(
-                                text: 'Send Message',
-                                onPressed: () {},
-                              ),
-                            )
-                          ],
-                        ),
+                      _buildTextField('Email Address', 'e.g. john@example.com'),
+                      const SizedBox(height: 16),
+                      _buildTextField('Message', 'How can we help you?', maxLines: 4),
+                      const SizedBox(height: 24),
+                      CustomButton(
+                        text: 'Send Message',
+                        onPressed: () {},
                       ),
                     ],
                   ),
-                ),
-              ),
+                ).animate().fadeIn(delay: 400.ms, duration: 600.ms),
+                const SizedBox(height: 32),
+
+                // ─── CONTACT INFO GRID ───
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoCard(
+                        theme,
+                        LucideIcons.mail,
+                        'Email Us',
+                        'support@kukufiti.com',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildInfoCard(
+                        theme,
+                        LucideIcons.phone,
+                        'Call Us',
+                        '+254 700 123 456',
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 600.ms),
+                const SizedBox(height: 32),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
-  Widget _buildContactDetailItem(IconData icon, String title, String value, ThemeData theme) {
+
+  Widget _buildTextField(String label, String hint, {int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(ThemeData theme, IconData icon, String title, String value) {
     return CustomCard(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13),
-                ),
-              ],
-            ),
+          Icon(icon, color: theme.colorScheme.primary, size: 20),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

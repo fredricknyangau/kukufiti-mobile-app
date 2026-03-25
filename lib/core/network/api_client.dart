@@ -7,7 +7,9 @@ import '../storage/secure_storage_service.dart';
 class ApiClient {
   static final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: AppConfig.apiUrl,
+      baseUrl: AppConfig.apiUrl.endsWith('/') 
+          ? AppConfig.apiUrl 
+          : '${AppConfig.apiUrl}/',
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),

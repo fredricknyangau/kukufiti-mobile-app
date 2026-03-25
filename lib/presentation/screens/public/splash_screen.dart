@@ -33,15 +33,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       _precacheImages();
     });
 
-    // 2. Start timer for 2 seconds
-    _splashTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) _navigate();
-    });
+    // 2. Wait for at least 2 seconds AND for auth hydration
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // We wait until the auth state is no longer loading (initialized)
+    // If it's still loading, we use a listener in a loop or a more robust method.
+    // However, since we are in a Future-based _initializeApp, we can check it.
+    
+    if (!mounted) return;
+    _navigate();
   }
 
   void _navigate() {
-    // 3. Navigate based on auth state
     final authState = ref.read(authProvider);
+    
+    // If auth is still loading, wait another 500ms and try again
+    if (authState.isLoading) {
+      Future.delayed(const Duration(milliseconds: 500), _navigate);
+      return;
+    }
+
     final isAuthenticated = authState.isAuthenticated;
     final hasSeenIntro = authState.hasSeenIntro;
 

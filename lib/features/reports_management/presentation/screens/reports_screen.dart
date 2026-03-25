@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../presentation/widgets/app_drawer.dart';
 import '../../../../presentation/widgets/custom_card.dart';
+import '../../../../presentation/widgets/premium_gate.dart';
 import '../../../../core/network/api_client.dart';
 import 'package:dio/dio.dart';
 
@@ -19,31 +20,35 @@ class ReportsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Reports', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          CustomCard(
-            isPremium: true,
-            child: ListTile(
-              leading: Icon(LucideIcons.fileText, color: theme.colorScheme.primary),
-              title: const Text('Batch Summary Report', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Export complete metrics for a selected batch.'),
-              trailing: const Icon(LucideIcons.fileText),
-              onTap: () => _showReportViewer(context, 'production'),
+      body: PremiumGate(
+        featureKey: 'reports',
+        featureName: 'Reporting & Export',
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            CustomCard(
+              isPremium: true,
+              child: ListTile(
+                leading: Icon(LucideIcons.fileText, color: theme.colorScheme.primary),
+                title: const Text('Batch Summary Report', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Export complete metrics for a selected batch.'),
+                trailing: const Icon(LucideIcons.fileText),
+                onTap: () => _showReportViewer(context, 'production'),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          CustomCard(
-            isPremium: true,
-            child: ListTile(
-              leading: Icon(LucideIcons.fileBarChart, color: theme.colorScheme.secondary),
-              title: const Text('Financial Report', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Monthly profit/loss statement.'),
-              trailing: const Icon(LucideIcons.fileText),
-              onTap: () => _showReportViewer(context, 'financial'),
+            const SizedBox(height: 12),
+            CustomCard(
+              isPremium: true,
+              child: ListTile(
+                leading: Icon(LucideIcons.fileBarChart, color: theme.colorScheme.secondary),
+                title: const Text('Financial Report', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Monthly profit/loss statement.'),
+                trailing: const Icon(LucideIcons.fileText),
+                onTap: () => _showReportViewer(context, 'financial'),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

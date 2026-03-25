@@ -1,14 +1,16 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_card.dart';
+import '../../widgets/custom_divider.dart';
 import '../../widgets/public_drawer.dart';
-import 'package:go_router/go_router.dart';
+import '../../widgets/public_mesh_background.dart';
 
 class PricingScreen extends StatefulWidget {
   const PricingScreen({super.key});
@@ -45,7 +47,6 @@ class _PricingScreenState extends State<PricingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       drawer: const PublicDrawer(),
@@ -56,103 +57,78 @@ class _PricingScreenState extends State<PricingScreen> {
         centerTitle: true,
       ),
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Background Glows
-          Positioned(
-            top: -100,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
-              ),
+      body: PublicMeshBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                const Text(
+                  'Simple, transparent pricing',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 8),
+                Text(
+                  'No hidden fees. Scale your farm profit.',
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
+                const SizedBox(height: 32),
+
+                // Billing Toggle
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildToggleItem('Monthly', !_isAnnual),
+                      _buildToggleItem('Anually (-20%)', _isAnnual),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 40),
+
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (_plans.isEmpty)
+                  const Center(child: Text('No plans available.'))
+                else
+                  ..._plans.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final plan = entry.value;
+                    final price = _isAnnual 
+                        ? (plan['annual_price'] ?? plan['monthly_price'])
+                        : plan['monthly_price'];
+                    final period = _isAnnual 
+                        ? (plan['annual_price'] != null ? '/year' : plan['period'])
+                        : plan['period'];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: _buildPlanCard(
+                        theme: theme,
+                        title: plan['name'],
+                        price: price,
+                        period: period,
+                        desc: plan['description'],
+                        features: List<String>.from(plan['features']),
+                        isPremium: plan['popular'],
+                        cta: plan['cta'] ?? 'Get Started',
+                        onPressed: () => _handleGetStarted(plan),
+                      ),
+                    ).animate().fadeIn(delay: (600 + index * 100).ms, duration: 600.ms).slideY(begin: 0.1, end: 0);
+                  }),
+              ],
             ),
           ),
-          Positioned(
-            bottom: -150,
-            left: -50,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.05),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Simple, transparent pricing',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No hidden fees. Scale your farm profit.',
-                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Billing Toggle
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildToggleItem('Monthly', !_isAnnual),
-                        _buildToggleItem('Anually (-20%)', _isAnnual),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else if (_plans.isEmpty)
-                    const Center(child: Text('No plans available.'))
-                  else
-                    ..._plans.map((plan) {
-                      final price = _isAnnual 
-                          ? (plan['annual_price'] ?? plan['monthly_price'])
-                          : plan['monthly_price'];
-                      final period = _isAnnual 
-                          ? (plan['annual_price'] != null ? '/year' : plan['period'])
-                          : plan['period'];
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: _buildPlanCard(
-                          theme: theme,
-                          title: plan['name'],
-                          price: price,
-                          period: period,
-                          desc: plan['description'],
-                          features: List<String>.from(plan['features']),
-                          isPremium: plan['popular'],
-                          cta: plan['cta'] ?? 'Get Started',
-                          onPressed: () => _handleGetStarted(plan),
-                        ),
-                      );
-                    }),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

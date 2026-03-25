@@ -50,10 +50,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _resendOtp() async {
+    // Aggressive Sanitization for Resend
+    String phone = widget.phoneNumber.trim().replaceAll(' ', '');
+    phone = phone.replaceAll('+', '');
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    if (!phone.startsWith('254')) {
+      phone = '254$phone';
+    }
+    final sanitizedPhone = '+$phone';
+    
+    debugPrint('OtpVerificationScreen: Resend Original Phone: "${widget.phoneNumber}"');
+    debugPrint('OtpVerificationScreen: Resend Sanitized Phone: "$sanitizedPhone"');
+
     try {
       final response = await ApiClient.instance.post(
         ApiEndpoints.sendOtp,
-        data: {'phone_number': widget.phoneNumber},
+        data: {'phone_number': sanitizedPhone},
       );
 
       final otpCode = response.data['code']?.toString();
@@ -84,11 +96,24 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
     setState(() => _isLoading = true);
 
+    // Aggressive Sanitization
+    String phone = widget.phoneNumber.trim().replaceAll(' ', '');
+    // Remove any existing plus briefly to avoid duplicates, then re-add
+    phone = phone.replaceAll('+', '');
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    if (!phone.startsWith('254')) {
+      phone = '254$phone';
+    }
+    final sanitizedPhone = '+$phone';
+    
+    debugPrint('OtpVerificationScreen: Original Phone: "${widget.phoneNumber}"');
+    debugPrint('OtpVerificationScreen: Sanitized Phone: "$sanitizedPhone"');
+
     try {
       final response = await ApiClient.instance.post(
         ApiEndpoints.verifyOtp,
         data: {
-          'phone_number': widget.phoneNumber,
+          'phone_number': sanitizedPhone,
           'code': code,
         },
       );
@@ -96,17 +121,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       if (mounted) {
         final token = response.data['access_token'];
         final isNew = response.data['is_new_user'] ?? false;
+        debugPrint('OtpVerificationScreen: Is New User Flag: $isNew');
 
         if (token != null) {
-          // Save and notify auth state
-          ref.read(authProvider.notifier).loginWithToken(token);
+          // Save and notify auth state - AWAIT this to prevent race conditions!
+          await ref.read(authProvider.notifier).loginWithToken(token);
           
           if (!mounted) return;
           ToastService.showSuccess(context, "Verification Successful!");
           
           if (isNew) {
+            debugPrint('OtpVerificationScreen: Navigating to profile setup');
             context.go('/profile-setup');
           } else {
+            debugPrint('OtpVerificationScreen: Navigating to dashboard');
             context.go('/dashboard');
           }
         } else {

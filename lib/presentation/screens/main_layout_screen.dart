@@ -172,7 +172,7 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
                 ),
                 NavigationDestination(
                    icon: const Icon(LucideIcons.pieChart),
-                   label: isStarter ? 'Analytics 🔒' : 'Analytics',
+                   label: isStarter ? 'Analytics' : 'Analytics',
                 ),
                 const NavigationDestination(
                    icon: Icon(LucideIcons.settings),
