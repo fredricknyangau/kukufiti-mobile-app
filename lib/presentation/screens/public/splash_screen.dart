@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,10 +13,18 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  Timer? _splashTimer;
+
   @override
   void initState() {
     super.initState();
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {
@@ -24,11 +33,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       _precacheImages();
     });
 
-    // 2. Wait 2 seconds for logo display
-    await Future.delayed(const Duration(seconds: 2));
+    // 2. Start timer for 2 seconds
+    _splashTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) _navigate();
+    });
+  }
 
-    if (!mounted) return;
-
+  void _navigate() {
     // 3. Navigate based on auth state
     final authState = ref.read(authProvider);
     final isAuthenticated = authState.isAuthenticated;

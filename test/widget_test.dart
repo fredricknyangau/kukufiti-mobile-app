@@ -22,6 +22,9 @@ void main() {
       ),
     );
 
+    // Wait for splash screen (2s) to avoid "pending timer" error
+    await tester.pumpAndSettle(const Duration(seconds: 3));
+
     // Basic assertion to check if the app started
     expect(find.byType(MaterialApp), findsOneWidget);
   });
