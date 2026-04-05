@@ -6,6 +6,7 @@ import '../providers/ai_insights_provider.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../providers/data_providers.dart' as data_providers;
 import '../../../../core/models/broiler_models.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class MortalityAdvisoryScreen extends ConsumerStatefulWidget {
   const MortalityAdvisoryScreen({super.key});
@@ -40,9 +41,9 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Select a batch below. Our AI will pull the daily mortality records you logged and detect anomalies, risk trends or potential disease outbreaks.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 24),
 
@@ -77,7 +78,7 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
                 minimumSize: const Size.fromHeight(50),
               ),
               child: aiState.isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? CircularProgressIndicator(color: theme.colorScheme.onPrimary)
                   : const Text('Analyze Trends', style: TextStyle(fontSize: 16)),
             ),
 
@@ -87,11 +88,11 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: theme.colorScheme.errorContainer,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
+                  border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
                 ),
-                child: Text(aiState.error!, style: TextStyle(color: Colors.red.shade900)),
+                child: Text(aiState.error!, style: TextStyle(color: theme.colorScheme.error)),
               ),
             ],
 
@@ -131,19 +132,20 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
   }
 
   Widget _buildReportCard(ThemeData theme, MortalityAnalysisResponse response) {
+    final customColors = theme.extension<CustomColors>()!;
     Color alertColor;
     IconData alertIcon;
     switch (response.alertLevel) {
       case 'CRITICAL':
-        alertColor = Colors.red;
+        alertColor = theme.colorScheme.error;
         alertIcon = Icons.error_outline;
         break;
       case 'WARNING':
-        alertColor = Colors.orange;
+        alertColor = customColors.warning ?? Colors.orange;
         alertIcon = Icons.warning_amber_outlined;
         break;
       default:
-        alertColor = Colors.green;
+        alertColor = customColors.success ?? theme.colorScheme.secondary;
         alertIcon = Icons.check_circle_outline;
     }
 
@@ -187,7 +189,7 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.arrow_right_rounded, size: 20, color: Colors.grey),
+                        Icon(Icons.arrow_right_rounded, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                         Expanded(child: Text(p)),
                       ],
                     ),
@@ -203,7 +205,7 @@ class _MortalityAdvisoryScreenState extends ConsumerState<MortalityAdvisoryScree
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.lightbulb_outline, size: 18, color: Colors.orange),
+                        Icon(Icons.lightbulb_outline, size: 18, color: customColors.warning),
                         const SizedBox(width: 6),
                         Expanded(child: Text(p)),
                       ],

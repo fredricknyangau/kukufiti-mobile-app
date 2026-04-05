@@ -10,6 +10,7 @@ import '../../widgets/custom_input.dart';
 
 import '../../../core/network/api_client_provider.dart';
 import '../../../providers/broiler_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class DailyChecksScreen extends ConsumerStatefulWidget {
   const DailyChecksScreen({super.key});
@@ -81,6 +82,7 @@ class _DailyChecksScreenState extends ConsumerState<DailyChecksScreen> {
     final user = profileAsync.value;
     final canEdit = user?.canEdit ?? false;
     final batch = broilerState.currentBatch;
+    final customColors = theme.extension<CustomColors>()!;
 
     return Scaffold(
       appBar: AppBar(
@@ -100,18 +102,18 @@ class _DailyChecksScreenState extends ConsumerState<DailyChecksScreen> {
                             margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.1),
+                              color: customColors.warning!.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                              border: Border.all(color: customColors.warning!.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(LucideIcons.eye, color: Colors.amber, size: 20),
+                                Icon(LucideIcons.eye, color: customColors.warning!, size: 20),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     'Read-Only Mode: You do not have permission to log daily checks.',
-                                    style: TextStyle(color: Colors.amber.shade900, fontSize: 13, fontWeight: FontWeight.w500),
+                                    style: TextStyle(color: customColors.warning!, fontSize: 13, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ],
@@ -207,13 +209,13 @@ class _DailyChecksScreenState extends ConsumerState<DailyChecksScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(

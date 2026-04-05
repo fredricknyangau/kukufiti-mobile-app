@@ -69,7 +69,7 @@ class CustomInput extends StatelessWidget {
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: theme.colorScheme.brightness == Brightness.light
-                ? const Color(0xFFF1F5F9) // Slate 100
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.04)
                 : theme.colorScheme.surface.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             border: OutlineInputBorder(

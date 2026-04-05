@@ -73,7 +73,7 @@ class ExpendituresScreen extends ConsumerWidget {
                  value: percentage,
                  title: percentage > 10 ? '${percentage.toStringAsFixed(0)}%' : '',
                  radius: 50,
-                 titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 10),
+                 titleStyle: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary, fontSize: 10),
                ));
             }).values.toList();
 
@@ -165,7 +165,7 @@ class ExpendituresScreen extends ConsumerWidget {
                                             content: const Text('This action cannot be undone.'),
                                             actions: [
                                               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                             ],
                                           ),
                                         );
@@ -186,9 +186,9 @@ class ExpendituresScreen extends ConsumerWidget {
                                         }
                                       }
                                     },
-                                    itemBuilder: (ctx) => const [
-                                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                      PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                                    itemBuilder: (ctx) => [
+                                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                      PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                     ],
                                   )
                                 : null,
@@ -207,7 +207,7 @@ class ExpendituresScreen extends ConsumerWidget {
           ? FloatingActionButton(
               onPressed: () => _showAddExpenditureDialog(context, ref),
               backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: theme.colorScheme.onPrimary,
               child: const Icon(LucideIcons.plus),
             )
           : null,
@@ -235,12 +235,12 @@ class ExpendituresScreen extends ConsumerWidget {
             children: [
               Text(item.description, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const CustomDivider(),
-              _detailRow('Amount', 'KES ${item.amount}', isBold: true),
-              _detailRow('Category', label.toUpperCase()),
-              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow(context, 'Amount', 'KES ${item.amount}', isBold: true),
+              _detailRow(context, 'Category', label.toUpperCase()),
+              _detailRow(context, 'Date', DateFormat('yyyy-MM-dd').format(item.date)),
               const CustomDivider(),
-              if (item.quantity != null) _detailRow('Quantity', '${item.quantity} ${item.unit ?? ''}'),
-              if (item.mpesaTransactionId != null) _detailRow('M-Pesa ID', '${item.mpesaTransactionId}'),
+              if (item.quantity != null) _detailRow(context, 'Quantity', '${item.quantity} ${item.unit ?? ''}'),
+              if (item.mpesaTransactionId != null) _detailRow(context, 'M-Pesa ID', '${item.mpesaTransactionId}'),
             ],
           ),
         ),
@@ -249,13 +249,13 @@ class ExpendituresScreen extends ConsumerWidget {
     );
   }
 
-  static Widget _detailRow(String label, String value, {bool isBold = false}) {
+  static Widget _detailRow(BuildContext context, String label, String value, {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         ],
       ),

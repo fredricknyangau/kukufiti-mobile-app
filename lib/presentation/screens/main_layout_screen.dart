@@ -102,7 +102,7 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.6),
+                    color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.8),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -120,18 +120,18 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
                             ),
                           ),
                           const SizedBox(height: 24),
-                          const Text(
+                          Text(
                             'Kuku Fiti is Locked',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Authenticate to continue',
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
                           ),
                           const SizedBox(height: 32),
                           ElevatedButton.icon(

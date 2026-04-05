@@ -10,6 +10,7 @@ import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class HarvestOptimizationScreen extends ConsumerStatefulWidget {
   const HarvestOptimizationScreen({super.key});
@@ -85,7 +86,7 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
           children: [
             Text('Maximize your Harvest ROI', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            const Text('AI analyzes growth curves and market prices to find your most profitable sell date.', style: TextStyle(color: Colors.grey)),
+            Text('AI analyzes growth curves and market prices to find your most profitable sell date.', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
             const SizedBox(height: 32),
             
             _buildInputSection(theme, broilerState.batches),
@@ -161,7 +162,7 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const Text('OPTIMAL HARVEST DATE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+              Text('OPTIMAL HARVEST DATE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.extension<CustomColors>()?.success ?? Colors.green)),
               const SizedBox(height: 8),
               Text('Day $optimalAge', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: -2)),
               Text('Estimated Profit: KES $projectedProfit', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -185,7 +186,7 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
           const SizedBox(height: 8),
           ...risks.map((r) => Padding(
             padding: const EdgeInsets.only(bottom: 4.0),
-            child: Row(children: [const Icon(LucideIcons.alertCircle, size: 14, color: Colors.orange), const SizedBox(width: 8), Expanded(child: Text(r, style: const TextStyle(fontSize: 13)))]),
+            child: Row(children: [Icon(LucideIcons.alertCircle, size: 14, color: theme.extension<CustomColors>()?.warning ?? Colors.orange), const SizedBox(width: 8), Expanded(child: Text(r, style: const TextStyle(fontSize: 13)))]),
           )),
         ],
         const SizedBox(height: 32),
@@ -214,10 +215,10 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: Colors.green,
+            color: theme.extension<CustomColors>()?.success ?? Colors.green,
             barWidth: 4,
             dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(show: true, color: Colors.green.withValues(alpha: 0.1)),
+            belowBarData: BarAreaData(show: true, color: (theme.extension<CustomColors>()?.success ?? Colors.green).withValues(alpha: 0.1)),
           ),
         ],
       ),

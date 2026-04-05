@@ -17,6 +17,7 @@ import '../../../../providers/broiler_provider.dart';
 import '../../../../core/models/broiler_models.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class WeightScreen extends ConsumerWidget {
   const WeightScreen({super.key});
@@ -178,7 +179,7 @@ class WeightScreen extends ConsumerWidget {
                           child: ListTile(
                             leading: CircleAvatar(
                                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                               child: const Icon(Icons.fitness_center, color: Colors.blue),
+                               child: Icon(Icons.fitness_center, color: theme.extension<CustomColors>()?.info ?? Colors.blue),
                             ),
                             title: Text('${item.averageWeight} g', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy').format(item.date)),
@@ -195,7 +196,7 @@ class WeightScreen extends ConsumerWidget {
                                       content: const Text('This action cannot be undone.'),
                                       actions: [
                                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                       ],
                                     ),
                                   );
@@ -216,9 +217,9 @@ class WeightScreen extends ConsumerWidget {
                                   }
                                 }
                               },
-                              itemBuilder: (ctx) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                              itemBuilder: (ctx) => [
+                                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                               ],
                             ),
                             onTap: () => _showWeightDetails(context, item),
@@ -235,7 +236,7 @@ class WeightScreen extends ConsumerWidget {
       floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showAddEditWeightDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: theme.colorScheme.onPrimary,
         child: const Icon(Icons.add),
       ) : null,
     );
@@ -258,13 +259,13 @@ class WeightScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
-              _detailRow('Sample Size', '${item.sampleSize} birds'),
-              _detailRow('Average Weight', '${item.averageWeight} g'),
-              if (item.minWeightGrams != null) _detailRow('Min Weight', '${item.minWeightGrams} g'),
-              if (item.maxWeightGrams != null) _detailRow('Max Weight', '${item.maxWeightGrams} g'),
+              _detailRow(context, 'Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow(context, 'Sample Size', '${item.sampleSize} birds'),
+              _detailRow(context, 'Average Weight', '${item.averageWeight} g'),
+              if (item.minWeightGrams != null) _detailRow(context, 'Min Weight', '${item.minWeightGrams} g'),
+              if (item.maxWeightGrams != null) _detailRow(context, 'Max Weight', '${item.maxWeightGrams} g'),
               const CustomDivider(),
-              _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
+              _detailRow(context, 'Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -273,13 +274,13 @@ class WeightScreen extends ConsumerWidget {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           const SizedBox(height: 2),
           Text(value, style: const TextStyle(fontSize: 16)),
         ],

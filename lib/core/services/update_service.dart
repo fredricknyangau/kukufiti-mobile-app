@@ -1,6 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file_plus/open_file_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class UpdateInfo {
   final bool isUpdateAvailable;
@@ -89,6 +94,61 @@ class UpdateService {
     } catch (_) {
       // Silently fail — update check should never crash the app
       return null;
+    }
+  }
+
+  /// Downloads the APK from [url], saving it to a temporary directory,
+  /// and triggers the Android system installer.
+  static Future<void> downloadAndInstallApk({
+    required String url,
+    required Function(double progress) onProgress,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      // 1. Check/Request storage permission if needed (usually not for temp/cache on modern Android)
+      // 2. Check/Request install permission (Android only)
+      if (Platform.isAndroid) {
+        var status = await Permission.requestInstallPackages.status;
+        if (!status.isGranted) {
+          status = await Permission.requestInstallPackages.request();
+          if (!status.isGranted) {
+            throw Exception('Permission to install packages was denied.');
+          }
+        }
+      }
+
+      // 3. Prepare storage path
+      final tempDir = await getTemporaryDirectory();
+      final filePath = "${tempDir.path}/update.apk";
+
+      // Delete existing file if any
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      final dio = Dio();
+
+      // 4. Start download
+      await dio.download(
+        url,
+        filePath,
+        cancelToken: cancelToken,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            onProgress(received / total);
+          }
+        },
+      );
+
+      // 5. Trigger installation
+      final result = await OpenFile.open(filePath);
+      if (result.type != ResultType.done) {
+        throw Exception('Failed to open APK: ${result.message}');
+      }
+    } catch (e) {
+      // Log error or rethrow for UI handling
+      rethrow;
     }
   }
 

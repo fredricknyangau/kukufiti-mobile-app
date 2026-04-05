@@ -147,18 +147,18 @@ class VetScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', DateFormat('yyyy-MM-dd').format(consult.date)),
-              _detailRow('Status', consult.status.toUpperCase()),
+              _detailRow(context, 'Date', DateFormat('yyyy-MM-dd').format(consult.date)),
+              _detailRow(context, 'Status', consult.status.toUpperCase()),
               const CustomDivider(),
-              if (consult.symptoms?.isNotEmpty == true) _detailRow('Symptoms', consult.symptoms!),
-              _detailRow('Diagnosis', consult.diagnosis?.isNotEmpty == true ? consult.diagnosis! : 'None Recorded'),
+              if (consult.symptoms?.isNotEmpty == true) _detailRow(context, 'Symptoms', consult.symptoms!),
+              _detailRow(context, 'Diagnosis', consult.diagnosis?.isNotEmpty == true ? consult.diagnosis! : 'None Recorded'),
               const CustomDivider(),
-              _detailRow('Treatment / Rec', consult.treatment?.isNotEmpty == true ? consult.treatment! : 'None Recorded'),
+              _detailRow(context, 'Treatment / Rec', consult.treatment?.isNotEmpty == true ? consult.treatment! : 'None Recorded'),
               const CustomDivider(),
-              _detailRow('Vet Name', consult.vetName ?? 'Not Assigned'),
-              if (consult.vetPhone?.isNotEmpty == true) _detailRow('Vet Phone', consult.vetPhone!),
+              _detailRow(context, 'Vet Name', consult.vetName ?? 'Not Assigned'),
+              if (consult.vetPhone?.isNotEmpty == true) _detailRow(context, 'Vet Phone', consult.vetPhone!),
               const CustomDivider(),
-              _detailRow('Notes', consult.notes?.isNotEmpty == true ? consult.notes! : 'No Notes'),
+              _detailRow(context, 'Notes', consult.notes?.isNotEmpty == true ? consult.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -167,13 +167,13 @@ class VetScreen extends ConsumerWidget {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           const SizedBox(height: 2),
           Text(value, style: const TextStyle(fontSize: 16)),
         ],

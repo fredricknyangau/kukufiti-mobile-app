@@ -41,9 +41,9 @@ class _HarvestPredictionScreenState extends ConsumerState<HarvestPredictionScree
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Select a batch and entered your desired target weights to compute estimated finishing days.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 24),
 
@@ -84,14 +84,14 @@ class _HarvestPredictionScreenState extends ConsumerState<HarvestPredictionScree
                   ? null
                   : _triggerAnalysis,
               child: aiState.isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? CircularProgressIndicator(color: theme.colorScheme.onPrimary)
                   : const Text('Predict Readiness'),
             ),
 
             const SizedBox(height: 32),
 
             if (aiState.error != null) ...[
-              Text(aiState.error!, style: const TextStyle(color: Colors.red)),
+              Text(aiState.error!, style: TextStyle(color: theme.colorScheme.error)),
             ],
 
             if (aiState.harvestPrediction != null) ...[

@@ -481,7 +481,7 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
                                           content: const Text('This action cannot be undone.'),
                                           actions: [
                                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error))),
                                           ],
                                         ),
                                       );

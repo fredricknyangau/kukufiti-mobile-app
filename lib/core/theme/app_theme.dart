@@ -4,21 +4,41 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static ThemeData get lightTheme {
     final baseTheme = ThemeData.light();
+    final colorScheme = const ColorScheme.light().copyWith(
+      surface: Colors.white,
+      onSurface: const Color(0xFF1B1C17), 
+      primary: const Color(0xFF22C55E), 
+      onPrimary: Colors.white,
+      secondary: const Color(0xFFECFDF5), 
+      onSecondary: const Color(0xFF065F46), 
+      tertiary: const Color(0xFFF59E0B), 
+      error: const Color(0xFFEF4444),
+      onError: Colors.white,
+      outline: const Color(0xFFE2E8F0),
+    );
+
     return baseTheme.copyWith(
       scaffoldBackgroundColor: const Color(0xFFFBFDFA), 
-      colorScheme: const ColorScheme.light().copyWith(
-        surface: Colors.white,
-        onSurface: const Color(0xFF1B1C17), 
-        primary: const Color(0xFF22C55E), 
-        onPrimary: Colors.white,
-        secondary: const Color(0xFFECFDF5), 
-        onSecondary: const Color(0xFF065F46), 
-        tertiary: const Color(0xFFF59E0B), 
-        error: const Color(0xFFEF4444),
-        onError: Colors.white,
-        outline: const Color(0xFFE2E8F0),
-      ),
+      colorScheme: colorScheme,
       textTheme: GoogleFonts.outfitTextTheme(baseTheme.textTheme),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        elevation: 8,
+        shadowColor: colorScheme.onSurface.withValues(alpha: 0.1),
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.15),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: colorScheme.primary);
+          }
+          return TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.6));
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: colorScheme.primary, size: 26);
+          }
+          return IconThemeData(color: colorScheme.onSurface.withValues(alpha: 0.6), size: 24);
+        }),
+      ),
       extensions: [
         const CustomColors(
           success: Color(0xFF22C55E),
@@ -35,21 +55,41 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final baseTheme = ThemeData.dark();
+    final colorScheme = const ColorScheme.dark().copyWith(
+      surface: const Color(0xFF1E293B), 
+      onSurface: const Color(0xFFF1F5F9), 
+      primary: const Color(0xFF22C55E),
+      onPrimary: Colors.white,
+      secondary: const Color(0xFF334155), 
+      onSecondary: const Color(0xFFF8FAFC),
+      tertiary: const Color(0xFFFBBF24), 
+      error: const Color(0xFFF87171),
+      onError: Colors.white,
+      outline: const Color(0xFF334155),
+    );
+
     return baseTheme.copyWith(
       scaffoldBackgroundColor: const Color(0xFF0F172A), 
-      colorScheme: const ColorScheme.dark().copyWith(
-        surface: const Color(0xFF1E293B), 
-        onSurface: const Color(0xFFF1F5F9), 
-        primary: const Color(0xFF22C55E),
-        onPrimary: Colors.white,
-        secondary: const Color(0xFF334155), 
-        onSecondary: const Color(0xFFF8FAFC),
-        tertiary: const Color(0xFFFBBF24), 
-        error: const Color(0xFFF87171),
-        onError: Colors.white,
-        outline: const Color(0xFF334155),
-      ),
+      colorScheme: colorScheme,
       textTheme: GoogleFonts.outfitTextTheme(baseTheme.textTheme),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        elevation: 8,
+        shadowColor: colorScheme.onSurface.withValues(alpha: 0.1),
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.15),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+           if (states.contains(WidgetState.selected)) {
+             return TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: colorScheme.primary);
+           }
+           return TextStyle(fontWeight: FontWeight.normal, fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.6));
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: colorScheme.primary, size: 26);
+          }
+          return IconThemeData(color: colorScheme.onSurface.withValues(alpha: 0.6), size: 24);
+        }),
+      ),
       extensions: [
         const CustomColors(
           success: Color(0xFF22C55E),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/fcr_insights.dart';
 import '../providers/ai_insights_provider.dart';
 import '../../../../providers/broiler_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class FcrInsightsScreen extends ConsumerStatefulWidget {
   const FcrInsightsScreen({super.key});
@@ -41,9 +42,9 @@ class _FcrInsightsScreenState extends ConsumerState<FcrInsightsScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Analyse exact Cost ratios and economic buffers contrasting flock weight weights.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 24),
 
@@ -84,14 +85,14 @@ class _FcrInsightsScreenState extends ConsumerState<FcrInsightsScreen> {
                   ? null
                   : _triggerAnalysis,
               child: aiState.isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? CircularProgressIndicator(color: theme.colorScheme.onPrimary)
                   : const Text('Get Insights'),
             ),
 
             const SizedBox(height: 32),
 
             if (aiState.error != null) ...[
-              Text(aiState.error!, style: const TextStyle(color: Colors.red)),
+              Text(aiState.error!, style: TextStyle(color: theme.colorScheme.error)),
             ],
 
             if (aiState.fcrInsights != null) ...[
@@ -122,9 +123,10 @@ class _FcrInsightsScreenState extends ConsumerState<FcrInsightsScreen> {
   }
 
   Widget _buildReportCard(ThemeData theme, FcrInsightsResponse response) {
-    Color statusColor = Colors.green;
-    if (response.benchmarkStatus == 'POOR') statusColor = Colors.red;
-    if (response.benchmarkStatus == 'GOOD') statusColor = Colors.orange;
+    final customColors = theme.extension<CustomColors>()!;
+    Color statusColor = customColors.success ?? theme.colorScheme.secondary;
+    if (response.benchmarkStatus == 'POOR') statusColor = theme.colorScheme.error;
+    if (response.benchmarkStatus == 'GOOD') statusColor = customColors.warning ?? Colors.orange;
 
     return Card(
       child: Padding(

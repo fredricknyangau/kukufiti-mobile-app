@@ -10,6 +10,7 @@ import '../../../core/utils/error_handler.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_input.dart';
+import '../../../core/theme/app_theme.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -64,9 +65,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.checkCircle, size: 64, color: Colors.grey.withValues(alpha: 0.3)),
+          Icon(LucideIcons.checkCircle, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          const Text('No tasks found. Create one to get started!', style: TextStyle(color: Colors.grey)),
+          Text('No tasks found. Create one to get started!', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
         ],
       ),
     );
@@ -89,7 +90,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 IconButton(
                   icon: Icon(
                     isCompleted ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                    color: isCompleted ? Colors.green : Colors.grey,
+                    color: isCompleted ? theme.extension<CustomColors>()?.success ?? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   onPressed: canEdit 
                       ? () {
@@ -111,13 +112,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           decoration: isCompleted ? TextDecoration.lineThrough : null,
-                          color: isCompleted ? Colors.grey : null,
+                          color: isCompleted ? theme.colorScheme.onSurface.withValues(alpha: 0.5) : null,
                         ),
                       ),
                       if (task.description != null && task.description!.isNotEmpty)
                         Text(
                           task.description!,
-                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -137,7 +138,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 ),
                 if (canEdit)
                   IconButton(
-                    icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.grey),
+                    icon: Icon(LucideIcons.trash2, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                     onPressed: () => _confirmDelete(context, task.id),
                   ),
               ],
@@ -167,7 +168,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),

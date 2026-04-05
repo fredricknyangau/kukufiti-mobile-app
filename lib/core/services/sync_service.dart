@@ -32,7 +32,8 @@ class SyncService {
       'method': method,
       'data': data,
       'timestamp': DateTime.now().toIso8601String(),
-      'retryCount': 0, // Track retries
+      'retryCount': 0,
+      'nextRetryAt': DateTime.now().toIso8601String(), // Immediate first attempt
     };
     ops.add(newOp);
     await _box.put('queue', ops);
@@ -48,16 +49,26 @@ class SyncService {
     if (ops.isEmpty) return;
 
     int successCount = 0;
-    List<Map<String, dynamic>> failedOps = [];
-    const int maxRetries = 3;
+    List<Map<String, dynamic>> updatedQueue = [];
+    final now = DateTime.now();
 
     for (var op in ops) {
       final endpoint = op['endpoint'] as String?;
       final method = op['method'] as String?;
       final data = op['data'] != null ? Map<String, dynamic>.from(op['data']) : <String, dynamic>{};
       int retryCount = (op['retryCount'] ?? 0) as int;
-
+      final nextRetryAtStr = op['nextRetryAt'] as String?;
+      
       if (endpoint == null || method == null) continue;
+
+      // Skip if it is not time to retry yet
+      if (nextRetryAtStr != null) {
+        final nextRetryAt = DateTime.parse(nextRetryAtStr);
+        if (now.isBefore(nextRetryAt)) {
+          updatedQueue.add(op);
+          continue;
+        }
+      }
 
       try {
         if (method == 'POST') {
@@ -68,37 +79,42 @@ class SyncService {
           await ApiClient.instance.delete(endpoint);
         }
         successCount++;
+        // If success, we don't add to updatedQueue
       } catch (e) {
-        // Handle validation errors (400) or max retries
         bool shouldDrop = false;
-        if (e is DioException && e.response?.statusCode == 400) {
-          debugPrint('SyncService: Dropping invalid operation (400 Bad Request): $endpoint');
-          shouldDrop = true;
-        } else {
-          retryCount++;
-          if (retryCount >= maxRetries) {
-            debugPrint('SyncService: Dropping operation after $maxRetries failures: $endpoint');
+        
+        // 4xx errors (except 429) are usually client-side bugs/validation failures. Drop them.
+        if (e is DioException && e.response?.statusCode != null) {
+          final code = e.response!.statusCode!;
+          if (code >= 400 && code < 500 && code != 429) {
+            debugPrint('SyncService: Dropping invalid operation ($code): $endpoint');
             shouldDrop = true;
           }
         }
 
         if (!shouldDrop) {
-          op['retryCount'] = retryCount;
-          failedOps.add(op);
+          retryCount++;
+          if (retryCount >= 10) { // Max 10 retries
+            debugPrint('SyncService: Dropping operation after 10 failures: $endpoint');
+          } else {
+            // Exponential Backoff: 2^retryCount * 1 minute
+            final delayMinutes = (1 << (retryCount - 1)); 
+            final nextRetry = now.add(Duration(minutes: delayMinutes));
+            
+            op['retryCount'] = retryCount;
+            op['nextRetryAt'] = nextRetry.toIso8601String();
+            updatedQueue.add(op);
+            debugPrint('SyncService: Scheduling retry #$retryCount for $endpoint at $nextRetry');
+          }
         }
       }
     }
 
-    // Update queue with only failed ones that haven't reached retry limit
-    await _box.put('queue', failedOps);
+    // Replace the queue with updated state
+    await _box.put('queue', updatedQueue);
 
     if (context.mounted && successCount > 0) {
       ToastService.showSuccess(context, 'Synced $successCount operations successfully');
-    }
-    
-    // Only show error toast if there are items left in the queue (failed but retriable)
-    if (failedOps.isNotEmpty && context.mounted) {
-       ToastService.showError(context, '${failedOps.length} operations waiting to retry sync');
     }
   }
 }

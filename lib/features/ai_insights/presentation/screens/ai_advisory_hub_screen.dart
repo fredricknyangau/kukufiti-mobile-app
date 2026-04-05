@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../presentation/widgets/premium_gate.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
 class AiAdvisoryHubScreen extends ConsumerWidget {
@@ -12,6 +13,7 @@ class AiAdvisoryHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
 
     final List<Map<String, dynamic>> modules = [
       {
@@ -19,56 +21,56 @@ class AiAdvisoryHubScreen extends ConsumerWidget {
         'desc': 'Target optimal daily nutrition weights',
         'icon': LucideIcons.sparkles,
         'route': '/ai-feed-advisory',
-        'color': Colors.deepPurple,
+        'color': customColors.purple!,
       },
       {
         'title': 'Mortality Analytics',
         'desc': 'Detect anomalous mortality spikes',
         'icon': LucideIcons.trendingDown,
         'route': '/ai-mortality-analysis',
-        'color': Colors.deepOrangeAccent,
+        'color': customColors.warning!,
       },
       {
         'title': 'Harvest Readiness',
         'desc': 'Predict finishing days to target weight',
         'icon': LucideIcons.calendarDays,
         'route': '/ai-harvest-prediction', // will Map these routes shortly
-        'color': Colors.teal,
+        'color': customColors.teal!,
       },
       {
         'title': 'Disease Risk',
         'desc': 'Analyze symptoms or missed vaccines',
         'icon': LucideIcons.shieldAlert,
         'route': '/ai-disease-risk',
-        'color': Colors.redAccent,
+        'color': theme.colorScheme.error,
       },
       {
         'title': 'FCR Insights',
         'desc': 'Assess feed conversion profitability',
         'icon': LucideIcons.calculator,
         'route': '/ai-fcr-insights',
-        'color': Colors.indigo,
+        'color': customColors.indigo!,
       },
       {
         'title': 'AI Vet Chatbot',
         'desc': 'East African context-aware farming AI',
         'icon': LucideIcons.messageSquare,
         'route': '/ai-chat',
-        'color': Colors.blueAccent,
+        'color': customColors.info!,
       },
       {
         'title': 'Voice-to-Record',
         'desc': 'Hands-free farm observations',
         'icon': LucideIcons.mic,
         'route': '/ai-voice-observation',
-        'color': Colors.orange,
+        'color': customColors.warning!,
       },
       {
         'title': 'Profit Optimizer',
         'desc': 'Maximize ROI on harvest dates',
         'icon': LucideIcons.trendingUp,
         'route': '/ai-profit-optimizer',
-        'color': Colors.green,
+        'color': customColors.success!,
       },
     ];
 

@@ -92,7 +92,7 @@ class MarketScreen extends ConsumerWidget {
           ? FloatingActionButton(
               onPressed: () => _showAddPriceDialog(context, ref),
               backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: theme.colorScheme.onPrimary,
               child: const Icon(LucideIcons.plus),
             )
           : null,

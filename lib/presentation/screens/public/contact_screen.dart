@@ -48,11 +48,11 @@ class ContactScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildTextField('Full Name', 'e.g. John Doe'),
+                      _buildTextField(theme, 'Full Name', 'e.g. John Doe'),
                       const SizedBox(height: 16),
-                      _buildTextField('Email Address', 'e.g. john@example.com'),
+                      _buildTextField(theme, 'Email Address', 'e.g. john@example.com'),
                       const SizedBox(height: 16),
-                      _buildTextField('Message', 'How can we help you?', maxLines: 4),
+                      _buildTextField(theme, 'Message', 'How can we help you?', maxLines: 4),
                       const SizedBox(height: 24),
                       CustomButton(
                         text: 'Send Message',
@@ -94,7 +94,7 @@ class ContactScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(ThemeData theme, String label, String hint, {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -107,15 +107,15 @@ class ContactScreen extends StatelessWidget {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5), fontSize: 14),
+            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+              borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+              borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
             ),
           ),
         ),

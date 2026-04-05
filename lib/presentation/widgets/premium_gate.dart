@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../providers/data_providers.dart';
+import '../../core/theme/app_theme.dart';
 
 class PremiumGate extends ConsumerWidget {
   final Widget child;
@@ -37,6 +38,9 @@ class PremiumGate extends ConsumerWidget {
           targetTier = 'Enterprise';
         }
 
+        final theme = Theme.of(context);
+        final customColors = theme.extension<CustomColors>();
+
         return Stack(
           children: [
             AbsorbPointer(
@@ -48,7 +52,7 @@ class PremiumGate extends ConsumerWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: theme.colorScheme.scrim.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -56,12 +60,12 @@ class PremiumGate extends ConsumerWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black12,
+                            color: theme.colorScheme.shadow.withValues(alpha: 0.12),
                             blurRadius: 10,
                             spreadRadius: 2,
                           )
@@ -69,17 +73,17 @@ class PremiumGate extends ConsumerWidget {
                       ),
                       child: Icon(
                         targetTier == 'Enterprise' ? LucideIcons.gem : LucideIcons.lock,
-                        color: targetTier == 'Enterprise' ? Colors.purple : Colors.orange,
+                        color: targetTier == 'Enterprise' ? customColors?.purple : customColors?.warning,
                         size: 32,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       '$featureName is Premium',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [Shadow(blurRadius: 4, color: Colors.black45)],
+                        color: Colors.white, // Absolute white for overlay contrast
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black.withValues(alpha: 0.45))], // Fixed contrast shadow
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -88,8 +92,8 @@ class PremiumGate extends ConsumerWidget {
                         context.push('/pricing'); 
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
                       child: Text('Upgrade to $targetTier'),

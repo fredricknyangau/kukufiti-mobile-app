@@ -176,7 +176,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                                          content: const Text('This action cannot be undone.'),
                                          actions: [
                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                          ],
                                        ),
                                      );
@@ -197,9 +197,9 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
                                      }
                                    }
                                  },
-                                 itemBuilder: (context) => const [
-                                   PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                   PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                                 itemBuilder: (context) => [
+                                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                   PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                  ],
                                ),
                                onTap: () => _showVaccinationDetails(context, v),
@@ -216,7 +216,7 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
        floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showAddEditVaccinationDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: theme.colorScheme.onPrimary,
         child: const Icon(LucideIcons.plus),
       ) : null,
     );
@@ -239,17 +239,17 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Event Date', DateFormat('yyyy-MM-dd').format(v.date)),
-              _detailRow('Method', v.administrationMethod.replaceAll('_', ' ').toUpperCase()),
-              _detailRow('Cost', 'KES ${v.cost}'),
+              _detailRow(context, 'Event Date', DateFormat('yyyy-MM-dd').format(v.date)),
+              _detailRow(context, 'Method', v.administrationMethod.replaceAll('_', ' ').toUpperCase()),
+              _detailRow(context, 'Cost', 'KES ${v.cost}'),
               const CustomDivider(),
-              _detailRow('Dosage', v.dosage ?? 'Default'),
+              _detailRow(context, 'Dosage', v.dosage ?? 'Default'),
               if (v.scheduledDate != null)
-                _detailRow('Scheduled Date', DateFormat('yyyy-MM-dd').format(v.scheduledDate!)),
-              if (v.administeredBy?.isNotEmpty == true) _detailRow('Administered By', v.administeredBy!),
-              if (v.batchNumber?.isNotEmpty == true) _detailRow('Vaccine Batch #', v.batchNumber!),
-              _detailRow('Status', v.completed ? 'COMPLETED' : 'PENDING'),
-              _detailRow('Notes', v.notes ?? 'No notes recorded'),
+                _detailRow(context, 'Scheduled Date', DateFormat('yyyy-MM-dd').format(v.scheduledDate!)),
+              if (v.administeredBy?.isNotEmpty == true) _detailRow(context, 'Administered By', v.administeredBy!),
+              if (v.batchNumber?.isNotEmpty == true) _detailRow(context, 'Vaccine Batch #', v.batchNumber!),
+              _detailRow(context, 'Status', v.completed ? 'COMPLETED' : 'PENDING'),
+              _detailRow(context, 'Notes', v.notes ?? 'No notes recorded'),
             ],
           ),
         ),
@@ -258,13 +258,13 @@ class _VaccinationsScreenState extends ConsumerState<VaccinationsScreen> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           const SizedBox(height: 2),
           Text(value, style: const TextStyle(fontSize: 16)),
         ],

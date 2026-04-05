@@ -37,15 +37,15 @@ class CustomCard extends StatelessWidget {
               margin: margin,
               padding: padding,
               decoration: BoxDecoration(
-                color: (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.3 : 0.7),
+                color: theme.colorScheme.surface.withValues(alpha: isDark ? 0.3 : 0.7),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.3),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   )
@@ -76,7 +76,7 @@ class CustomCard extends StatelessWidget {
                 spreadRadius: -4,
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: theme.colorScheme.shadow.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -98,7 +98,7 @@ class CustomCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              color: theme.colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.04),
               blurRadius: 16,
               offset: const Offset(0, 8),
               spreadRadius: -4,

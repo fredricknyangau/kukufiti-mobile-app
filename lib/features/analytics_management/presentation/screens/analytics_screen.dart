@@ -9,12 +9,15 @@ import '../../../../presentation/widgets/custom_card.dart';
 import '../../../../providers/data_providers.dart';
 import '../../../../core/models/broiler_models.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
 
     // Watch all data streams
     final metricsAsync = ref.watch(dashboardMetricsProvider);
@@ -128,7 +131,7 @@ class AnalyticsScreen extends ConsumerWidget {
                       'Total Birds', 
                       '${metrics['current_birds'] ?? 0}',
                       icon: LucideIcons.twitter, // standard bird icon equivalent
-                      color: Colors.orange,
+                      color: customColors.warning!,
                     ),
                   ],
                 ),
@@ -143,7 +146,7 @@ class AnalyticsScreen extends ConsumerWidget {
                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                          children: [
                            Text('Weight Trends', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                           const Icon(LucideIcons.trendingUp, color: Colors.green, size: 20),
+                           Icon(LucideIcons.trendingUp, color: customColors.success!, size: 20),
                          ],
                        ),
                        const SizedBox(height: 24),
@@ -157,7 +160,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                    return touchedSpots.map((spot) {
                                      return LineTooltipItem(
                                        '${spot.y.toStringAsFixed(1)} g',
-                                       const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                       TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold),
                                      );
                                    }).toList();
                                  },
@@ -184,7 +187,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                      final index = value.toInt();
                                      if (index >= 0 && index < sortedWeight.length) {
                                          final date = sortedWeight[index].date;
-                                         return Text(DateFormat('dd/MM').format(date), style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                         return Text(DateFormat('dd/MM').format(date), style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)));
                                      }
                                      return const SizedBox();
                                    },
@@ -234,7 +237,7 @@ class AnalyticsScreen extends ConsumerWidget {
                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                          children: [
                            Text('Daily Mortality Trend', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                           const Icon(LucideIcons.alertTriangle, color: Colors.orange, size: 20),
+                           Icon(LucideIcons.alertTriangle, color: customColors.warning!, size: 20),
                          ],
                        ),
                        const SizedBox(height: 24),
@@ -263,7 +266,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                      final index = value.toInt();
                                      if (index >= 0 && index <= 6) {
                                          final day = DateTime.now().subtract(Duration(days: 6 - index));
-                                         return Text(DateFormat('E').format(day), style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                         return Text(DateFormat('E').format(day), style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)));
                                      }
                                      return const SizedBox();
                                    },
@@ -294,7 +297,7 @@ class AnalyticsScreen extends ConsumerWidget {
                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                          children: [
                            Text('Revenue vs Expenses', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                           const Icon(LucideIcons.dollarSign, color: Colors.green, size: 20),
+                           Icon(LucideIcons.dollarSign, color: customColors.success!, size: 20),
                          ],
                        ),
                        const SizedBox(height: 24),
@@ -308,7 +311,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                    return touchedSpots.map((spot) {
                                      return LineTooltipItem(
                                        spot.y.toStringAsFixed(0),
-                                       const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                       TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold),
                                      );
                                    }).toList();
                                  },
@@ -335,7 +338,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                      final index = value.toInt();
                                      if (index >= 0 && index < financeData.length) {
                                          final name = financeData[index]['name']?.toString() ?? '';
-                                         return Text(name, style: const TextStyle(fontSize: 9, color: Colors.grey));
+                                         return Text(name, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)));
                                      }
                                      return const SizedBox();
                                    },
@@ -399,7 +402,7 @@ class AnalyticsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(20.0),
                         child: Column(
                           children: [
-                            const Icon(LucideIcons.mapPin, size: 48, color: Colors.grey),
+                            Icon(LucideIcons.mapPin, size: 48, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                             const SizedBox(height: 16),
                             Text(benchmarking['message'] ?? 'Set your county in profile to see benchmarks.', textAlign: TextAlign.center),
                           ],
@@ -425,7 +428,7 @@ class AnalyticsScreen extends ConsumerWidget {
                    const SizedBox(height: 24),
                    Text(
                      'Based on data from ${benchmarking['user_count']} farmers in your region.',
-                     style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                      textAlign: TextAlign.center,
                    ),
                  ]

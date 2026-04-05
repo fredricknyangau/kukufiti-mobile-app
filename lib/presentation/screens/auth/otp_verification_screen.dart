@@ -213,7 +213,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       border: Border.all(color: theme.colorScheme.outline),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
+                          color: theme.colorScheme.shadow.withValues(alpha: 0.02),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),

@@ -45,7 +45,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         children: [
           Expanded(
             child: aiState.chatHistory.isEmpty
-                ? const Center(child: Text('Ask me anything about your flock!', style: TextStyle(color: Colors.grey)))
+                ? Center(child: Text('Ask me anything about your flock!', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))))
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
@@ -80,9 +80,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
           ),
 
           if (aiState.isLoading) ...[
-             const Padding(
-               padding: EdgeInsets.symmetric(vertical: 8.0),
-               child: Text('AI is typing...', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+             Padding(
+               padding: const EdgeInsets.symmetric(vertical: 8.0),
+               child: Text('AI is typing...', style: TextStyle(fontStyle: FontStyle.italic, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
              ),
           ],
 

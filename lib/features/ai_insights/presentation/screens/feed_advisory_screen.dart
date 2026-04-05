@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/feed_recommendation.dart';
 import '../providers/ai_insights_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class FeedAdvisoryScreen extends ConsumerStatefulWidget {
   const FeedAdvisoryScreen({super.key});
@@ -42,6 +43,8 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
   @override
   Widget build(BuildContext context) {
     final aiState = ref.watch(aiInsightsProvider);
+    final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
 
     return Scaffold(
       appBar: AppBar(
@@ -57,9 +60,9 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Enter your flock details below and our AI engine will calculate the optimal daily feed allocation based on standard growth curves.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 24),
             Form(
@@ -139,7 +142,7 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
                       minimumSize: const Size.fromHeight(50),
                     ),
                     child: aiState.isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? CircularProgressIndicator(color: theme.colorScheme.onPrimary)
                         : const Text('Calculate Recommendation', style: TextStyle(fontSize: 16)),
                   ),
                 ],
@@ -150,13 +153,13 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: theme.colorScheme.errorContainer,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
+                  border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   aiState.error!,
-                  style: TextStyle(color: Colors.red.shade900),
+                  style: TextStyle(color: theme.colorScheme.error),
                 ),
               ),
             ],
@@ -179,10 +182,10 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Daily Feed Required:', style: TextStyle(color: Colors.grey)),
+                          Text('Daily Feed Required:', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
                           Text(
                             '${aiState.recommendation!.recommendedDailyKg.toStringAsFixed(2)} Kg',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
                           ),
                         ],
                       ),
@@ -190,17 +193,17 @@ class _FeedAdvisoryScreenState extends ConsumerState<FeedAdvisoryScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Growth Sub-Status:', style: TextStyle(color: Colors.grey)),
+                          Text('Growth Sub-Status:', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
                           Chip(
                             label: Text(
                               aiState.recommendation!.statusFlag,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.bold),
                             ),
                             backgroundColor: aiState.recommendation!.statusFlag == 'NORMAL' 
-                                ? Colors.green 
+                                ? customColors.success 
                                 : aiState.recommendation!.statusFlag == 'LOW' 
-                                  ? Colors.orange 
-                                  : Colors.red,
+                                  ? customColors.warning 
+                                  : theme.colorScheme.error,
                           ),
                         ],
                       ),
