@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -76,6 +77,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Widget build(BuildContext context) {
     // Warm Background consistent with onboarding
     final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -91,7 +93,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -102,8 +104,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 'assets/images/chicken_logo.jpeg',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                  child: Icon(Icons.image, size: 50, color: customColors.neutral!),
                 ),
               ),
             ),

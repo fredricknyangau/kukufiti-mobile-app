@@ -22,8 +22,10 @@ class AnalyticsScreen extends ConsumerWidget {
     final weightAsync = ref.watch(weightProvider);
     final mortalityAsync = ref.watch(mortalityProvider);
 
+    final benchmarkingAsync = ref.watch(benchmarkingProvider);
+
     // Provide a simple unified loading/error state if any is loading
-    if (metricsAsync.isLoading || financeAsync.isLoading || weightAsync.isLoading || mortalityAsync.isLoading) {
+    if (metricsAsync.isLoading || financeAsync.isLoading || weightAsync.isLoading || mortalityAsync.isLoading || benchmarkingAsync.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -35,6 +37,7 @@ class AnalyticsScreen extends ConsumerWidget {
     final financeData = financeAsync.value ?? [];
     final List<WeightRecord> weightData = weightAsync.value ?? [];
     final List<MortalityRecord> mortalityDataRaw = mortalityAsync.value ?? [];
+    final benchmarking = benchmarkingAsync.value ?? {};
 
     // Process Growth Data
     final sortedWeight = List<WeightRecord>.from(weightData)
@@ -69,17 +72,19 @@ class AnalyticsScreen extends ConsumerWidget {
     }
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         drawer: const AppDrawer(),
         appBar: AppBar(
           title: const Text('Performance Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
           bottom: const TabBar(
+            isScrollable: true,
             dividerColor: Colors.transparent,
             tabs: [
               Tab(text: 'Growth'),
               Tab(text: 'Health'),
               Tab(text: 'Financial'),
+              Tab(text: 'Regional'),
             ],
           ),
         ),
@@ -382,10 +387,77 @@ class AnalyticsScreen extends ConsumerWidget {
                   ),
                 )
               ],
+            ),
+
+            // Regional Benchmarking Tab
+            ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                 if (benchmarking['county'] == null)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            const Icon(LucideIcons.mapPin, size: 48, color: Colors.grey),
+                            const SizedBox(height: 16),
+                            Text(benchmarking['message'] ?? 'Set your county in profile to see benchmarks.', textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    )
+                 else ...[
+                   Text(
+                     'Benchmarking: ${benchmarking['county']}',
+                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                   ),
+                   const SizedBox(height: 16),
+                   CustomCard(
+                     padding: const EdgeInsets.all(20),
+                     child: Column(
+                       children: [
+                         _buildBenchmarkRow(context, 'Mortality Rate', '${metrics['mortality_rate']}%', '${benchmarking['mortality_avg']}%'),
+                         const Divider(height: 32),
+                         _buildBenchmarkRow(context, 'FCR Rate', '${metrics['fcr_rate']}', '${benchmarking['fcr_avg']}'),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 24),
+                   Text(
+                     'Based on data from ${benchmarking['user_count']} farmers in your region.',
+                     style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                     textAlign: TextAlign.center,
+                   ),
+                 ]
+              ],
             )
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBenchmarkRow(BuildContext context, String label, String userVal, String regionalVal) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Regional Avg: $regionalVal', style: theme.textTheme.bodySmall),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(userVal, style: TextStyle(color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold)),
+        ),
+      ],
     );
   }
 

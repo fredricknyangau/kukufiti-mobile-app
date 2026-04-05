@@ -21,6 +21,9 @@ class VetScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final vetAsync = ref.watch(vetConsultationsProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -94,17 +97,18 @@ class VetScreen extends ConsumerWidget {
                                 style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 11),
                               ),
                             ),
-                            PopupMenuButton<String>(
-                              icon: const Icon(LucideIcons.moreVertical, size: 20),
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _showAddEditConsultationDialog(context, ref, item: consult);
-                                }
-                              },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                              ],
-                            ),
+                            if (canEdit)
+                              PopupMenuButton<String>(
+                                icon: const Icon(LucideIcons.moreVertical, size: 20),
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _showAddEditConsultationDialog(context, ref, item: consult);
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                ],
+                              ),
                           ],
                         ),
                         onTap: () => _showConsultationDetails(context, consult),
@@ -117,11 +121,13 @@ class VetScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditConsultationDialog(context, ref),
-        backgroundColor: theme.colorScheme.primary,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: () => _showAddEditConsultationDialog(context, ref),
+              backgroundColor: theme.colorScheme.primary,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
   void _showAddEditConsultationDialog(BuildContext context, WidgetRef ref, {VetConsultation? item}) {
@@ -144,11 +150,15 @@ class VetScreen extends ConsumerWidget {
               _detailRow('Date', DateFormat('yyyy-MM-dd').format(consult.date)),
               _detailRow('Status', consult.status.toUpperCase()),
               const CustomDivider(),
+              if (consult.symptoms?.isNotEmpty == true) _detailRow('Symptoms', consult.symptoms!),
               _detailRow('Diagnosis', consult.diagnosis?.isNotEmpty == true ? consult.diagnosis! : 'None Recorded'),
               const CustomDivider(),
               _detailRow('Treatment / Rec', consult.treatment?.isNotEmpty == true ? consult.treatment! : 'None Recorded'),
               const CustomDivider(),
               _detailRow('Vet Name', consult.vetName ?? 'Not Assigned'),
+              if (consult.vetPhone?.isNotEmpty == true) _detailRow('Vet Phone', consult.vetPhone!),
+              const CustomDivider(),
+              _detailRow('Notes', consult.notes?.isNotEmpty == true ? consult.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -184,9 +194,12 @@ class _AddEditConsultationDialog extends StatefulWidget {
 class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _reasonController;
+  late final TextEditingController _symptomsController;
   late final TextEditingController _diagnosisController;
   late final TextEditingController _treatmentController;
   late final TextEditingController _vetNameController;
+  late final TextEditingController _vetPhoneController;
+  late final TextEditingController _notesController;
 
   String _status = 'pending';
   bool _isLoading = false;
@@ -195,18 +208,24 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
   void initState() {
     super.initState();
     _reasonController = TextEditingController(text: widget.item?.issue ?? '');
+    _symptomsController = TextEditingController(text: widget.item?.symptoms ?? '');
     _diagnosisController = TextEditingController(text: widget.item?.diagnosis ?? '');
     _treatmentController = TextEditingController(text: widget.item?.treatment ?? '');
     _vetNameController = TextEditingController(text: widget.item?.vetName ?? '');
+    _vetPhoneController = TextEditingController(text: widget.item?.vetPhone ?? '');
+    _notesController = TextEditingController(text: widget.item?.notes ?? '');
     _status = widget.item?.status ?? 'pending';
   }
 
   @override
   void dispose() {
     _reasonController.dispose();
+    _symptomsController.dispose();
     _diagnosisController.dispose();
     _treatmentController.dispose();
     _vetNameController.dispose();
+    _vetPhoneController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -216,11 +235,14 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
 
     final payload = {
       'issue': _reasonController.text.trim(),
+      'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
       'diagnosis': _diagnosisController.text.trim().isEmpty ? null : _diagnosisController.text.trim(),
       'treatment': _treatmentController.text.trim().isEmpty ? null : _treatmentController.text.trim(),
       'vet_name': _vetNameController.text.trim().isEmpty ? null : _vetNameController.text.trim(),
+      'vet_phone': _vetPhoneController.text.trim().isEmpty ? null : _vetPhoneController.text.trim(),
       'date': widget.item?.date != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.item!.date) : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
       'status': _status,
+      'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
     };
 
     try {
@@ -253,10 +275,16 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
               mainAxisSize: MainAxisSize.min,
               children: [
                 CustomInput(
-                  label: 'Issue / Symptoms',
-                  hintText: 'e.g. Lethargy',
+                  label: 'Issue Title',
+                  hintText: 'e.g. Coughing Flock',
                   controller: _reasonController,
                   validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                CustomInput(
+                  label: 'Symptoms observed (Optional)',
+                  hintText: 'e.g. Lethargy, drooping wings',
+                  controller: _symptomsController,
                 ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Diagnosis (Optional)', controller: _diagnosisController),
@@ -268,6 +296,8 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
                 ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Vet Name (Optional)', controller: _vetNameController),
+                const SizedBox(height: 12),
+                CustomInput(label: 'Vet Phone (Optional)', controller: _vetPhoneController, keyboardType: TextInputType.phone),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _status,
@@ -282,6 +312,8 @@ class _AddEditConsultationDialogState extends State<_AddEditConsultationDialog> 
                     if (v != null) setState(() => _status = v);
                   },
                 ),
+                const SizedBox(height: 12),
+                CustomInput(label: 'Notes', controller: _notesController),
               ],
             ),
           ),

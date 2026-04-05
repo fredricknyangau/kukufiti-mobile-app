@@ -25,6 +25,12 @@ class Batch {
   final String? supplier;
   @JsonKey(name: 'source_location')
   final String? sourceLocation;
+  @JsonKey(name: 'hatchery_source')
+  final String? hatcherySource;
+  @JsonKey(name: 'expected_end_date')
+  final DateTime? expectedEndDate;
+  @JsonKey(name: 'farm_id')
+  final String? farmId;
 
   Batch({
     required this.id,
@@ -38,6 +44,9 @@ class Batch {
     this.breed,
     this.supplier,
     this.sourceLocation,
+    this.hatcherySource,
+    this.expectedEndDate,
+    this.farmId,
   });
 
   factory Batch.fromJson(Map<String, dynamic> json) => _$BatchFromJson(json);
@@ -70,6 +79,9 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
   Map<String, dynamic> toJson() => _$UserToJson(this);
+
+  bool get canEdit => role != 'VIEWER';
+  bool get isAdmin => role == 'ADMIN' || isSuperuser == true;
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
@@ -82,6 +94,8 @@ class MortalityRecord {
   final DateTime date;
   final int count;
   final String? cause;
+  final String? symptoms;
+  final String? actionTaken;
   final String? notes;
   @JsonKey(defaultValue: 'death')
   final String type; // 'death' | 'cull'
@@ -92,6 +106,8 @@ class MortalityRecord {
     required this.date,
     required this.count,
     this.cause,
+    this.symptoms,
+    this.actionTaken,
     this.notes,
     required this.type,
   });
@@ -154,6 +170,10 @@ class WeightRecord {
   @JsonKey(name: 'average_weight_grams')
   final double averageWeight;
   final int sampleSize;
+  @JsonKey(name: 'min_weight_grams')
+  final double? minWeightGrams;
+  @JsonKey(name: 'max_weight_grams')
+  final double? maxWeightGrams;
   final String? notes;
 
   WeightRecord({
@@ -162,6 +182,8 @@ class WeightRecord {
     required this.date,
     required this.averageWeight,
     required this.sampleSize,
+    this.minWeightGrams,
+    this.maxWeightGrams,
     this.notes,
   });
 
@@ -178,8 +200,11 @@ class VaccinationRecord {
   @JsonKey(name: 'event_date')
   final DateTime date;
   final String vaccineName;
+  final String? diseaseTarget;
   final String? dosage;
   final String administrationMethod;
+  final String? administeredBy;
+  final String? batchNumber;
   final double? cost;
   final String? notes;
   final DateTime? scheduledDate;
@@ -191,8 +216,11 @@ class VaccinationRecord {
     required this.batchId,
     required this.date,
     required this.vaccineName,
+    this.diseaseTarget,
     this.dosage,
     required this.administrationMethod,
+    this.administeredBy,
+    this.batchNumber,
     this.cost,
     this.notes,
     this.scheduledDate,
@@ -493,4 +521,93 @@ class BatchSummary {
 
   factory BatchSummary.fromJson(Map<String, dynamic> json) => _$BatchSummaryFromJson(json);
   Map<String, dynamic> toJson() => _$BatchSummaryToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class DailyCheck {
+  final String? id;
+  @JsonKey(name: 'flock_id')
+  final String batchId;
+  final DateTime checkDate;
+  final String? checkTime;
+  
+  final double? temperatureCelsius;
+  final double? humidityPercent;
+  final String? chickBehavior; // 'normal', 'huddling', etc.
+  final String? litterCondition; // 'dry', 'damp', etc.
+  final String? feedLevel; // 'full', 'adequate', etc.
+  final String? waterLevel;
+  final String? generalNotes;
+
+  DailyCheck({
+    this.id,
+    required this.batchId,
+    required this.checkDate,
+    this.checkTime,
+    this.temperatureCelsius,
+    this.humidityPercent,
+    this.chickBehavior,
+    this.litterCondition,
+    this.feedLevel,
+    this.waterLevel,
+    this.generalNotes,
+  });
+
+  factory DailyCheck.fromJson(Map<String, dynamic> json) => _$DailyCheckFromJson(json);
+  Map<String, dynamic> toJson() => _$DailyCheckToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class ScheduledTask {
+  final String id;
+  final String title;
+  final String? description;
+  final DateTime dueDate;
+  final String status; // 'PENDING' | 'COMPLETED'
+  final String category;
+  @JsonKey(name: 'flock_id')
+  final String? batchId;
+  final String? recurrenceInterval;
+
+  ScheduledTask({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.dueDate,
+    this.status = 'PENDING',
+    this.category = 'general',
+    this.batchId,
+    this.recurrenceInterval,
+  });
+
+  factory ScheduledTask.fromJson(Map<String, dynamic> json) => _$ScheduledTaskFromJson(json);
+  Map<String, dynamic> toJson() => _$ScheduledTaskToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class AIResponse {
+  final String? statusFlag;
+  final String? reasoningExplanation;
+  final String? alertLevel;
+  final List<String>? recommendations;
+  final List<String>? potentialCauses;
+  final String? response; // For chat
+  final List<String>? actionableHighlights;
+  final double? estimatedDaysToTarget;
+  final double? estimatedFcr;
+
+  AIResponse({
+    this.statusFlag,
+    this.reasoningExplanation,
+    this.alertLevel,
+    this.recommendations,
+    this.potentialCauses,
+    this.response,
+    this.actionableHighlights,
+    this.estimatedDaysToTarget,
+    this.estimatedFcr,
+  });
+
+  factory AIResponse.fromJson(Map<String, dynamic> json) => _$AIResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$AIResponseToJson(this);
 }

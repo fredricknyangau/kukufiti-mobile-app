@@ -12,7 +12,7 @@ enum CustomButtonVariant {
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final CustomButtonVariant variant;
   final bool isLoading;
   final Widget? icon;
@@ -21,7 +21,7 @@ class CustomButton extends StatelessWidget {
   const CustomButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.variant = CustomButtonVariant.primary,
     this.isLoading = false,
     this.icon,
@@ -33,7 +33,7 @@ class CustomButton extends StatelessWidget {
     if (hapticFeedback) {
       HapticFeedback.lightImpact();
     }
-    onPressed();
+    onPressed?.call();
   }
 
   @override
@@ -123,7 +123,7 @@ class CustomButton extends StatelessWidget {
             : null,
       ),
       child: ElevatedButton(
-        onPressed: isLoading ? null : _handlePress,
+        onPressed: (isLoading || onPressed == null) ? null : _handlePress,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: foregroundColor,

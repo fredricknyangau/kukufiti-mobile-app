@@ -13,15 +13,18 @@ class ManageResourcesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resourcesAsync = ref.watch(resourcesProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final canEdit = profileAsync.value?.isAdmin ?? false;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Resources', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showResourceFormDialog(context: context, ref: ref),
         child: const Icon(LucideIcons.plus),
-      ),
+      ) : null,
       body: resourcesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error loading resources: ${e.toString().split('\n').first}')),
@@ -31,29 +34,60 @@ class ManageResourcesScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(resourcesProvider),
-            child: GridView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              children: [
+                if (!canEdit)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.eye, size: 16, color: theme.colorScheme.secondary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'View-Only Mode',
+                          style: TextStyle(
+                            color: theme.colorScheme.secondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
                 childAspectRatio: 0.8,
               ),
               itemCount: guides.length,
-              itemBuilder: (context, index) {
-                final guide = guides[index];
-                IconData iconData = LucideIcons.bookOpen;
-                if (guide['icon'] == 'syringe') iconData = LucideIcons.syringe;
-                if (guide['icon'] == 'alertTriangle') iconData = LucideIcons.alertTriangle;
-                if (guide['icon'] == 'wheat') iconData = LucideIcons.wheat;
+                  itemBuilder: (context, index) {
+                    final guide = guides[index];
+                    IconData iconData = LucideIcons.bookOpen;
+                    if (guide['icon'] == 'syringe') iconData = LucideIcons.syringe;
+                    if (guide['icon'] == 'alertTriangle') iconData = LucideIcons.alertTriangle;
+                    if (guide['icon'] == 'wheat') iconData = LucideIcons.wheat;
 
-                return _buildResourceCard(
-                  context,
-                  ref,
-                  guide,
-                  iconData,
-                );
-              },
+                    return _buildResourceCard(
+                      context,
+                      ref,
+                      guide,
+                      iconData,
+                      canEdit,
+                    );
+                  },
+                ),
+              ],
             ),
           );
 
@@ -62,7 +96,7 @@ class ManageResourcesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildResourceCard(BuildContext context, WidgetRef ref, Map<String, dynamic> guide, IconData icon) {
+  Widget _buildResourceCard(BuildContext context, WidgetRef ref, Map<String, dynamic> guide, IconData icon, bool canEdit) {
     final theme = Theme.of(context);
     final title = guide['title']?.toString() ?? 'Guide';
     final subtitle = guide['description']?.toString() ?? '';
@@ -86,24 +120,25 @@ class ManageResourcesScreen extends ConsumerWidget {
                 ),
                 child: Icon(icon, color: theme.colorScheme.primary, size: 24),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(LucideIcons.pencil, size: 16),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _showResourceFormDialog(context: context, ref: ref, guide: guide),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.red),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _deleteResource(context, ref, id),
-                  ),
-                ],
-              ),
+               if (canEdit)
+                 Row(
+                   mainAxisSize: MainAxisSize.min,
+                   children: [
+                     IconButton(
+                       icon: const Icon(LucideIcons.pencil, size: 16),
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
+                       onPressed: () => _showResourceFormDialog(context: context, ref: ref, guide: guide),
+                     ),
+                     const SizedBox(width: 4),
+                     IconButton(
+                       icon: Icon(LucideIcons.trash2, size: 16, color: theme.colorScheme.error),
+                       padding: EdgeInsets.zero,
+                       constraints: const BoxConstraints(),
+                       onPressed: () => _deleteResource(context, ref, id),
+                     ),
+                   ],
+                 ),
             ],
           ),
           const SizedBox(height: 12),
@@ -251,6 +286,7 @@ class ManageResourcesScreen extends ConsumerWidget {
   }
 
   void _deleteResource(BuildContext context, WidgetRef ref, String id) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -271,7 +307,7 @@ class ManageResourcesScreen extends ConsumerWidget {
               }
 
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
           ),
         ],
       ),

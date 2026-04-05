@@ -18,6 +18,11 @@ Batch _$BatchFromJson(Map<String, dynamic> json) => Batch(
   breed: json['breed'] as String?,
   supplier: json['supplier'] as String?,
   sourceLocation: json['source_location'] as String?,
+  hatcherySource: json['hatchery_source'] as String?,
+  expectedEndDate: json['expected_end_date'] == null
+      ? null
+      : DateTime.parse(json['expected_end_date'] as String),
+  farmId: json['farm_id'] as String?,
 );
 
 Map<String, dynamic> _$BatchToJson(Batch instance) => <String, dynamic>{
@@ -31,12 +36,15 @@ Map<String, dynamic> _$BatchToJson(Batch instance) => <String, dynamic>{
   'notes': instance.notes,
   'breed': instance.breed,
   'supplier': instance.supplier,
-  'sourceLocation': instance.sourceLocation,
+  'source_location': instance.sourceLocation,
+  'hatchery_source': instance.hatcherySource,
+  'expected_end_date': instance.expectedEndDate?.toIso8601String(),
+  'farm_id': instance.farmId,
 };
 
 User _$UserFromJson(Map<String, dynamic> json) => User(
   id: json['id'] as String,
-  email: json['email'] as String,
+  email: json['email'] as String?,
   fullName: json['full_name'] as String?,
   phoneNumber: json['phone_number'] as String?,
   location: json['location'] as String?,
@@ -65,6 +73,8 @@ MortalityRecord _$MortalityRecordFromJson(Map<String, dynamic> json) =>
       date: DateTime.parse(json['event_date'] as String),
       count: (json['count'] as num).toInt(),
       cause: json['cause'] as String?,
+      symptoms: json['symptoms'] as String?,
+      actionTaken: json['action_taken'] as String?,
       notes: json['notes'] as String?,
       type: json['type'] as String? ?? 'death',
     );
@@ -76,6 +86,8 @@ Map<String, dynamic> _$MortalityRecordToJson(MortalityRecord instance) =>
       'event_date': instance.date.toIso8601String(),
       'count': instance.count,
       'cause': instance.cause,
+      'symptoms': instance.symptoms,
+      'action_taken': instance.actionTaken,
       'notes': instance.notes,
       'type': instance.type,
     };
@@ -123,6 +135,8 @@ WeightRecord _$WeightRecordFromJson(Map<String, dynamic> json) => WeightRecord(
   date: DateTime.parse(json['event_date'] as String),
   averageWeight: (json['average_weight_grams'] as num).toDouble(),
   sampleSize: (json['sample_size'] as num).toInt(),
+  minWeightGrams: (json['min_weight_grams'] as num?)?.toDouble(),
+  maxWeightGrams: (json['max_weight_grams'] as num?)?.toDouble(),
   notes: json['notes'] as String?,
 );
 
@@ -133,6 +147,8 @@ Map<String, dynamic> _$WeightRecordToJson(WeightRecord instance) =>
       'event_date': instance.date.toIso8601String(),
       'average_weight_grams': instance.averageWeight,
       'sample_size': instance.sampleSize,
+      'min_weight_grams': instance.minWeightGrams,
+      'max_weight_grams': instance.maxWeightGrams,
       'notes': instance.notes,
     };
 
@@ -142,8 +158,11 @@ VaccinationRecord _$VaccinationRecordFromJson(Map<String, dynamic> json) =>
       batchId: json['flock_id'] as String,
       date: DateTime.parse(json['event_date'] as String),
       vaccineName: json['vaccine_name'] as String,
+      diseaseTarget: json['disease_target'] as String?,
       dosage: json['dosage'] as String?,
       administrationMethod: json['administration_method'] as String,
+      administeredBy: json['administered_by'] as String?,
+      batchNumber: json['batch_number'] as String?,
       cost: (json['cost'] as num?)?.toDouble(),
       notes: json['notes'] as String?,
       scheduledDate: json['scheduled_date'] == null
@@ -158,8 +177,11 @@ Map<String, dynamic> _$VaccinationRecordToJson(VaccinationRecord instance) =>
       'flock_id': instance.batchId,
       'event_date': instance.date.toIso8601String(),
       'vaccine_name': instance.vaccineName,
+      'disease_target': instance.diseaseTarget,
       'dosage': instance.dosage,
       'administration_method': instance.administrationMethod,
+      'administered_by': instance.administeredBy,
+      'batch_number': instance.batchNumber,
       'cost': instance.cost,
       'notes': instance.notes,
       'scheduled_date': instance.scheduledDate?.toIso8601String(),
@@ -430,4 +452,88 @@ Map<String, dynamic> _$BatchSummaryToJson(BatchSummary instance) =>
       'fcr': instance.fcr,
       'total_vaccination_cost': instance.totalVaccinationCost,
       'profit_loss': instance.profitLoss,
+    };
+
+DailyCheck _$DailyCheckFromJson(Map<String, dynamic> json) => DailyCheck(
+  id: json['id'] as String?,
+  batchId: json['flock_id'] as String,
+  checkDate: DateTime.parse(json['check_date'] as String),
+  checkTime: json['check_time'] as String?,
+  temperatureCelsius: (json['temperature_celsius'] as num?)?.toDouble(),
+  humidityPercent: (json['humidity_percent'] as num?)?.toDouble(),
+  chickBehavior: json['chick_behavior'] as String?,
+  litterCondition: json['litter_condition'] as String?,
+  feedLevel: json['feed_level'] as String?,
+  waterLevel: json['water_level'] as String?,
+  generalNotes: json['general_notes'] as String?,
+);
+
+Map<String, dynamic> _$DailyCheckToJson(DailyCheck instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'flock_id': instance.batchId,
+      'check_date': instance.checkDate.toIso8601String(),
+      'check_time': instance.checkTime,
+      'temperature_celsius': instance.temperatureCelsius,
+      'humidity_percent': instance.humidityPercent,
+      'chick_behavior': instance.chickBehavior,
+      'litter_condition': instance.litterCondition,
+      'feed_level': instance.feedLevel,
+      'water_level': instance.waterLevel,
+      'general_notes': instance.generalNotes,
+    };
+
+ScheduledTask _$ScheduledTaskFromJson(Map<String, dynamic> json) =>
+    ScheduledTask(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      dueDate: DateTime.parse(json['due_date'] as String),
+      status: json['status'] as String? ?? 'PENDING',
+      category: json['category'] as String? ?? 'general',
+      batchId: json['flock_id'] as String?,
+      recurrenceInterval: json['recurrence_interval'] as String?,
+    );
+
+Map<String, dynamic> _$ScheduledTaskToJson(ScheduledTask instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'description': instance.description,
+      'due_date': instance.dueDate.toIso8601String(),
+      'status': instance.status,
+      'category': instance.category,
+      'flock_id': instance.batchId,
+      'recurrence_interval': instance.recurrenceInterval,
+    };
+
+AIResponse _$AIResponseFromJson(Map<String, dynamic> json) => AIResponse(
+  statusFlag: json['status_flag'] as String?,
+  reasoningExplanation: json['reasoning_explanation'] as String?,
+  alertLevel: json['alert_level'] as String?,
+  recommendations: (json['recommendations'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  potentialCauses: (json['potential_causes'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  response: json['response'] as String?,
+  actionableHighlights: (json['actionable_highlights'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  estimatedDaysToTarget: (json['estimated_days_to_target'] as num?)?.toDouble(),
+  estimatedFcr: (json['estimated_fcr'] as num?)?.toDouble(),
+);
+
+Map<String, dynamic> _$AIResponseToJson(AIResponse instance) =>
+    <String, dynamic>{
+      'status_flag': instance.statusFlag,
+      'reasoning_explanation': instance.reasoningExplanation,
+      'alert_level': instance.alertLevel,
+      'recommendations': instance.recommendations,
+      'potential_causes': instance.potentialCauses,
+      'response': instance.response,
+      'actionable_highlights': instance.actionableHighlights,
+      'estimated_days_to_target': instance.estimatedDaysToTarget,
+      'estimated_fcr': instance.estimatedFcr,
     };

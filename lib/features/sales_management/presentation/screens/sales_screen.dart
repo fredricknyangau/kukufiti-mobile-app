@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../core/theme/app_theme.dart';
 
 import '../../../../core/network/api_client.dart';
 import 'package:dio/dio.dart';
@@ -26,6 +27,9 @@ class SalesScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final salesAsync = ref.watch(salesProvider);
     final broilerState = ref.watch(broilerProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
     final currentBatch = broilerState.currentBatch;
 
     return Scaffold(
@@ -160,45 +164,47 @@ class SalesScreen extends ConsumerWidget {
                               style: const TextStyle(fontWeight: FontWeight.bold)
                             ),
                             subtitle: Text('${item.quantity} birds - ${DateFormat('MMM dd, yyyy').format(item.date)}'),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) async {
-                                if (value == 'edit') {
-                                  _showAddEditSalesDialog(context, ref, currentBatch, item: item);
-                                } else if (value == 'delete') {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Delete sale?'),
-                                      content: const Text('This action cannot be undone.'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await ApiClient.instance.delete('${ApiEndpoints.sales}/${item.id}');
-                                      ref.invalidate(salesProvider);
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        String message = 'Failed to delete';
-                                        if (e is DioException && e.response?.statusCode == 404) {
-                                          message = 'Record already deleted';
-                                          ref.invalidate(salesProvider);
+                            trailing: canEdit
+                                ? PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert),
+                                    onSelected: (value) async {
+                                      if (value == 'edit') {
+                                        _showAddEditSalesDialog(context, ref, currentBatch, item: item);
+                                      } else if (value == 'delete') {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Delete sale?'),
+                                            content: const Text('This action cannot be undone.'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          try {
+                                            await ApiClient.instance.delete('${ApiEndpoints.sales}/${item.id}');
+                                            ref.invalidate(salesProvider);
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              String message = 'Failed to delete';
+                                              if (e is DioException && e.response?.statusCode == 404) {
+                                                message = 'Record already deleted';
+                                                ref.invalidate(salesProvider);
+                                              }
+                                              ToastService.showError(context, message);
+                                            }
+                                          }
                                         }
-                                        ToastService.showError(context, message);
                                       }
-                                    }
-                                  }
-                                }
-                              },
-                              itemBuilder: (ctx) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-                              ],
-                            ),
+                                    },
+                                    itemBuilder: (ctx) => [
+                                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                      PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
+                                    ],
+                                  )
+                                : null,
                             onTap: () => _showSaleDetails(context, item),
                           ),
                         );
@@ -210,12 +216,14 @@ class SalesScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditSalesDialog(context, ref, currentBatch),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: () => _showAddEditSalesDialog(context, ref, currentBatch),
+              backgroundColor: theme.colorScheme.tertiary,
+              foregroundColor: theme.colorScheme.onTertiary,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
@@ -239,14 +247,17 @@ class SalesScreen extends ConsumerWidget {
               Text('Buyer: ${item.buyerName ?? 'Walk-in'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               if (item.buyerPhone?.isNotEmpty == true) Text('Phone: ${item.buyerPhone}'),
               const CustomDivider(),
-              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
-              _detailRow('Quantity', '${item.quantity} birds'),
-              _detailRow('Price per Bird', 'KES ${item.pricePerBird}'),
-              _detailRow('Total Amount', 'KES ${item.totalAmount}', isBold: true),
+              _detailRow(ctx, 'Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow(ctx, 'Quantity', '${item.quantity} units'),
+              _detailRow(ctx, 'Unit Price', 'KES ${item.pricePerBird.toStringAsFixed(2)}'),
+              _detailRow(ctx, 'Total', 'KES ${item.totalAmount.toStringAsFixed(2)}', isBold: true),
               const CustomDivider(),
-              if (item.averageWeight != null) _detailRow('Avg Weight', '${item.averageWeight} g'),
-              if (item.mpesaTransactionId != null) _detailRow('M-Pesa ID', '${item.mpesaTransactionId}'),
-              if (item.notes?.isNotEmpty == true) _detailRow('Notes', '${item.notes}'),
+              _detailRow(ctx, 'Customer', item.buyerName?.isNotEmpty == true ? item.buyerName! : 'Walk-in'),
+              _detailRow(ctx, 'Phone', item.buyerPhone?.isNotEmpty == true ? item.buyerPhone! : 'N/A'),
+              // Assuming paymentStatus is a field in SaleRecord
+              // _detailRow(ctx, 'Payment', item.paymentStatus.toUpperCase()), // This line was in the instruction but paymentStatus is not in SaleRecord
+              if (item.mpesaTransactionId != null) _detailRow(ctx, 'M-Pesa ID', '${item.mpesaTransactionId}'),
+              if (item.notes?.isNotEmpty == true) _detailRow(ctx, 'Notes', '${item.notes}'),
             ],
           ),
         ),
@@ -255,13 +266,14 @@ class SalesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _detailRow(String label, String value, {bool isBold = false}) {
+  Widget _detailRow(BuildContext context, String label, String value, {bool isBold = false}) {
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(label, style: TextStyle(color: customColors.neutral!)),
           Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         ],
       ),

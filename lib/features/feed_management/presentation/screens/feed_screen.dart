@@ -38,6 +38,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
     final batches = broilerState.batches;
+    final canEdit = profileAsync.value?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -59,12 +60,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           ),
           data: (records) {
              // Filter Logic
-             final filteredRecords = _selectedBatchId == null 
-                 ? records 
+             final filteredRecords = _selectedBatchId == null
+                 ? records
                  : records.where((e) => e.batchId == _selectedBatchId).toList();
 
              final totalAmount = filteredRecords.fold<double>(0, (prev, e) => prev + e.quantity);
-             
+
              // Feed by Type Breakdown
              final feedByType = feedTypes.map((t) {
                final type = t['value'] as String;
@@ -72,14 +73,36 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                return {'type': type, 'label': t['label'] as String, 'quantity': qty};
              }).where((e) => (e['quantity'] as double) > 0).toList();
 
-             final isViewer = profileAsync.value?.role == 'VIEWER';
-
              return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!canEdit)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.eye, size: 16, color: theme.colorScheme.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'View-Only Mode',
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Row(
                     children: [
                       Expanded(
@@ -112,7 +135,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Filter Dropdown
                   DropdownButtonFormField<String?>(
                     initialValue: _selectedBatchId,
@@ -127,12 +150,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                     ],
                     onChanged: (v) => setState(() => _selectedBatchId = v),
                   ),
-                  
+
                   const SizedBox(height: 16),
 
                   // Feed Type Breakdown
                   if (feedByType.isNotEmpty) ...[
-                    Text('Breakdown by Type', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 13, fontWeight: FontWeight.bold)),
+                    Text('Breakdown by Type', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -140,9 +163,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       children: feedByType.map((t) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withAlpha(70),
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: theme.colorScheme.primary.withAlpha(50)),
+                          border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                         ),
                         child: Text('${t['label']}: ${(t['quantity'] as double).toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       )).toList(),
@@ -160,14 +183,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         'Feed Intake Log',
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      TextButton.icon(
-                        onPressed: () => context.push('/feed-calculator'),
-                        icon: const Icon(LucideIcons.calculator, size: 16),
-                        label: const Text('Formulate Feed', style: TextStyle(fontSize: 12)),
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
+                      if (canEdit)
+                        TextButton.icon(
+                          onPressed: () => context.push('/feed-calculator'),
+                          icon: const Icon(LucideIcons.calculator, size: 16),
+                          label: const Text('Formulate Feed', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -178,7 +202,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                           padding: const EdgeInsets.all(24.0),
                           child: Text(
                             'No feed records found for this selection.',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150)),
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ),
                       ),
@@ -190,17 +214,17 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       itemCount: filteredRecords.length,
                       itemBuilder: (context, index) {
                         final item = filteredRecords.reversed.toList()[index];
-                        
+
                         return CustomCard(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                               backgroundColor: theme.colorScheme.primary.withAlpha(25),
+                               backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                                child: Icon(LucideIcons.wheat, color: theme.colorScheme.primary),
                             ),
                             title: Text('${item.quantity} kg - ${item.feedType.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy').format(item.date)),
-                            trailing: isViewer ? null : PopupMenuButton<String>(
+                             trailing: !canEdit ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -250,12 +274,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           },
         ),
       ),
-       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
+       floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showAddEditFeedDialog(context, ref, currentBatch),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(LucideIcons.plus),
-      ),
+      ) : null,
     );
   }
 

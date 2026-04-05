@@ -25,6 +25,9 @@ class ExpendituresScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final expAsync = ref.watch(expendituresProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -148,45 +151,47 @@ class ExpendituresScreen extends ConsumerWidget {
                               style: const TextStyle(fontWeight: FontWeight.bold)
                             ),
                             subtitle: Text('$label - ${DateFormat('MMM dd, yyyy').format(item.date)}'),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) async {
-                                if (value == 'edit') {
-                                  _showAddExpenditureDialog(context, ref, item: item);
-                                } else if (value == 'delete') {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Delete expenditure?'),
-                                      content: const Text('This action cannot be undone.'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await ApiClient.instance.delete('${ApiEndpoints.expenditures}/${item.id}');
-                                      ref.invalidate(expendituresProvider);
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        String message = 'Failed to delete';
-                                        if (e is DioException && e.response?.statusCode == 404) {
-                                          message = 'Record already deleted';
-                                          ref.invalidate(expendituresProvider);
+                            trailing: canEdit 
+                                ? PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert),
+                                    onSelected: (value) async {
+                                      if (value == 'edit') {
+                                        _showAddExpenditureDialog(context, ref, item: item);
+                                      } else if (value == 'delete') {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Delete expenditure?'),
+                                            content: const Text('This action cannot be undone.'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          try {
+                                            await ApiClient.instance.delete('${ApiEndpoints.expenditures}/${item.id}');
+                                            ref.invalidate(expendituresProvider);
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              String message = 'Failed to delete';
+                                              if (e is DioException && e.response?.statusCode == 404) {
+                                                message = 'Record already deleted';
+                                                ref.invalidate(expendituresProvider);
+                                              }
+                                              ToastService.showError(context, message);
+                                            }
+                                          }
                                         }
-                                        ToastService.showError(context, message);
                                       }
-                                    }
-                                  }
-                                }
-                              },
-                              itemBuilder: (ctx) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-                              ],
-                            ),
+                                    },
+                                    itemBuilder: (ctx) => const [
+                                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                      PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                                    ],
+                                  )
+                                : null,
                             onTap: () => _showExpenditureDetails(context, item),
                           ),
                         );
@@ -198,12 +203,14 @@ class ExpendituresScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddExpenditureDialog(context, ref),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: () => _showAddExpenditureDialog(context, ref),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
@@ -271,6 +278,8 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
   final _newInvNameController = TextEditingController();
   final _newInvUnitController = TextEditingController();
   final _quantityController = TextEditingController();
+  final _mpesaController = TextEditingController();
+  final _unitController = TextEditingController();
 
   String _category = expenseCategories.first['value'] as String;
   String? _selectedBatchId;
@@ -290,6 +299,8 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
       _selectedInventoryId = widget.item!.inventoryItemId;
       _quantityController.text = widget.item!.quantity?.toString() ?? '';
       _selectedSupplierId = widget.item!.supplierId;
+      _mpesaController.text = widget.item!.mpesaTransactionId ?? '';
+      _unitController.text = widget.item!.unit ?? '';
     }
   }
 
@@ -300,6 +311,8 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
     _newInvNameController.dispose();
     _newInvUnitController.dispose();
     _quantityController.dispose();
+    _mpesaController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -322,6 +335,8 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
       'newInventoryUnit': _createInventoryItem ? _newInvUnitController.text.trim() : null,
       'quantity': double.tryParse(_quantityController.text) ?? 0,
       'supplierId': _selectedSupplierId,
+      'mpesaTransactionId': _mpesaController.text.trim().isEmpty ? null : _mpesaController.text.trim(),
+      'unit': _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
     };
 
     try {
@@ -467,6 +482,12 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
                           },
                         ),
                         const SizedBox(height: 12),
+                        CustomInput(
+                          label: 'Quantity Unit (Optional)',
+                          hintText: 'e.g. bags, kg',
+                          controller: _unitController,
+                        ),
+                        const SizedBox(height: 12),
                       ],
                       if (_selectedInventoryId == null) ...[
                         CheckboxListTile(
@@ -502,6 +523,12 @@ class _AddExpenditureDialogState extends ConsumerState<_AddExpenditureDialog> {
                           const SizedBox(height: 12),
                         ],
                       ],
+                      CustomInput(
+                        label: 'M-Pesa Transaction ID (Optional)',
+                        hintText: 'e.g. QKZ2LM...',
+                        controller: _mpesaController,
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   );
                 },

@@ -29,6 +29,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final inventoryAsync = ref.watch(inventoryProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -126,43 +129,44 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                       ),
                                     ),
                                   ),
-                                  PopupMenuButton<String>(
-                                    icon: const Icon(LucideIcons.moreVertical, size: 20),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onSelected: (value) async {
-                                      if (value == 'edit') {
-                                        _showAddEditItemDialog(context, ref, item: item);
-                                      } else if (value == 'restock') {
-                                        _showAddEditItemDialog(context, ref, item: item, isRestock: true);
-                                      } else if (value == 'delete') {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text('Delete Item?'),
-                                            content: const Text('This action cannot be undone.'),
-                                            actions: [
-                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirm == true) {
-                                          try {
-                                            await ApiClient.instance.delete('${ApiEndpoints.inventory}${item.id}');
-                                            ref.invalidate(inventoryProvider);
-                                          } catch (e) {
-                                            if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
+                                  if (canEdit)
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(LucideIcons.moreVertical, size: 20),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onSelected: (value) async {
+                                        if (value == 'edit') {
+                                          _showAddEditItemDialog(context, ref, item: item);
+                                        } else if (value == 'restock') {
+                                          _showAddEditItemDialog(context, ref, item: item, isRestock: true);
+                                        } else if (value == 'delete') {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: const Text('Delete Item?'),
+                                              content: const Text('This action cannot be undone.'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            try {
+                                              await ApiClient.instance.delete('${ApiEndpoints.inventory}${item.id}');
+                                              ref.invalidate(inventoryProvider);
+                                            } catch (e) {
+                                              if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
+                                            }
                                           }
                                         }
-                                      }
-                                    },
-                                    itemBuilder: (context) => const [
-                                      PopupMenuItem(value: 'restock', child: Text('Update Stock')),
-                                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                      PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-                                    ],
-                                  ),
+                                      },
+                                      itemBuilder: (context) => const [
+                                        PopupMenuItem(value: 'restock', child: Text('Update Stock')),
+                                        PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                        PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                                      ],
+                                    ),
                                 ],
                               ),
                               onTap: () => _showItemHistory(context, ref, item),
@@ -177,12 +181,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditItemDialog(context, ref),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: () => _showAddEditItemDialog(context, ref),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 

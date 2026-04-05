@@ -44,12 +44,18 @@ class PeopleScreen extends StatelessWidget {
         ),
         floatingActionButton: Consumer(
           builder: (context, ref, child) {
+            final profileAsync = ref.watch(profileProvider);
+            final canEdit = profileAsync.value?.canEdit ?? false;
+            
+            if (!canEdit) return const SizedBox.shrink();
+
             return FloatingActionButton(
               onPressed: () {
                 final sub = ref.read(subscriptionProvider).value;
                 final plan = sub?['plan_type'] ?? 'STARTER';
+                final isAdmin = profileAsync.value?.isAdmin == true;
                 
-                if (plan == 'STARTER') {
+                if (!isAdmin && plan == 'STARTER') {
                    final suppliers = ref.read(suppliersProvider).value?.length ?? 0;
                    final customers = ref.read(customersProvider).value?.length ?? 0;
                    final employees = ref.read(employeesProvider).value?.length ?? 0;
@@ -94,22 +100,21 @@ void _showAddPersonSheet(BuildContext context, WidgetRef ref, {dynamic item, Str
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (context) => _AddPersonSheet(ref: ref, item: item, initialType: initialType),
+    builder: (context) => _AddPersonSheet(item: item, initialType: initialType),
   );
 }
 
-class _AddPersonSheet extends StatefulWidget {
-  final WidgetRef ref;
+class _AddPersonSheet extends ConsumerStatefulWidget {
   final dynamic item;
   final String? initialType;
 
-  const _AddPersonSheet({required this.ref, this.item, this.initialType});
+  const _AddPersonSheet({this.item, this.initialType});
 
   @override
-  State<_AddPersonSheet> createState() => _AddPersonSheetState();
+  ConsumerState<_AddPersonSheet> createState() => _AddPersonSheetState();
 }
 
-class _AddPersonSheetState extends State<_AddPersonSheet> {
+class _AddPersonSheetState extends ConsumerState<_AddPersonSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -206,9 +211,9 @@ class _AddPersonSheetState extends State<_AddPersonSheet> {
 
       if (mounted) {
         ToastService.showSuccess(context, '$_selectedType ${widget.item != null ? 'updated' : 'added'} successfully');
-        if (_selectedType == 'Supplier') widget.ref.invalidate(suppliersProvider);
-        if (_selectedType == 'Customer') widget.ref.invalidate(customersProvider);
-        if (_selectedType == 'Employee') widget.ref.invalidate(employeesProvider);
+        if (_selectedType == 'Supplier') ref.invalidate(suppliersProvider);
+        if (_selectedType == 'Customer') ref.invalidate(customersProvider);
+        if (_selectedType == 'Employee') ref.invalidate(employeesProvider);
         Navigator.pop(context);
       }
     } catch (e) {
@@ -314,13 +319,31 @@ class _AddPersonSheetState extends State<_AddPersonSheet> {
                       .toList(),
                   onChanged: (v) => setState(() => _employeeRole = v!),
                 ),
+                if (ref.watch(profileProvider).value?.isAdmin ?? false) ...[
+                  const SizedBox(height: 16),
+                  CustomInput(label: 'Salary (KES)', controller: _salaryController, keyboardType: TextInputType.number),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Active Status'),
+                    value: _isActive,
+                    onChanged: (v) => setState(() => _isActive = v),
+                  ),
+                ],
                 const SizedBox(height: 16),
-                CustomInput(label: 'Salary (KES)', controller: _salaryController, keyboardType: TextInputType.number),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  title: const Text('Active Status'),
-                  value: _isActive,
-                  onChanged: (v) => setState(() => _isActive = v),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Start Date'),
+                  subtitle: Text(DateFormat('yyyy-MM-dd').format(_startDate)),
+                  trailing: const Icon(LucideIcons.calendar),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _startDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) setState(() => _startDate = picked);
+                  },
                 ),
               ],
 
@@ -438,39 +461,48 @@ class _PeopleListState<T> extends ConsumerState<_PeopleList<T>> {
                               padding: const EdgeInsets.only(top: 4.0),
                               child: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                             ),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(LucideIcons.moreVertical, size: 20),
-                              onSelected: (value) async {
-                                if (value == 'edit') {
-                                  _showAddPersonSheet(context, ref, item: person, initialType: widget.type);
-                                } else if (value == 'delete') {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text('Delete ${widget.type}?'),
-                                      content: const Text('This action cannot be undone.'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await ApiClient.instance.delete('${ApiEndpoints.people(endpointType)}/${person.id}');
-                                      if (T == Supplier) ref.invalidate(suppliersProvider);
-                                      if (T == Customer) ref.invalidate(customersProvider);
-                                      if (T == Employee) ref.invalidate(employeesProvider);
-                                    } catch (e) {
-                                      if (context.mounted) ToastService.showError(context, 'Failed to delete');
+                            trailing: Consumer(
+                              builder: (context, ref, child) {
+                                final profileAsync = ref.watch(profileProvider);
+                                final canEdit = profileAsync.value?.canEdit ?? false;
+                                
+                                if (!canEdit) return const SizedBox.shrink();
+
+                                return PopupMenuButton<String>(
+                                  icon: const Icon(LucideIcons.moreVertical, size: 20),
+                                  onSelected: (value) async {
+                                    if (value == 'edit') {
+                                      _showAddPersonSheet(context, ref, item: person, initialType: widget.type);
+                                    } else if (value == 'delete') {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: Text('Delete ${widget.type}?'),
+                                          content: const Text('This action cannot be undone.'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm == true) {
+                                        try {
+                                          await ApiClient.instance.delete('${ApiEndpoints.people(endpointType)}/${person.id}');
+                                          if (T == Supplier) ref.invalidate(suppliersProvider);
+                                          if (T == Customer) ref.invalidate(customersProvider);
+                                          if (T == Employee) ref.invalidate(employeesProvider);
+                                        } catch (e) {
+                                          if (context.mounted) ToastService.showError(context, 'Failed to delete');
+                                        }
+                                      }
                                     }
-                                  }
-                                }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                    const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                                  ],
+                                );
                               },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-                              ],
                             ),
                           ),
                         ),

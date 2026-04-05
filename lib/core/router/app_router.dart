@@ -46,6 +46,10 @@ import '../../features/ai_insights/presentation/screens/harvest_prediction_scree
 import '../../features/ai_insights/presentation/screens/disease_risk_screen.dart';
 import '../../features/ai_insights/presentation/screens/fcr_insights_screen.dart';
 import '../../features/ai_insights/presentation/screens/ai_chat_screen.dart';
+import '../../features/ai_insights/presentation/screens/voice_observation_screen.dart';
+import '../../features/ai_insights/presentation/screens/harvest_optimization_screen.dart';
+import '../../presentation/screens/features/daily_checks_screen.dart';
+import '../../presentation/screens/features/tasks_screen.dart';
 
 // Financials
 import '../../features/expenses_management/presentation/screens/financials_screen.dart';
@@ -71,6 +75,9 @@ import '../../features/admin_dashboard_management/presentation/screens/manage_us
 
 // Farm Management
 import '../../features/farm_management/presentation/screens/farms_screen.dart';
+import 'package:mobile/features/community_management/presentation/screens/community_feed_screen.dart';
+import 'package:mobile/features/community_management/presentation/screens/post_detail_screen.dart';
+import 'package:mobile/features/community_management/presentation/screens/create_post_screen.dart';
 
 
 
@@ -231,6 +238,29 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/calendar',
                 builder: (context, state) => const CalendarScreen(),
               ),
+              GoRoute(
+                path: '/daily-checks',
+                builder: (context, state) => const DailyChecksScreen(),
+              ),
+              GoRoute(
+                path: '/tasks',
+                builder: (context, state) => const TasksScreen(),
+              ),
+              GoRoute(
+                path: '/community',
+                builder: (context, state) => const CommunityFeedScreen(),
+              ),
+              GoRoute(
+                path: '/community/post',
+                builder: (context, state) {
+                   final id = state.extra as String? ?? '';
+                   return PostDetailScreen(postId: id);
+                },
+              ),
+              GoRoute(
+                path: '/community/create',
+                builder: (context, state) => const CreatePostScreen(),
+              ),
             ],
           ),
           
@@ -285,6 +315,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/ai-chat',
                 builder: (context, state) => const AiChatScreen(),
+              ),
+              GoRoute(
+                path: '/ai-voice-observation',
+                builder: (context, state) => const VoiceObservationScreen(),
+              ),
+              GoRoute(
+                path: '/ai-profit-optimizer',
+                builder: (context, state) => const HarvestOptimizationScreen(),
               ),
             ],
           ),

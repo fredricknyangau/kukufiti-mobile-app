@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../widgets/custom_card.dart';
 import '../../widgets/public_drawer.dart';
 import '../../widgets/public_mesh_background.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class FeaturesScreen extends StatelessWidget {
   const FeaturesScreen({super.key});
@@ -11,17 +12,18 @@ class FeaturesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
 
     final List<Map<String, dynamic>> items = [
       {'title': 'Financial Analytics', 'desc': 'Gain deep insights into your farm\'s profitability per batch.', 'icon': LucideIcons.barChart3, 'color': theme.colorScheme.primary},
-      {'title': 'Mortality Monitoring', 'desc': 'Log daily mortality trends and receive automated threshold alerts.', 'icon': LucideIcons.activity, 'color': const Color(0xFFF43F5E)},
-      {'title': 'Conversion Optimize', 'desc': 'Monitor FCR (Feed Conversion Ratio) in real-time to save feed.', 'icon': LucideIcons.trendingUp, 'color': Colors.blueAccent},
-      {'title': 'Biosecurity Logs', 'desc': 'Maintain tamper-proof records of critical safety biosecurity logs.', 'icon': LucideIcons.shieldCheck, 'color': Colors.indigoAccent},
-      {'title': 'Task Scheduling', 'desc': 'Schedule vaccinations and routine tasks with integrated reminders.', 'icon': LucideIcons.checkCircle, 'color': Colors.purpleAccent},
-      {'title': 'Team Collaboration', 'desc': 'Assign roles and permissions to staff and farm managers.', 'icon': LucideIcons.users, 'color': Colors.tealAccent},
-      {'title': 'Mobile-First Design', 'desc': 'Manage your farm from field using optimized responsive setup.', 'icon': LucideIcons.smartphone, 'color': Colors.cyan},
-      {'title': 'Cloud Backup', 'desc': 'Automatic cloud backups and enterprise-grade security safety.', 'icon': LucideIcons.cloud, 'color': Colors.blueGrey},
-      {'title': 'Real-time Alerts', 'desc': 'React instantly to missed vaccinations or mortality triggers.', 'icon': LucideIcons.clock, 'color': Colors.orangeAccent},
+      {'title': 'Mortality Monitoring', 'desc': 'Log daily mortality trends and receive automated threshold alerts.', 'icon': LucideIcons.activity, 'color': theme.colorScheme.error},
+      {'title': 'Conversion Optimize', 'desc': 'Monitor FCR (Feed Conversion Ratio) in real-time to save feed.', 'icon': LucideIcons.trendingUp, 'color': customColors.info!},
+      {'title': 'Biosecurity Logs', 'desc': 'Maintain tamper-proof records of critical safety biosecurity logs.', 'icon': LucideIcons.shieldCheck, 'color': customColors.indigo!},
+      {'title': 'Task Scheduling', 'desc': 'Schedule vaccinations and routine tasks with integrated reminders.', 'icon': LucideIcons.checkCircle, 'color': customColors.purple!},
+      {'title': 'Team Collaboration', 'desc': 'Assign roles and permissions to staff and farm managers.', 'icon': LucideIcons.users, 'color': customColors.teal!},
+      {'title': 'Mobile-First Design', 'desc': 'Manage your farm from field using optimized responsive setup.', 'icon': LucideIcons.smartphone, 'color': customColors.teal!},
+      {'title': 'Cloud Backup', 'desc': 'Automatic cloud backups and enterprise-grade security safety.', 'icon': LucideIcons.cloud, 'color': customColors.neutral!},
+      {'title': 'Real-time Alerts', 'desc': 'React instantly to missed vaccinations or mortality triggers.', 'icon': LucideIcons.clock, 'color': customColors.warning!},
     ];
 
     return Scaffold(

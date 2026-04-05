@@ -22,13 +22,17 @@ class AppDrawer extends ConsumerWidget {
 
     String? getRequiredPlan(String route) {
       if (['/audit-logs', '/farms', '/admin'].contains(route)) return 'ENTERPRISE';
-      if (['/inventory', '/alerts', '/analytics', '/reports', '/market', '/vet', '/biosecurity', '/calendar'].contains(route)) {
+      if ([
+        '/inventory', '/alerts', '/analytics', '/reports', '/market', '/vet', 
+        '/biosecurity', '/calendar', '/ai-insights-hub', '/daily-checks', '/tasks'
+      ].contains(route)) {
         return 'PROFESSIONAL';
       }
       return null;
     }
 
     bool hasAccess(String route) {
+      if (user?.isAdmin == true) return true;
       final required = getRequiredPlan(route);
       if (required == null) return true;
       if (plan == 'ENTERPRISE') return true;
@@ -230,6 +234,8 @@ class AppDrawer extends ConsumerWidget {
                       buildDrawerItem('Feed', '/feed', LucideIcons.wheat),
                       buildDrawerItem('Weight', '/weight', LucideIcons.scale),
                       buildDrawerItem('Vaccinations', '/vaccinations', LucideIcons.syringe),
+                      buildDrawerItem('AI Advisory', '/ai-insights-hub', LucideIcons.sparkles),
+                      buildDrawerItem('Daily Checks', '/daily-checks', LucideIcons.clipboardList),
                     ],
                     icon: LucideIcons.activity,
                     initiallyExpanded: [
@@ -257,6 +263,7 @@ class AppDrawer extends ConsumerWidget {
                     [
                       buildDrawerItem('People', '/people', LucideIcons.users),
                       buildDrawerItem('Calendar', '/calendar', LucideIcons.calendar),
+                      buildDrawerItem('Tasks', '/tasks', LucideIcons.checkSquare),
                       buildDrawerItem('Inventory', '/inventory', LucideIcons.archive),
                       buildDrawerItem('Biosecurity', '/biosecurity', LucideIcons.clipboardCheck),
                       buildDrawerItem('Reports', '/reports', LucideIcons.fileText),

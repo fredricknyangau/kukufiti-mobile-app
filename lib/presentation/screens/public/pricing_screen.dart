@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_theme.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -89,7 +90,7 @@ class _PricingScreenState extends State<PricingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildToggleItem('Monthly', !_isAnnual),
-                      _buildToggleItem('Anually (-20%)', _isAnnual),
+                      _buildToggleItem('Annually', _isAnnual),
                     ],
                   ),
                 ).animate().fadeIn(delay: 400.ms),
@@ -104,11 +105,11 @@ class _PricingScreenState extends State<PricingScreen> {
                     final index = entry.key;
                     final plan = entry.value;
                     final price = _isAnnual 
-                        ? (plan['annual_price'] ?? plan['monthly_price'])
+                        ? (plan['yearly_price'] ?? plan['monthly_price'])
                         : plan['monthly_price'];
                     final period = _isAnnual 
-                        ? (plan['annual_price'] != null ? '/year' : plan['period'])
-                        : plan['period'];
+                        ? (plan['yearly_price'] != null ? '/year' : '/mo')
+                        : '/mo';
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 24),
@@ -117,10 +118,11 @@ class _PricingScreenState extends State<PricingScreen> {
                         title: plan['name'],
                         price: price,
                         period: period,
-                        desc: plan['description'],
-                        features: List<String>.from(plan['features']),
-                        isPremium: plan['popular'],
-                        cta: plan['cta'] ?? 'Get Started',
+                        desc: plan['description'] ?? '',
+                        features: List<String>.from(plan['features'] ?? []),
+                        isPremium: plan['popular'] ?? false,
+                        showDiscount: plan['show_discount'] ?? true, // Support marketing toggle
+                        cta: plan['cta'] ?? (plan['plan_type'] == 'ENTERPRISE' ? 'Contact Sales' : 'Get Started'),
                         onPressed: () => _handleGetStarted(plan),
                       ),
                     ).animate().fadeIn(delay: (600 + index * 100).ms, duration: 600.ms).slideY(begin: 0.1, end: 0);
@@ -136,7 +138,7 @@ class _PricingScreenState extends State<PricingScreen> {
   Widget _buildToggleItem(String label, bool isActive) {
     final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () => setState(() => _isAnnual = label.startsWith('Anu') || label.contains('(-20%)')),
+      onTap: () => setState(() => _isAnnual = label.startsWith('Ann') || label.contains('(-20%)')),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -163,6 +165,7 @@ class _PricingScreenState extends State<PricingScreen> {
     required String desc,
     required List<String> features,
     required bool isPremium,
+    required bool showDiscount,
     required String cta,
     required VoidCallback onPressed,
   }) {
@@ -191,7 +194,23 @@ class _PricingScreenState extends State<PricingScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-                if (isPremium)
+                if (showDiscount && _isAnnual && title.toUpperCase().contains('PROFESSIONAL'))
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.extension<CustomColors>()!.success!.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Best Value',
+                      style: TextStyle(
+                        color: theme.extension<CustomColors>()!.success!,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                else if (isPremium)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -250,12 +269,12 @@ class _PricingScreenState extends State<PricingScreen> {
       return;
     }
 
-    if (plan['id'] == 'STARTER') {
+    if (plan['plan_type'] == 'STARTER') {
       if (mounted) context.go('/dashboard');
       return;
     }
 
-    if (plan['id'] == 'ENTERPRISE') {
+    if (plan['plan_type'] == 'ENTERPRISE') {
       if (mounted) context.push('/contact');
       return;
     }
@@ -279,7 +298,7 @@ class _PricingScreenState extends State<PricingScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Amount: ${_isAnnual ? (plan['annual_price'] ?? plan['monthly_price']) : plan['monthly_price']}'),
+                Text('Amount: Ksh ${_isAnnual ? (plan['yearly_price'] ?? plan['monthly_price']) : plan['monthly_price']}'),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: phoneController,
@@ -320,7 +339,7 @@ class _PricingScreenState extends State<PricingScreen> {
   void _submitSubscription(Map<String, dynamic> plan, String phone) async {
     try {
       final payload = {
-        'plan_type': plan['id'],
+        'plan_type': plan['plan_type'],
         'billing_period': _isAnnual ? 'yearly' : 'monthly',
         'phone_number': phone,
       };

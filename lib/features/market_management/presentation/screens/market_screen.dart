@@ -20,6 +20,9 @@ class MarketScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final marketAsync = ref.watch(marketPricesProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -62,19 +65,20 @@ class MarketScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        PopupMenuButton<String>(
-                          icon: const Icon(LucideIcons.moreVertical, size: 20),
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              _showAddPriceDialog(context, ref, item: item);
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          ],
-                        ),
+                        if (canEdit)
+                          PopupMenuButton<String>(
+                            icon: const Icon(LucideIcons.moreVertical, size: 20),
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _showAddPriceDialog(context, ref, item: item);
+                              }
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -84,19 +88,24 @@ class MarketScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddPriceDialog(context, ref),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: () => _showAddPriceDialog(context, ref),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
   void _showAddPriceDialog(BuildContext context, WidgetRef ref, {MarketPrice? item}) {
-    final priceController = TextEditingController(text: item != null ? item.pricePerKg.toString() : '');
+    final priceController = TextEditingController(text: item?.pricePerKg.toString() ?? '');
+    final birdPriceController = TextEditingController(text: item?.pricePerBird?.toString() ?? '');
     final marketController = TextEditingController(text: item?.town ?? '');
     final countyController = TextEditingController(text: item?.county ?? '');
+    final sourceController = TextEditingController(text: item?.source ?? '');
+    final notesController = TextEditingController(text: item?.notes ?? '');
     bool isLoading = false;
 
     showDialog(
@@ -109,9 +118,15 @@ class MarketScreen extends ConsumerWidget {
             children: [
               CustomInput(label: 'Price (KES/kg)', keyboardType: const TextInputType.numberWithOptions(decimal: true), controller: priceController),
               const SizedBox(height: 12),
+              CustomInput(label: 'Price per Bird (KES, Optional)', keyboardType: const TextInputType.numberWithOptions(decimal: true), controller: birdPriceController),
+              const SizedBox(height: 12),
               CustomInput(label: 'Market Name', hintText: 'e.g. City Market', controller: marketController),
               const SizedBox(height: 12),
               CustomInput(label: 'County', hintText: 'e.g. Nairobi', controller: countyController),
+              const SizedBox(height: 12),
+              CustomInput(label: 'Source (Optional)', hintText: 'e.g. News, Vendor', controller: sourceController),
+              const SizedBox(height: 12),
+              CustomInput(label: 'Notes', controller: notesController),
             ],
           ),
           actions: [
@@ -127,8 +142,11 @@ class MarketScreen extends ConsumerWidget {
                   final payload = {
                     'price_date': DateTime.now().toIso8601String().split('T')[0],
                     'price_per_kg': price,
+                    'price_per_bird': birdPriceController.text.trim().isEmpty ? null : double.tryParse(birdPriceController.text.trim()),
                     'town': marketController.text.trim().isEmpty ? 'General' : marketController.text.trim(),
                     'county': countyController.text.trim().isEmpty ? 'N/A' : countyController.text.trim(),
+                    'source': sourceController.text.trim().isEmpty ? null : sourceController.text.trim(),
+                    'notes': notesController.text.trim().isEmpty ? null : notesController.text.trim(),
                   };
 
                   if (item != null) {

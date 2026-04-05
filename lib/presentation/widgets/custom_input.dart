@@ -12,6 +12,7 @@ class CustomInput extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final int? maxLines;
   final FocusNode? focusNode;
+  final bool enabled;
 
   const CustomInput({
     super.key,
@@ -26,6 +27,7 @@ class CustomInput extends StatelessWidget {
     this.onChanged,
     this.maxLines = 1,
     this.focusNode,
+    this.enabled = true,
   });
 
   @override
@@ -54,6 +56,7 @@ class CustomInput extends StatelessWidget {
           onChanged: onChanged,
           maxLines: maxLines,
           focusNode: focusNode,
+          enabled: enabled,
           style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
           decoration: InputDecoration(
             hintText: hintText,

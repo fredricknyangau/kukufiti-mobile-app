@@ -62,7 +62,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> fetchFeedRecommendation(FeedRecommendationRequest request) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_advisory')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_advisory')) {
       state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
       return;
     }
@@ -82,7 +83,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> fetchMortalityAnalysis(MortalityAnalysisRequest request) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_advisory')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_advisory')) {
       state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
       return;
     }
@@ -102,7 +104,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> fetchHarvestPrediction(HarvestPredictionRequest request) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_advisory')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_advisory')) {
       state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
       return;
     }
@@ -122,7 +125,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> fetchDiseaseRisk(DiseaseRiskRequest request) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_advisory')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_advisory')) {
       state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
       return;
     }
@@ -142,7 +146,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> fetchFcrInsights(FcrInsightsRequest request) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_advisory')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_advisory')) {
       state = state.copyWith(error: 'AI Advisory requires an Enterprise Plan');
       return;
     }
@@ -162,7 +167,8 @@ class AiInsightsNotifier extends Notifier<AiInsightsState> {
 
   Future<void> sendMessage(String text) async {
     final features = List<String>.from(ref.read(planDetailsProvider).value?['features'] ?? []);
-    if (!features.contains('ai_chat')) {
+    final isAdmin = ref.read(profileProvider).value?.isAdmin == true;
+    if (!isAdmin && !features.contains('ai_chat')) {
       state = state.copyWith(error: 'AI Chat requires an Enterprise Plan');
       return;
     }

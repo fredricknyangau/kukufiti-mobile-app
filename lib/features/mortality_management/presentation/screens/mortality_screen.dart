@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../core/theme/app_theme.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -35,6 +37,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
     final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
+    final canEdit = profileAsync.value?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -79,14 +82,36 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
               spots.add(FlSpot((6 - i).toDouble(), countToday.toDouble()));
             }
 
-            final isViewer = profileAsync.value?.role == 'VIEWER';
-
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!canEdit)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.eye, size: 16, color: theme.colorScheme.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'View-Only Mode',
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   DropdownButtonFormField<String?>(
                     initialValue: _selectedBatchId,
                     decoration: InputDecoration(
@@ -115,7 +140,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Total Mortality', style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14)),
+                              Text('Total Mortality', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14)),
                               const SizedBox(height: 4),
                               Text('$totalMortality birds dead', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.error)),
                             ],
@@ -171,7 +196,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                                   dotData: const FlDotData(show: true),
                                   belowBarData: BarAreaData(
                                     show: true,
-                                    color: theme.colorScheme.error.withAlpha(50),
+                                    color: theme.colorScheme.error.withValues(alpha: 0.2),
                                   ),
                                 ),
                               ],
@@ -194,7 +219,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                           padding: const EdgeInsets.all(24.0),
                           child: Text(
                             'No recent mortality records.',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150)),
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ),
                       ),
@@ -211,12 +236,12 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                               backgroundColor: theme.colorScheme.error.withAlpha(25),
+                               backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
                                child: Icon(Icons.warning, color: theme.colorScheme.error),
                             ),
                             title: Text('${item.count} birds lost', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy - HH:mm').format(item.date)),
-                            trailing: isViewer ? null : PopupMenuButton<String>(
+                            trailing: !canEdit ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -229,7 +254,7 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                                       content: const Text('This action cannot be undone.'),
                                       actions: [
                                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                                       ],
                                     ),
                                   );
@@ -250,9 +275,9 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
                                   }
                                 }
                               },
-                              itemBuilder: (ctx) => const [
-                                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                              itemBuilder: (ctx) => [
+                                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
                               ],
                             ),
                             onTap: () => _showMortalityDetails(context, item),
@@ -266,12 +291,12 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
           },
         ),
       ),
-       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
+       floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showAddEditMortalityDialog(context, ref, currentBatch),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        foregroundColor: theme.colorScheme.onError,
         child: const Icon(Icons.add),
-      ),
+      ) : null,
     );
   }
 
@@ -292,13 +317,15 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
-              _detailRow('Count', '${item.count} birds'),
-              _detailRow('Type', item.type.toUpperCase()),
+              _detailRow(ctx, 'Date', DateFormat('yyyy-MM-dd').format(item.date)),
+              _detailRow(ctx, 'Count', '${item.count} birds'),
+              _detailRow(ctx, 'Type', item.type.toUpperCase()),
               const CustomDivider(),
-              _detailRow('Cause', item.cause?.isNotEmpty == true ? item.cause! : 'None Recorded'),
+              _detailRow(ctx, 'Cause', item.cause?.isNotEmpty == true ? item.cause! : 'None Recorded'),
+              if (item.symptoms?.isNotEmpty == true) _detailRow(ctx, 'Symptoms', item.symptoms!),
+              if (item.actionTaken?.isNotEmpty == true) _detailRow(ctx, 'Action Taken', item.actionTaken!),
               const CustomDivider(),
-              _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
+              _detailRow(ctx, 'Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
           ),
         ),
@@ -307,13 +334,14 @@ class _MortalityScreenState extends ConsumerState<MortalityScreen> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(BuildContext context, String label, String value) {
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: customColors.neutral!)),
           const SizedBox(height: 2),
           Text(value, style: const TextStyle(fontSize: 16)),
         ],
@@ -336,6 +364,8 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _countController;
   late final TextEditingController _causeController;
+  late final TextEditingController _symptomsController;
+  late final TextEditingController _actionTakenController;
   late final TextEditingController _notesController;
   String _type = 'death';
 
@@ -346,6 +376,8 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
     super.initState();
     _countController = TextEditingController(text: widget.item?.count.toString() ?? '');
     _causeController = TextEditingController(text: widget.item?.cause ?? '');
+    _symptomsController = TextEditingController(text: widget.item?.symptoms ?? '');
+    _actionTakenController = TextEditingController(text: widget.item?.actionTaken ?? '');
     _notesController = TextEditingController(text: widget.item?.notes ?? '');
     _type = widget.item?.type ?? 'death';
   }
@@ -354,6 +386,8 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
   void dispose() {
     _countController.dispose();
     _causeController.dispose();
+    _symptomsController.dispose();
+    _actionTakenController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -375,6 +409,8 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
       'event_id': const Uuid().v4(),
       'count': count,
       'cause': _causeController.text.trim().isEmpty ? null : _causeController.text.trim(),
+      'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
+      'action_taken': _actionTakenController.text.trim().isEmpty ? null : _actionTakenController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
     };
 
@@ -426,6 +462,10 @@ class _AddEditMortalityDialogState extends State<_AddEditMortalityDialog> {
                 ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Cause (Optional)', hintText: 'e.g. Illness, Heat', controller: _causeController),
+                const SizedBox(height: 12),
+                CustomInput(label: 'Symptoms (Optional)', hintText: 'e.g. Lethargy, cough', controller: _symptomsController),
+                const SizedBox(height: 12),
+                CustomInput(label: 'Action Taken (Optional)', hintText: 'e.g. Separated birds', controller: _actionTakenController),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Notes', controller: _notesController),
               ],

@@ -18,8 +18,9 @@ class AiInsightsRepository {
 
   Future<FeedRecommendationResponse> getFeedRecommendation(FeedRecommendationRequest request) async {
     final sub = ref.read(subscriptionProvider).value;
+    final profile = ref.read(profileProvider).value;
     final plan = sub?['plan_type'] ?? 'STARTER';
-    if (plan != 'ENTERPRISE') {
+    if (profile?.isAdmin != true && plan != 'ENTERPRISE') {
       throw Exception('AI Insights require an Enterprise Plan. Please upgrade to access this feature.');
     }
 

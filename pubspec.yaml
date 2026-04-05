@@ -1,7 +1,7 @@
 name: mobile
 description: "KukuFiti - Modern Poultry Management"
 publish_to: 'none'
-version: 1.2.5+1
+version: 1.2.6+1
 
 environment:
   sdk: ^3.11.1
@@ -39,6 +39,10 @@ dependencies:
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.2
   flutter_animate: ^4.5.2
+  record: ^6.2.0
+  audioplayers: ^6.6.0
+  path: ^1.9.1
+  timeago: ^3.7.0
 
 dev_dependencies:
   flutter_test:

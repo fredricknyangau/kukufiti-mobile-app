@@ -107,6 +107,7 @@ class ProfileScreen extends ConsumerWidget {
     final nameController = TextEditingController(text: profile.fullName);
     final phoneController = TextEditingController(text: profile.phoneNumber);
     final locationController = TextEditingController(text: profile.location);
+    final emailController = TextEditingController(text: profile.email);
     bool isLoading = false;
 
     showDialog(
@@ -118,6 +119,8 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               CustomInput(label: 'Full Name', controller: nameController),
+              const SizedBox(height: 12),
+              CustomInput(label: 'Email', controller: emailController, keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 12),
               CustomInput(label: 'Phone Number', controller: phoneController),
               const SizedBox(height: 12),
@@ -135,6 +138,7 @@ class ProfileScreen extends ConsumerWidget {
                 try {
                   await ApiClient.instance.put(ApiEndpoints.profile, data: {
                     'full_name': nameController.text.trim(),
+                    'email': emailController.text.trim().isEmpty ? null : emailController.text.trim(),
                     'phone_number': phoneController.text.trim(),
                     'location': locationController.text.trim(),
                   });

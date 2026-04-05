@@ -23,6 +23,9 @@ class PremiumGate extends ConsumerWidget {
     
     return subDetailsAsync.when(
       data: (plan) {
+        final profile = ref.watch(profileProvider).value;
+        if (profile?.isAdmin == true) return child;
+        
         final features = List<String>.from(plan['features'] ?? []);
         final hasAccess = features.contains(featureKey);
 

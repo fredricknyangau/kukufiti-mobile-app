@@ -206,8 +206,12 @@ class _BatchDetailsScreenState extends ConsumerState<BatchDetailsScreen> {
       child: Column(
         children: [
           _infoRow(LucideIcons.calendar, 'Commencement Date', DateFormat('MMM dd, yyyy').format(batch.commencementDate)),
+          if (batch.expectedEndDate != null) ...[
+            const CustomDivider(),
+            _infoRow(LucideIcons.calendarClock, 'Expected End Date', DateFormat('MMM dd, yyyy').format(batch.expectedEndDate!)),
+          ],
           const CustomDivider(),
-          _infoRow(LucideIcons.package, 'Supplier', batch.supplier ?? 'Not specified'),
+          _infoRow(LucideIcons.package, 'Hatchery Source', batch.hatcherySource ?? 'Not specified'),
           const CustomDivider(),
           _infoRow(LucideIcons.mapPin, 'Source Location', batch.sourceLocation ?? 'Not specified'),
           if (batch.notes?.isNotEmpty == true) ...[

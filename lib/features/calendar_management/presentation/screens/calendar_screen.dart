@@ -246,6 +246,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
   late DateTime _dueDate;
   String _category = 'general';
   String? _selectedFlockId;
+  String? _recurrenceInterval;
   bool _isLoading = false;
 
   @override
@@ -275,6 +276,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
         'status': 'PENDING',
         'category': _category,
         'flock_id': _selectedFlockId,
+        if (_recurrenceInterval != null) 'recurrence_interval': _recurrenceInterval,
       };
 
       await ApiClient.instance.post('/tasks/', data: payload);
@@ -343,6 +345,16 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase())))
                     .toList(),
                 onChanged: (v) => setState(() => _category = v!),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String?>(
+                initialValue: _recurrenceInterval,
+                decoration: const InputDecoration(labelText: 'Recurrence (Optional)', border: OutlineInputBorder()),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('None (One-time)')),
+                  ...['daily', 'weekly', 'monthly'].map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))),
+                ],
+                onChanged: (v) => setState(() => _recurrenceInterval = v),
               ),
               const SizedBox(height: 16),
               ListTile(

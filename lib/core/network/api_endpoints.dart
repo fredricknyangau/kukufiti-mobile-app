@@ -41,6 +41,7 @@ class ApiEndpoints {
   // Analytics
   static const String dashboardMetrics = 'analytics/dashboard-metrics';
   static const String financialChart = 'analytics/charts/revenue-vs-expenses';
+  static const String benchmarking = 'analytics/benchmarks';
 
   // Admin
   static const String adminStats = 'admin/stats';
@@ -65,6 +66,17 @@ class ApiEndpoints {
   static const String aiDiseaseRisk = 'ai/disease-risk';
   static const String aiFcrInsights = 'ai/fcr-insights';
   static const String aiChat = 'ai/chat';
+  static const String aiVoiceRecord = 'ai/voice-record';
+  static const String aiHarvestOptimization = 'ai/harvest-optimization';
+  
+  static const String dailyChecks = 'daily-checks';
+
+  // Community
+  static const String communityCategories = 'community/categories';
+  static const String communityFeed = 'community/feed';
+  static String communityPostDetails(String id) => 'community/posts/$id';
+  static String communityPostLike(String id) => 'community/posts/$id/like';
+  static String communityPostComments(String id) => 'community/posts/$id/comments';
 }
 
 

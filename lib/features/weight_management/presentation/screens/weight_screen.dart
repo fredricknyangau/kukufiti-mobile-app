@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -27,6 +28,7 @@ class WeightScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider);
     final broilerState = ref.watch(broilerProvider);
     final currentBatch = broilerState.currentBatch;
+    final canEdit = profileAsync.value?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -55,14 +57,36 @@ class WeightScreen extends ConsumerWidget {
               spots.add(FlSpot(i.toDouble(), sortedRecords[i].averageWeight));
             }
 
-            final isViewer = profileAsync.value?.role == 'VIEWER';
-
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!canEdit)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.eye, size: 16, color: theme.colorScheme.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'View-Only Mode',
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   CustomCard(
                     isPremium: true,
                     child: Column(
@@ -114,7 +138,7 @@ class WeightScreen extends ConsumerWidget {
                                     dotData: const FlDotData(show: true),
                                     belowBarData: BarAreaData(
                                       show: true,
-                                      color: theme.colorScheme.primary.withAlpha(50),
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
                                     ),
                                   ),
                                 ],
@@ -137,7 +161,7 @@ class WeightScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(24.0),
                           child: Text(
                             'No weight records available.',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150)),
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ),
                       ),
@@ -153,12 +177,12 @@ class WeightScreen extends ConsumerWidget {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                               backgroundColor: theme.colorScheme.primary.withAlpha(25),
+                               backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                                child: const Icon(Icons.fitness_center, color: Colors.blue),
                             ),
                             title: Text('${item.averageWeight} g', style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(DateFormat('MMM dd, yyyy').format(item.date)),
-                              trailing: isViewer ? null : PopupMenuButton<String>(
+                            trailing: !canEdit ? null : PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert),
                               onSelected: (value) async {
                                 if (value == 'edit') {
@@ -208,12 +232,12 @@ class WeightScreen extends ConsumerWidget {
           },
         ),
       ),
-       floatingActionButton: profileAsync.value?.role == 'VIEWER' ? null : FloatingActionButton(
+      floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: () => _showAddEditWeightDialog(context, ref, currentBatch),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
-      ),
+      ) : null,
     );
   }
 
@@ -237,6 +261,8 @@ class WeightScreen extends ConsumerWidget {
               _detailRow('Date', DateFormat('yyyy-MM-dd').format(item.date)),
               _detailRow('Sample Size', '${item.sampleSize} birds'),
               _detailRow('Average Weight', '${item.averageWeight} g'),
+              if (item.minWeightGrams != null) _detailRow('Min Weight', '${item.minWeightGrams} g'),
+              if (item.maxWeightGrams != null) _detailRow('Max Weight', '${item.maxWeightGrams} g'),
               const CustomDivider(),
               _detailRow('Notes', item.notes?.isNotEmpty == true ? item.notes! : 'No Notes'),
             ],
@@ -276,6 +302,8 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _weightController;
   late final TextEditingController _sampleSizeController;
+  late final TextEditingController _minWeightController;
+  late final TextEditingController _maxWeightController;
   late final TextEditingController _notesController;
 
   bool _isLoading = false;
@@ -285,6 +313,8 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
     super.initState();
     _weightController = TextEditingController(text: widget.item?.averageWeight.toString() ?? '');
     _sampleSizeController = TextEditingController(text: widget.item?.sampleSize.toString() ?? '10');
+    _minWeightController = TextEditingController(text: widget.item?.minWeightGrams?.toString() ?? '');
+    _maxWeightController = TextEditingController(text: widget.item?.maxWeightGrams?.toString() ?? '');
     _notesController = TextEditingController(text: widget.item?.notes ?? '');
   }
 
@@ -292,6 +322,8 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
   void dispose() {
     _weightController.dispose();
     _sampleSizeController.dispose();
+    _minWeightController.dispose();
+    _maxWeightController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -315,6 +347,8 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
       'event_id': const Uuid().v4(),
       'average_weight_grams': avgWeight,
       'sample_size': sampleSize,
+      'min_weight_grams': _minWeightController.text.trim().isEmpty ? null : double.tryParse(_minWeightController.text.trim()),
+      'max_weight_grams': _maxWeightController.text.trim().isEmpty ? null : double.tryParse(_maxWeightController.text.trim()),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
     };
 
@@ -360,6 +394,26 @@ class _AddEditWeightDialogState extends State<_AddEditWeightDialog> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   controller: _weightController,
                   validator: (v) => (double.tryParse(v ?? '') ?? 0.0) <= 0 ? 'Enter valid weight' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomInput(
+                        label: 'Min Weight (g)',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        controller: _minWeightController,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CustomInput(
+                        label: 'Max Weight (g)',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        controller: _maxWeightController,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 CustomInput(label: 'Notes', controller: _notesController),

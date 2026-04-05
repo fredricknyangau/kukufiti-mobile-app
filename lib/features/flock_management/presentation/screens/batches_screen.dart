@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -42,8 +43,12 @@ class BatchesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final broilerState = ref.watch(broilerProvider);
+    final profileAsync = ref.watch(profileProvider);
     final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
     final farms = ref.watch(farmsProvider).value ?? [];
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -61,7 +66,7 @@ class BatchesScreen extends ConsumerWidget {
                       Center(
                         child: Text(
                           'Error: ${broilerState.error}',
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(color: theme.colorScheme.error),
                         ),
                       ),
                     ],
@@ -97,10 +102,10 @@ class BatchesScreen extends ConsumerWidget {
                       final status = batch.status.toLowerCase();
                       Color statusColor;
                       switch (status) {
-                        case 'active': statusColor = Colors.green; break;
-                        case 'completed': statusColor = Colors.blue; break;
-                        case 'sold': statusColor = Colors.orange; break;
-                        default: statusColor = Colors.grey;
+                        case 'active': statusColor = customColors.success!; break;
+                        case 'completed': statusColor = customColors.info!; break;
+                        case 'sold': statusColor = customColors.warning!; break;
+                        default: statusColor = customColors.neutral!;
                       }
 
                       return Padding(
@@ -159,43 +164,44 @@ class BatchesScreen extends ConsumerWidget {
                                           ],
                                         ),
                                       ),
-                                      PopupMenuButton<String>(
-                                        onSelected: (value) async {
-                                          if (value == 'edit') {
-                                            _showAddBatchSheet(context, ref, batch: batch);
-                                          } else if (value == 'delete') {
-                                            final confirm = await showDialog<bool>(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text('Delete Batch?'),
-                                                content: const Text('This action cannot be undone.'),
-                                                actions: [
-                                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      HapticFeedback.mediumImpact();
-                                                      Navigator.pop(context, true);
-                                                    },
-                                                    child: const Text('Delete', style: TextStyle(color: Colors.red))
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                            if (confirm == true) {
-                                              try {
-                                                await ApiClient.instance.delete('${ApiEndpoints.batches}${batch.id}');
-                                                ref.read(broilerProvider.notifier).fetchBatches();
-                                              } catch (e) {
-                                                if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
+                                      if (canEdit)
+                                        PopupMenuButton<String>(
+                                          onSelected: (value) async {
+                                            if (value == 'edit') {
+                                              _showAddBatchSheet(context, ref, batch: batch);
+                                            } else if (value == 'delete') {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Delete Batch?'),
+                                                  content: const Text('This action cannot be undone.'),
+                                                  actions: [
+                                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        HapticFeedback.mediumImpact();
+                                                        Navigator.pop(context, true);
+                                                      },
+                                                      child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                              if (confirm == true) {
+                                                try {
+                                                  await ApiClient.instance.delete('${ApiEndpoints.batches}${batch.id}');
+                                                  ref.read(broilerProvider.notifier).fetchBatches();
+                                                } catch (e) {
+                                                  if (context.mounted) ToastService.showError(context, 'Failed to delete: $e');
+                                                }
                                               }
                                             }
-                                          }
-                                        },
-                                        itemBuilder: (context) => const [
-                                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                          PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-                                        ],
-                                      ),
+                                          },
+                                          itemBuilder: (context) => [
+                                            const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                            PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: theme.colorScheme.error))),
+                                          ],
+                                        ),
                                     ],
                                   ),
                                   const Padding(
@@ -249,15 +255,17 @@ class BatchesScreen extends ConsumerWidget {
                     },
                   ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          _showAddBatchSheet(context, ref);
-        },
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit 
+          ? FloatingActionButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _showAddBatchSheet(context, ref);
+              },
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
@@ -286,9 +294,13 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
   final _nameController = TextEditingController();
   final _sizeController = TextEditingController();
   final _costController = TextEditingController();
+  final _sourceLocationController = TextEditingController();
+  final _hatcherySourceController = TextEditingController();
+  final _notesController = TextEditingController();
   String _breed = breedsWithWeightStandards.first['value']!;
   String _status = 'active';
   DateTime? _startDate = DateTime.now();
+  DateTime? _expectedEndDate;
   bool _isLoading = false;
   String? _selectedFarmId;
 
@@ -302,7 +314,11 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       _breed = widget.batch!.breed ?? breedsWithWeightStandards.first['value']!;
       _status = widget.batch!.status.toLowerCase();
       _startDate = widget.batch!.commencementDate;
-      _selectedFarmId = widget.batch!.sourceLocation;
+      _expectedEndDate = widget.batch!.expectedEndDate;
+      _selectedFarmId = widget.batch!.farmId ?? widget.batch!.sourceLocation;
+      _sourceLocationController.text = widget.batch!.sourceLocation ?? '';
+      _hatcherySourceController.text = widget.batch!.hatcherySource ?? '';
+      _notesController.text = widget.batch!.notes ?? '';
     }
   }
 
@@ -311,6 +327,9 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
     _nameController.dispose();
     _sizeController.dispose();
     _costController.dispose();
+    _sourceLocationController.dispose();
+    _hatcherySourceController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -331,8 +350,12 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       'total_acquisition_cost': initialChicks * costPerChick,
       'breed': _breed,
       'start_date': DateFormat('yyyy-MM-dd').format(_startDate!),
+      if (_expectedEndDate != null) 'expected_end_date': DateFormat('yyyy-MM-dd').format(_expectedEndDate!),
       'status': _status,
-      'source_location': _selectedFarmId,
+      'farm_id': _selectedFarmId,
+      if (_sourceLocationController.text.trim().isNotEmpty) 'source_location': _sourceLocationController.text.trim(),
+      if (_hatcherySourceController.text.trim().isNotEmpty) 'hatchery_source': _hatcherySourceController.text.trim(),
+      if (_notesController.text.trim().isNotEmpty) 'notes': _notesController.text.trim(),
     };
 
     try {
@@ -504,6 +527,51 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                   );
                   if (picked != null) setState(() => _startDate = picked);
                 },
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Expected End Date (Optional)'),
+                subtitle: Text(_expectedEndDate != null ? DateFormat('yyyy-MM-dd').format(_expectedEndDate!) : 'Select Date'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_expectedEndDate != null)
+                      IconButton(
+                        icon: const Icon(LucideIcons.x, size: 20),
+                        onPressed: () => setState(() => _expectedEndDate = null),
+                      ),
+                    const Icon(LucideIcons.calendar),
+                  ],
+                ),
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _expectedEndDate ?? _startDate!.add(const Duration(days: 42)),
+                    firstDate: _startDate!,
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null) setState(() => _expectedEndDate = picked);
+                },
+              ),
+              const SizedBox(height: 16),
+              CustomInput(
+                label: 'Hatchery Source (Optional)',
+                hintText: 'e.g., Kenchic, local supplier',
+                controller: _hatcherySourceController,
+              ),
+              const SizedBox(height: 16),
+              CustomInput(
+                label: 'Source Location (Optional)',
+                hintText: 'e.g., Thika Road Office',
+                controller: _sourceLocationController,
+              ),
+              const SizedBox(height: 16),
+              CustomInput(
+                label: 'Notes (Optional)',
+                hintText: 'Any extra details',
+                controller: _notesController,
               ),
               const SizedBox(height: 24),
               CustomButton(

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_theme.dart';
 
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -244,7 +245,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     Map<String, dynamic> metrics,
   ) {
     final planDetails = ref.watch(planDetailsProvider).value;
-    final isPremium = List<String>.from(planDetails?['features'] ?? []).contains('financials');
+    final profile = ref.watch(profileProvider).value;
+    final isPremium = profile?.isAdmin == true || List<String>.from(planDetails?['features'] ?? []).contains('financials');
 
     final totalRev = (metrics['total_revenue'] as num?)?.toDouble() ?? 0.0;
     final totalExp = (metrics['total_expenses'] as num?)?.toDouble() ?? 0.0;
@@ -466,7 +468,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                     child: Container(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -477,17 +479,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 color: theme.colorScheme.primary.withValues(alpha: 0.9),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(LucideIcons.lock, color: Colors.white, size: 24),
+                              child: Icon(LucideIcons.lock, color: theme.colorScheme.onPrimary, size: 24),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'Premium Feature',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.onPrimary),
                             ),
                             const SizedBox(height: 4),
                             TextButton(
                               onPressed: () => showPremiumUpgradeDialog(context, 'Financial Trend Analytics'),
-                              child: const Text('Upgrade to View', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline)),
+                              child: Text('Upgrade to View', style: TextStyle(color: theme.colorScheme.onPrimary, decoration: TextDecoration.underline)),
                             ),
                           ],
                         ),
@@ -541,9 +543,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildStatsGrid(BuildContext context, Map<String, dynamic> metrics) {
+    final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
     final subDetailsAsync = ref.watch(planDetailsProvider);
+    final profile = ref.watch(profileProvider).value;
     final features = List<String>.from(subDetailsAsync.value?['features'] ?? []);
-    final isPremium = features.contains('fcr_analytics');
+    final isPremium = profile?.isAdmin == true || features.contains('fcr_analytics');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -560,7 +565,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               title: 'Active Batches',
               value: (metrics['active_flocks'] ?? 0).toString(),
               icon: LucideIcons.layers,
-              color: Colors.blue,
+              color: customColors.info!,
               onTap: () => context.push('/batches'),
             ),
             _buildStatCard(
@@ -568,7 +573,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               title: 'Total Birds',
               value: (metrics['current_birds'] ?? 0).toString(),
               icon: LucideIcons.userPlus,
-              color: Colors.orange,
+              color: customColors.warning!,
               onTap: () => context.push('/batches'),
             ),
             _buildStatCard(
@@ -576,7 +581,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               title: 'Mortality Rate',
               value: '${metrics['mortality_rate'] ?? 0}%',
               icon: LucideIcons.skull,
-              color: Colors.redAccent,
+              color: theme.colorScheme.error,
               onTap: () => context.push('/mortality'),
             ),
             _buildStatCard(
@@ -584,7 +589,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               title: 'Market Prices',
               value: 'Check',
               icon: LucideIcons.lineChart,
-              color: Colors.green,
+              color: theme.colorScheme.primary,
               onTap: () => context.push('/market'),
             ),
           ],
@@ -608,10 +613,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.1),
+                    color: customColors.purple!.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(LucideIcons.compass, color: Colors.deepPurple),
+                  child: Icon(LucideIcons.compass, color: customColors.purple!),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -630,23 +635,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
                 if (!isPremium)
-                  const Icon(LucideIcons.lock, size: 16, color: Colors.grey)
+                  Icon(LucideIcons.lock, size: 16, color: customColors.neutral!)
                 else
-                  const Icon(LucideIcons.chevronRight, color: Colors.grey),
+                  Icon(LucideIcons.chevronRight, color: customColors.neutral!),
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
-        if (features.contains('iot_sensors'))
-          _buildClimateCard(context, Theme.of(context))
+        if (isPremium)
+          _buildClimateCard(context, theme, metrics)
         else
-          _buildLockedClimateCard(context, Theme.of(context)),
+          _buildLockedClimateCard(context, theme),
       ],
     );
   }
 
-  Widget _buildClimateCard(BuildContext context, ThemeData theme) {
+  Widget _buildClimateCard(BuildContext context, ThemeData theme, Map<String, dynamic> metrics) {
+    final customColors = theme.extension<CustomColors>()!;
     return CustomCard(
       isPremium: true,
       onTap: () {},
@@ -662,24 +668,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text('Demo', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
+                  color: customColors.warning!.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.thermometer, label: 'Temp', value: '— °C', color: Colors.orange)),
-                Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.droplet, label: 'Humidity', value: '—%', color: Colors.blue)),
-                Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-                Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.wifi, label: 'Sensor', value: 'None', color: Colors.grey)),
-              ],
-            ),
-            const SizedBox(height: 12),
+                child: Text('Demo', style: TextStyle(color: customColors.warning!, fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.thermometer, label: 'Temp', value: '${metrics['env_temp'] ?? '—'} °C', color: customColors.warning!)),
+              Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+              Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.droplet, label: 'Humidity', value: '${metrics['env_humidity'] ?? '—'}%', color: customColors.info!)),
+              Container(height: 30, width: 1, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+              Expanded(child: _buildClimateMetric(theme, icon: LucideIcons.wifi, label: 'Sensor', value: metrics['sensor_status'] ?? 'None', color: customColors.neutral!)),
+            ],
+          ),
+          const SizedBox(height: 12),
             Text(
               '🔌 Connect an IoT sensor to see live climate data.',
               style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
@@ -703,6 +709,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildLockedClimateCard(BuildContext context, ThemeData theme) {
+    final customColors = theme.extension<CustomColors>()!;
     return CustomCard(
       isPremium: false,
       onTap: () => showPremiumUpgradeDialog(context, 'Smart IoT Climate Trackers'),
@@ -711,9 +718,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.1), shape: BoxShape.circle),
-              child: const Icon(LucideIcons.gauge, color: Colors.teal),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: customColors.teal!.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(LucideIcons.gauge, color: customColors.teal!),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -726,7 +733,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
             ),
-            const Icon(LucideIcons.lock, size: 16, color: Colors.grey),
+            Icon(LucideIcons.lock, size: 16, color: customColors.neutral!),
           ],
         ),
       ),
@@ -818,9 +825,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 
   Widget _buildQuickActions(BuildContext context) {
+    final theme = Theme.of(context);
+    final customColors = theme.extension<CustomColors>()!;
     final subAsync = ref.watch(subscriptionProvider);
+    final profile = ref.watch(profileProvider).value;
     final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    final isStarter = plan == 'STARTER';
+    final isStarter = profile?.isAdmin != true && plan == 'STARTER';
+    final isEnterprise = profile?.isAdmin == true || plan == 'ENTERPRISE';
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -828,25 +839,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           _buildActionItem(
             context,
+            icon: LucideIcons.globe,
+            label: 'Community',
+            route: '/community',
+            color: customColors.teal!,
+          ),
+          _buildActionItem(
+            context,
             icon: LucideIcons.sparkles,
             label: 'AI Advisory',
             route: '/ai-insights-hub',
-            color: Colors.deepPurple,
-            isLocked: plan != 'ENTERPRISE',
+            color: customColors.purple!,
+            isLocked: !isEnterprise,
           ),
           _buildActionItem(
             context,
             icon: LucideIcons.users,
             label: 'People',
             route: '/people',
-            color: Colors.blueGrey,
+            color: customColors.neutral!,
           ),
           _buildActionItem(
             context,
             icon: LucideIcons.shoppingBag,
             label: 'Market',
             route: '/market',
-            color: Colors.teal,
+            color: customColors.teal!,
             isLocked: isStarter,
           ),
           _buildActionItem(
@@ -854,7 +872,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: LucideIcons.package,
             label: 'Inventory',
             route: '/inventory',
-            color: Colors.indigo,
+            color: customColors.indigo!,
             isLocked: isStarter,
           ),
           _buildActionItem(
@@ -862,7 +880,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: LucideIcons.heartPulse,
             label: 'Vet',
             route: '/vet',
-            color: Colors.redAccent,
+            color: theme.colorScheme.error,
             isLocked: isStarter,
           ),
         ],
@@ -918,7 +936,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           )
@@ -970,25 +988,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           child: Row(
             children: [
-              const Icon(LucideIcons.shieldAlert, color: Colors.white, size: 28),
+              Icon(LucideIcons.shieldAlert, color: theme.colorScheme.onError, size: 28),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Critical Attention Required',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: theme.colorScheme.onError, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${criticals.length} issues need immediate resolution.',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: theme.colorScheme.onError.withValues(alpha: 0.7), fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              const Icon(LucideIcons.chevronRight, color: Colors.white, size: 20),
+              Icon(LucideIcons.chevronRight, color: theme.colorScheme.onError, size: 20),
             ],
           ),
         );
@@ -998,15 +1016,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildActivitiesTimeline(BuildContext context, ThemeData theme, Map<String, dynamic> metrics) {
+    final customColors = theme.extension<CustomColors>()!;
     final List<dynamic> activities = metrics['recent_activities'] ?? [];
 
     if (activities.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Center(
           child: Text(
             'No recent activities recorded today.',
-            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+            style: TextStyle(color: customColors.neutral!, fontStyle: FontStyle.italic),
           ),
         ),
       );
@@ -1016,26 +1035,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       children: activities.map((act) {
         final type = act['type'] ?? 'other';
         IconData icon = LucideIcons.bell;
-        Color color = Colors.grey;
-
-        switch (type) {
-          case 'sale':
-            icon = LucideIcons.shoppingBag;
-            color = Colors.green;
-            break;
-          case 'expense':
-            icon = LucideIcons.package;
-            color = Colors.blue;
-            break;
-          case 'mortality':
-            icon = LucideIcons.skull;
-            color = Colors.redAccent;
-            break;
-          case 'feed':
-            icon = LucideIcons.wheat;
-            color = Colors.orange;
-            break;
-        }
+        Color color = customColors.neutral!;
+ 
+         switch (type) {
+           case 'sale':
+             icon = LucideIcons.shoppingBag;
+             color = theme.colorScheme.primary;
+             break;
+           case 'expense':
+             icon = LucideIcons.package;
+             color = customColors.info!;
+             break;
+           case 'mortality':
+             icon = LucideIcons.skull;
+             color = theme.colorScheme.error;
+             break;
+           case 'feed':
+             icon = LucideIcons.wheat;
+             color = customColors.warning!;
+             break;
+         }
 
         final dateStr = act['date'] ?? '';
         String formattedTime = 'Recent';
@@ -1112,9 +1131,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildFarmsSummary(BuildContext context, ThemeData theme) {
+    final customColors = theme.extension<CustomColors>()!;
     final subAsync = ref.watch(subscriptionProvider);
+    final profile = ref.watch(profileProvider).value;
     final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    if (plan != 'ENTERPRISE') {
+    final isEnterprise = profile?.isAdmin == true || plan == 'ENTERPRISE';
+    
+    if (!isEnterprise) {
       return Padding(
         padding: const EdgeInsets.only(top: 24),
         child: CustomCard(
@@ -1126,12 +1149,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
+                  color: customColors.info!.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.home,
-                  color: Colors.blue,
+                  color: customColors.info!,
                   size: 24,
                 ),
               ),
@@ -1158,7 +1181,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ],
                 ),
               ),
-              const Icon(LucideIcons.lock, size: 16, color: Colors.grey),
+              Icon(LucideIcons.lock, size: 16, color: customColors.neutral!),
             ],
           ),
         ),
@@ -1181,12 +1204,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
+                          color: customColors.warning!.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           LucideIcons.compass,
-                          color: Colors.orange,
+                          color: customColors.warning!,
                           size: 24,
                         ),
                       ),

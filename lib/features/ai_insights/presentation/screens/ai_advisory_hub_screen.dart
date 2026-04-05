@@ -56,6 +56,20 @@ class AiAdvisoryHubScreen extends ConsumerWidget {
         'route': '/ai-chat',
         'color': Colors.blueAccent,
       },
+      {
+        'title': 'Voice-to-Record',
+        'desc': 'Hands-free farm observations',
+        'icon': LucideIcons.mic,
+        'route': '/ai-voice-observation',
+        'color': Colors.orange,
+      },
+      {
+        'title': 'Profit Optimizer',
+        'desc': 'Maximize ROI on harvest dates',
+        'icon': LucideIcons.trendingUp,
+        'route': '/ai-profit-optimizer',
+        'color': Colors.green,
+      },
     ];
 
     return Scaffold(

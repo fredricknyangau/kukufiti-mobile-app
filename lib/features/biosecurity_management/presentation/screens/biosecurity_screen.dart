@@ -97,6 +97,9 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
     final weekRecords = records.where((r) => r.date.isAfter(startOfWeek)).toList();
     final weekStat = '${weekRecords.length}/7';
 
+    final profileAsync = ref.watch(profileProvider);
+    final canEdit = profileAsync.value?.canEdit ?? false;
+
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -107,6 +110,30 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (!canEdit)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.eye, size: 16, color: theme.colorScheme.secondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'View-Only Mode',
+                      style: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const Text('Daily farm hygiene and safety checks'),
             const SizedBox(height: 16),
             
@@ -149,15 +176,15 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                         biosecurityChecklist[index],
                         style: TextStyle(
                           decoration: _checkedStatus[index] ? TextDecoration.lineThrough : null,
-                          color: _checkedStatus[index] ? theme.colorScheme.onSurface.withAlpha(128) : null,
+                          color: _checkedStatus[index] ? theme.colorScheme.onSurface.withValues(alpha: 0.5) : null,
                         ),
                       ),
                       value: _checkedStatus[index],
-                      onChanged: (val) {
+                      onChanged: canEdit ? (val) {
                         setState(() {
                           _checkedStatus[index] = val ?? false;
                         });
-                      },
+                      } : null,
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                     );
@@ -169,19 +196,21 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                     label: 'Completed By *',
                     hintText: 'Your name',
                     controller: _completedByController,
+                    enabled: canEdit,
                   ),
                   const SizedBox(height: 16),
                   CustomInput(
                     label: 'Additional Notes',
                     hintText: 'Any issues or observations...',
                     controller: _notesController,
+                    enabled: canEdit,
                   ),
                   const SizedBox(height: 16),
                   CustomButton(
                     text: 'Submit Checklist',
                     icon: const Icon(LucideIcons.checkCircle, size: 18),
                     isLoading: _isSubmitting,
-                    onPressed: _submitChecklist,
+                    onPressed: canEdit ? _submitChecklist : null,
                   )
                 ],
               ),
@@ -202,10 +231,10 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
-                          Icon(LucideIcons.clipboardCheck, size: 48, color: theme.colorScheme.onSurface.withAlpha(51)),
+                          Icon(LucideIcons.clipboardCheck, size: 48, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
                           const SizedBox(height: 8),
                           const Text('No checklists recorded yet'),
-                          Text('Complete today\'s checklist to start tracking', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(153))),
+                          Text('Complete today\'s checklist to start tracking', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ],
                       ),
                     ),
@@ -226,12 +255,12 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.primary.withAlpha(25),
+                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                           child: Icon(LucideIcons.clipboardCheck, color: theme.colorScheme.primary, size: 20),
                         ),
                         title: Text('Compliance: $completedCount/${items.length} Checked'),
                         subtitle: Text('${DateFormat('MMM dd, yyyy').format(item.date)} - By ${item.completedBy ?? 'Unknown'}'),
-                        trailing: PopupMenuButton<String>(
+                        trailing: !canEdit ? null : PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert),
                           itemBuilder: (ctx2) => const [
                             PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red)))
@@ -280,7 +309,7 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.withAlpha(25),
+                color: Colors.orange.withValues(alpha: 0.1),
                 border: Border.all(color: Colors.orange),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -356,7 +385,7 @@ class _BiosecurityScreenState extends ConsumerState<BiosecurityScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(child: Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), maxLines: 1)),
-              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withAlpha(128)),
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
             ],
           ),
           Text(

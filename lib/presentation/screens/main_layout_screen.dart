@@ -68,8 +68,9 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
   Widget build(BuildContext context) {
     final subAsync = ref.watch(subscriptionProvider);
     final settings = ref.watch(settingsProvider);
+    final profile = ref.watch(profileProvider).value;
     final plan = subAsync.value?['plan_type'] ?? 'STARTER';
-    final isStarter = plan == 'STARTER';
+    final isStarter = profile?.isAdmin != true && plan == 'STARTER';
     
     final isLocked = settings.biometricLockEnabled && !_isUnlocked;
 

@@ -21,6 +21,9 @@ class FarmsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final farmsAsync = ref.watch(farmsProvider);
     final theme = Theme.of(context);
+    final profileAsync = ref.watch(profileProvider);
+    final user = profileAsync.value;
+    final canEdit = user?.canEdit ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -77,22 +80,24 @@ class FarmsScreen extends ConsumerWidget {
                           fontSize: 13,
                         ),
                       ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _showAddFarmSheet(context, ref, farm: farm);
-                          } else if (value == 'delete') {
-                            _confirmDelete(context, ref, farm);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Delete', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
+                      trailing: canEdit
+                          ? PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _showAddFarmSheet(context, ref, farm: farm);
+                                } else if (value == 'delete') {
+                                  _confirmDelete(context, ref, farm);
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Delete', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            )
+                          : null,
                     ),
                   ),
                 );
@@ -113,16 +118,18 @@ class FarmsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          _showAddFarmSheet(context, ref);
-        },
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        child: const Icon(LucideIcons.plus),
-      ),
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              heroTag: null,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _showAddFarmSheet(context, ref);
+              },
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
@@ -133,7 +140,7 @@ class FarmsScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _AddFarmSheet(ref: ref, farm: farm),
+      builder: (context) => _AddFarmSheet(farm: farm),
     );
   }
 
@@ -168,20 +175,20 @@ class FarmsScreen extends ConsumerWidget {
   }
 }
 
-class _AddFarmSheet extends StatefulWidget {
-  final WidgetRef ref;
+class _AddFarmSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic>? farm;
 
-  const _AddFarmSheet({required this.ref, this.farm});
+  const _AddFarmSheet({this.farm});
 
   @override
-  State<_AddFarmSheet> createState() => _AddFarmSheetState();
+  ConsumerState<_AddFarmSheet> createState() => _AddFarmSheetState();
 }
 
-class _AddFarmSheetState extends State<_AddFarmSheet> {
+class _AddFarmSheetState extends ConsumerState<_AddFarmSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
+  bool _isActive = true;
   bool _isLoading = false;
 
   @override
@@ -190,6 +197,7 @@ class _AddFarmSheetState extends State<_AddFarmSheet> {
     if (widget.farm != null) {
       _nameController.text = widget.farm!['name'] ?? '';
       _locationController.text = widget.farm!['location'] ?? '';
+      _isActive = widget.farm!['is_active'] ?? true;
     }
   }
 
@@ -210,6 +218,7 @@ class _AddFarmSheetState extends State<_AddFarmSheet> {
     final data = {
       'name': _nameController.text.trim(),
       'location': _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+      'is_active': _isActive,
     };
 
     try {
@@ -222,7 +231,7 @@ class _AddFarmSheetState extends State<_AddFarmSheet> {
       if (mounted) {
         HapticFeedback.heavyImpact();
         ToastService.showSuccess(context, widget.farm != null ? 'Farm updated' : 'Farm created');
-        widget.ref.invalidate(farmsProvider);
+        ref.invalidate(farmsProvider);
         Navigator.pop(context);
       }
     } catch (e) {
@@ -274,6 +283,18 @@ class _AddFarmSheetState extends State<_AddFarmSheet> {
                 hintText: 'e.g., Nakuru, Pipeline',
                 controller: _locationController,
               ),
+              if (ref.watch(profileProvider).value?.isAdmin ?? false) ...[
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Active Farm'),
+                  subtitle: const Text('Is this farm currently operational?'),
+                  value: _isActive,
+                  onChanged: (v) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _isActive = v);
+                  },
+                ),
+              ],
               const SizedBox(height: 32),
               CustomButton(
                 text: widget.farm != null ? 'Update Farm' : 'Create Farm',

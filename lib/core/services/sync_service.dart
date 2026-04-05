@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dio/dio.dart';
 import 'dart:async';
 import '../network/api_client.dart';
 import '../utils/toast_service.dart';
@@ -31,6 +32,7 @@ class SyncService {
       'method': method,
       'data': data,
       'timestamp': DateTime.now().toIso8601String(),
+      'retryCount': 0, // Track retries
     };
     ops.add(newOp);
     await _box.put('queue', ops);
@@ -47,11 +49,13 @@ class SyncService {
 
     int successCount = 0;
     List<Map<String, dynamic>> failedOps = [];
+    const int maxRetries = 3;
 
     for (var op in ops) {
       final endpoint = op['endpoint'] as String?;
       final method = op['method'] as String?;
       final data = op['data'] != null ? Map<String, dynamic>.from(op['data']) : <String, dynamic>{};
+      int retryCount = (op['retryCount'] ?? 0) as int;
 
       if (endpoint == null || method == null) continue;
 
@@ -65,18 +69,36 @@ class SyncService {
         }
         successCount++;
       } catch (e) {
-        failedOps.add(op);
+        // Handle validation errors (400) or max retries
+        bool shouldDrop = false;
+        if (e is DioException && e.response?.statusCode == 400) {
+          debugPrint('SyncService: Dropping invalid operation (400 Bad Request): $endpoint');
+          shouldDrop = true;
+        } else {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            debugPrint('SyncService: Dropping operation after $maxRetries failures: $endpoint');
+            shouldDrop = true;
+          }
+        }
+
+        if (!shouldDrop) {
+          op['retryCount'] = retryCount;
+          failedOps.add(op);
+        }
       }
     }
 
-    // Update queue with only failed ones
+    // Update queue with only failed ones that haven't reached retry limit
     await _box.put('queue', failedOps);
 
     if (context.mounted && successCount > 0) {
       ToastService.showSuccess(context, 'Synced $successCount operations successfully');
     }
+    
+    // Only show error toast if there are items left in the queue (failed but retriable)
     if (failedOps.isNotEmpty && context.mounted) {
-       ToastService.showError(context, '${failedOps.length} operations failed to sync');
+       ToastService.showError(context, '${failedOps.length} operations waiting to retry sync');
     }
   }
 }
