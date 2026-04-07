@@ -105,6 +105,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                                                  Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/chicken_logo.jpeg',
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                           Text(
                             'KukuFiti',
                             style: theme.textTheme.headlineMedium?.copyWith(

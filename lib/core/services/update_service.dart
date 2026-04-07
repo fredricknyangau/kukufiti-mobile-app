@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file_plus/open_file_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class UpdateInfo {
@@ -142,7 +142,7 @@ class UpdateService {
       );
 
       // 5. Trigger installation
-      final result = await OpenFile.open(filePath);
+      final result = await OpenFilex.open(filePath);
       if (result.type != ResultType.done) {
         throw Exception('Failed to open APK: ${result.message}');
       }
