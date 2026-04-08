@@ -1,0 +1,60 @@
+# Pre-commit hooks for security and code quality
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # ─────────────────────────────────────────────────────────────
+  # SECURITY HOOKS - PREVENT SECRETS
+  # ─────────────────────────────────────────────────────────────
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent private keys from being committed
+      - id: detect-private-key
+        exclude: '.env.example'
+
+      # Prevent large files from being committed
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Ensure files parse as valid YAML/JSON
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+
+      # Ensure no merge conflicts left
+      - id: check-merge-conflict
+
+  # ─────────────────────────────────────────────────────────────
+  # PREVENT .env FILES FROM BEING COMMITTED
+  # ─────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: no-env-files
+        name: Prevent .env files from being committed
+        entry: |
+          bash -c '
+          if git diff --cached --name-only | grep -E "\.env($|\.)" > /dev/null; then
+            echo "❌ ERROR: .env files must not be committed!"
+            echo "   Allowed: .env.example (with placeholders only)"
+            exit 1
+          fi
+          '
+        language: system
+        stages: [pre-commit]
+
+      - id: no-api-keys
+        name: Prevent hardcoded API keys
+        entry: |
+          bash -c '
+          if git diff --cached | grep -E "^[^+-]" | grep -iE "(api_key|secret_key|password)\s*=\s*['\''\"a-zA-Z0-9]" | grep -v "placeholder\|example\|change-me\|place.holder"; then
+            echo "❌ ERROR: Possible API key detected!"
+            exit 1
+          fi
+          '
+        language: system
+        stages: [pre-commit]
+
+default_stages: [pre-commit]
+fail_fast: false

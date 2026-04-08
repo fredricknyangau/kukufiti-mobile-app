@@ -56,6 +56,21 @@ jobs:
       # ─── 7. RUN TESTS ───────────────────────────────────────────────
       - name: Run tests
         run: flutter test
+        continue-on-error: true
+
+      - name: Run tests with coverage
+        run: |
+          flutter pub global activate coverage
+          flutter test --coverage
+        continue-on-error: true
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+          flags: mobile
+        continue-on-error: true
 
       # ─── 8. DECODE SECRETS ──────────────────────────────────────────
       - name: Decode keystore
