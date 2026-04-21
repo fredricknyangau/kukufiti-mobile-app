@@ -1,4 +1,4 @@
-import '../../domain/entities/analytics_metrics.dart';
+import 'package:mobile/features/analytics_management/domain/entities/analytics_metrics.dart';
 
 class AnalyticsMetricsDto {
   final double mortalityRate;

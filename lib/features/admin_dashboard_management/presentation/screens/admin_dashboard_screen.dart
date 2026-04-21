@@ -1,15 +1,13 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
-
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../providers/data_providers.dart';
-
-import '../../../../core/utils/error_handler.dart';
+import 'package:mobile/shared/widgets/custom_divider.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/core/utils/error_handler.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -184,7 +182,6 @@ class AdminDashboardScreen extends ConsumerWidget {
       ),
     );
   }
-
 
   Widget _buildStatCard(BuildContext context, String title, String value, String subtitle, IconData icon) {
     return CustomCard(

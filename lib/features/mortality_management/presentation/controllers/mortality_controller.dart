@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/mortality_repository_impl.dart';
-import '../../domain/entities/mortality.dart';
-import '../../domain/repositories/mortality_repository.dart';
-import '../../domain/usecases/get_mortality_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/mortality_management/data/repositories/mortality_repository_impl.dart';
+import 'package:mobile/features/mortality_management/domain/entities/mortality.dart';
+import 'package:mobile/features/mortality_management/domain/repositories/mortality_repository.dart';
+import 'package:mobile/features/mortality_management/domain/usecases/get_mortality_usecase.dart';
 
 final mortalityRepositoryProvider = Provider<MortalityRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

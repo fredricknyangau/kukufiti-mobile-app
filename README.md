@@ -28,7 +28,7 @@ flutter pub get
 
 ```bash
 # Point at a local backend
-flutter run --dart-define=API_URL=http://192.168.x.x:8000/api/v1
+flutter run --dart-define=API_URL=http://192.168.x.x:8080/api/v1
 
 # Point at the hosted production backend
 flutter run --dart-define=API_URL=https://kukufiti-backend.onrender.com/api/v1

@@ -11,8 +11,8 @@ Batch _$BatchFromJson(Map<String, dynamic> json) => Batch(
   name: json['name'] as String,
   commencementDate: DateTime.parse(json['start_date'] as String),
   initialChicks: (json['initial_count'] as num).toInt(),
-  costPerChick: (json['cost_per_bird'] as num).toDouble(),
-  totalCost: (json['total_acquisition_cost'] as num).toDouble(),
+  costPerChick: const DoubleConverter().fromJson(json['cost_per_bird']),
+  totalCost: const DoubleConverter().fromJson(json['total_acquisition_cost']),
   status: json['status'] as String,
   notes: json['notes'] as String?,
   breed: json['breed'] as String?,
@@ -30,8 +30,8 @@ Map<String, dynamic> _$BatchToJson(Batch instance) => <String, dynamic>{
   'name': instance.name,
   'start_date': instance.commencementDate.toIso8601String(),
   'initial_count': instance.initialChicks,
-  'cost_per_bird': instance.costPerChick,
-  'total_acquisition_cost': instance.totalCost,
+  'cost_per_bird': const DoubleConverter().toJson(instance.costPerChick),
+  'total_acquisition_cost': const DoubleConverter().toJson(instance.totalCost),
   'status': instance.status,
   'notes': instance.notes,
   'breed': instance.breed,
@@ -98,8 +98,8 @@ Expenditure _$ExpenditureFromJson(Map<String, dynamic> json) => Expenditure(
   date: DateTime.parse(json['date'] as String),
   category: json['category'] as String,
   description: json['description'] as String,
-  amount: (json['amount'] as num).toDouble(),
-  quantity: (json['quantity'] as num?)?.toDouble(),
+  amount: const DoubleConverter().fromJson(json['amount']),
+  quantity: const OptionalDoubleConverter().fromJson(json['quantity']),
   unit: json['unit'] as String?,
   receiptImage: json['receipt_image'] as String?,
   mpesaTransactionId: json['mpesa_transaction_id'] as String?,
@@ -117,8 +117,8 @@ Map<String, dynamic> _$ExpenditureToJson(Expenditure instance) =>
       'date': instance.date.toIso8601String(),
       'category': instance.category,
       'description': instance.description,
-      'amount': instance.amount,
-      'quantity': instance.quantity,
+      'amount': const DoubleConverter().toJson(instance.amount),
+      'quantity': const OptionalDoubleConverter().toJson(instance.quantity),
       'unit': instance.unit,
       'receipt_image': instance.receiptImage,
       'mpesa_transaction_id': instance.mpesaTransactionId,
@@ -133,10 +133,14 @@ WeightRecord _$WeightRecordFromJson(Map<String, dynamic> json) => WeightRecord(
   id: json['id'] as String,
   batchId: json['flock_id'] as String,
   date: DateTime.parse(json['event_date'] as String),
-  averageWeight: (json['average_weight_grams'] as num).toDouble(),
+  averageWeight: const DoubleConverter().fromJson(json['average_weight_grams']),
   sampleSize: (json['sample_size'] as num).toInt(),
-  minWeightGrams: (json['min_weight_grams'] as num?)?.toDouble(),
-  maxWeightGrams: (json['max_weight_grams'] as num?)?.toDouble(),
+  minWeightGrams: const OptionalDoubleConverter().fromJson(
+    json['min_weight_grams'],
+  ),
+  maxWeightGrams: const OptionalDoubleConverter().fromJson(
+    json['max_weight_grams'],
+  ),
   notes: json['notes'] as String?,
 );
 
@@ -145,10 +149,16 @@ Map<String, dynamic> _$WeightRecordToJson(WeightRecord instance) =>
       'id': instance.id,
       'flock_id': instance.batchId,
       'event_date': instance.date.toIso8601String(),
-      'average_weight_grams': instance.averageWeight,
+      'average_weight_grams': const DoubleConverter().toJson(
+        instance.averageWeight,
+      ),
       'sample_size': instance.sampleSize,
-      'min_weight_grams': instance.minWeightGrams,
-      'max_weight_grams': instance.maxWeightGrams,
+      'min_weight_grams': const OptionalDoubleConverter().toJson(
+        instance.minWeightGrams,
+      ),
+      'max_weight_grams': const OptionalDoubleConverter().toJson(
+        instance.maxWeightGrams,
+      ),
       'notes': instance.notes,
     };
 
@@ -163,7 +173,7 @@ VaccinationRecord _$VaccinationRecordFromJson(Map<String, dynamic> json) =>
       administrationMethod: json['administration_method'] as String,
       administeredBy: json['administered_by'] as String?,
       batchNumber: json['batch_number'] as String?,
-      cost: (json['cost'] as num?)?.toDouble(),
+      cost: const OptionalDoubleConverter().fromJson(json['cost_ksh']),
       notes: json['notes'] as String?,
       scheduledDate: json['scheduled_date'] == null
           ? null
@@ -182,7 +192,7 @@ Map<String, dynamic> _$VaccinationRecordToJson(VaccinationRecord instance) =>
       'administration_method': instance.administrationMethod,
       'administered_by': instance.administeredBy,
       'batch_number': instance.batchNumber,
-      'cost': instance.cost,
+      'cost_ksh': const OptionalDoubleConverter().toJson(instance.cost),
       'notes': instance.notes,
       'scheduled_date': instance.scheduledDate?.toIso8601String(),
       'completed': instance.completed,
@@ -193,43 +203,48 @@ SaleRecord _$SaleRecordFromJson(Map<String, dynamic> json) => SaleRecord(
   batchId: json['flock_id'] as String,
   date: DateTime.parse(json['date'] as String),
   quantity: (json['quantity'] as num).toInt(),
-  pricePerKg: (json['price_per_kg'] as num?)?.toDouble(),
-  pricePerBird: (json['price_per_bird'] as num).toDouble(),
-  totalAmount: (json['total_amount'] as num).toDouble(),
+  pricePerKg: const OptionalDoubleConverter().fromJson(json['price_per_kg']),
+  pricePerBird: const DoubleConverter().fromJson(json['price_per_bird']),
+  totalAmount: const DoubleConverter().fromJson(json['total_amount']),
   buyerName: json['buyer_name'] as String?,
   buyerPhone: json['buyer_phone'] as String?,
   buyerLocation: json['buyer_location'] as String?,
   notes: json['notes'] as String?,
   mpesaTransactionId: json['mpesa_transaction_id'] as String?,
-  averageWeight: (json['average_weight_grams'] as num?)?.toDouble(),
+  averageWeight: const OptionalDoubleConverter().fromJson(
+    json['average_weight_grams'],
+  ),
   customerId: json['customer_id'] as String?,
 );
 
-Map<String, dynamic> _$SaleRecordToJson(SaleRecord instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'flock_id': instance.batchId,
-      'date': instance.date.toIso8601String(),
-      'quantity': instance.quantity,
-      'price_per_kg': instance.pricePerKg,
-      'price_per_bird': instance.pricePerBird,
-      'total_amount': instance.totalAmount,
-      'buyer_name': instance.buyerName,
-      'buyer_phone': instance.buyerPhone,
-      'buyer_location': instance.buyerLocation,
-      'notes': instance.notes,
-      'mpesa_transaction_id': instance.mpesaTransactionId,
-      'average_weight_grams': instance.averageWeight,
-      'customer_id': instance.customerId,
-    };
+Map<String, dynamic> _$SaleRecordToJson(
+  SaleRecord instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'flock_id': instance.batchId,
+  'date': instance.date.toIso8601String(),
+  'quantity': instance.quantity,
+  'price_per_kg': const OptionalDoubleConverter().toJson(instance.pricePerKg),
+  'price_per_bird': const DoubleConverter().toJson(instance.pricePerBird),
+  'total_amount': const DoubleConverter().toJson(instance.totalAmount),
+  'buyer_name': instance.buyerName,
+  'buyer_phone': instance.buyerPhone,
+  'buyer_location': instance.buyerLocation,
+  'notes': instance.notes,
+  'mpesa_transaction_id': instance.mpesaTransactionId,
+  'average_weight_grams': const OptionalDoubleConverter().toJson(
+    instance.averageWeight,
+  ),
+  'customer_id': instance.customerId,
+};
 
 FeedRecord _$FeedRecordFromJson(Map<String, dynamic> json) => FeedRecord(
   id: json['id'] as String,
   batchId: json['flock_id'] as String,
   date: DateTime.parse(json['event_date'] as String),
   feedType: json['feed_type'] as String,
-  quantity: (json['quantity_kg'] as num).toDouble(),
-  cost: (json['cost_ksh'] as num?)?.toDouble(),
+  quantity: const DoubleConverter().fromJson(json['quantity_kg']),
+  cost: const OptionalDoubleConverter().fromJson(json['cost_ksh']),
   supplier: json['supplier'] as String?,
   notes: json['notes'] as String?,
   isHomemade: json['is_homemade'] as bool?,
@@ -244,8 +259,8 @@ Map<String, dynamic> _$FeedRecordToJson(FeedRecord instance) =>
       'flock_id': instance.batchId,
       'event_date': instance.date.toIso8601String(),
       'feed_type': instance.feedType,
-      'quantity_kg': instance.quantity,
-      'cost_ksh': instance.cost,
+      'quantity_kg': const DoubleConverter().toJson(instance.quantity),
+      'cost_ksh': const OptionalDoubleConverter().toJson(instance.cost),
       'supplier': instance.supplier,
       'notes': instance.notes,
       'is_homemade': instance.isHomemade,
@@ -255,19 +270,27 @@ Map<String, dynamic> _$FeedRecordToJson(FeedRecord instance) =>
 FeedIngredient _$FeedIngredientFromJson(Map<String, dynamic> json) =>
     FeedIngredient(
       name: json['name'] as String,
-      quantity: (json['quantity'] as num).toDouble(),
-      cost: (json['cost'] as num).toDouble(),
-      proteinContent: (json['protein_content'] as num?)?.toDouble(),
-      energyContent: (json['energy_content'] as num?)?.toDouble(),
+      quantity: const DoubleConverter().fromJson(json['quantity']),
+      cost: const DoubleConverter().fromJson(json['cost']),
+      proteinContent: const OptionalDoubleConverter().fromJson(
+        json['protein_content'],
+      ),
+      energyContent: const OptionalDoubleConverter().fromJson(
+        json['energy_content'],
+      ),
     );
 
 Map<String, dynamic> _$FeedIngredientToJson(FeedIngredient instance) =>
     <String, dynamic>{
       'name': instance.name,
-      'quantity': instance.quantity,
-      'cost': instance.cost,
-      'protein_content': instance.proteinContent,
-      'energy_content': instance.energyContent,
+      'quantity': const DoubleConverter().toJson(instance.quantity),
+      'cost': const DoubleConverter().toJson(instance.cost),
+      'protein_content': const OptionalDoubleConverter().toJson(
+        instance.proteinContent,
+      ),
+      'energy_content': const OptionalDoubleConverter().toJson(
+        instance.energyContent,
+      ),
     };
 
 InventoryItem _$InventoryItemFromJson(Map<String, dynamic> json) =>
@@ -275,10 +298,10 @@ InventoryItem _$InventoryItemFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       name: json['name'] as String,
       category: json['category'] as String,
-      quantity: (json['quantity'] as num).toDouble(),
+      quantity: const DoubleConverter().fromJson(json['quantity']),
       unit: json['unit'] as String,
-      minimumStock: (json['minimum_stock'] as num).toDouble(),
-      costPerUnit: (json['cost_per_unit'] as num).toDouble(),
+      minimumStock: const DoubleConverter().fromJson(json['minimum_stock']),
+      costPerUnit: const DoubleConverter().fromJson(json['cost_per_unit']),
       lastRestocked: json['last_restocked'] == null
           ? null
           : DateTime.parse(json['last_restocked'] as String),
@@ -290,10 +313,10 @@ Map<String, dynamic> _$InventoryItemToJson(InventoryItem instance) =>
       'id': instance.id,
       'name': instance.name,
       'category': instance.category,
-      'quantity': instance.quantity,
+      'quantity': const DoubleConverter().toJson(instance.quantity),
       'unit': instance.unit,
-      'minimum_stock': instance.minimumStock,
-      'cost_per_unit': instance.costPerUnit,
+      'minimum_stock': const DoubleConverter().toJson(instance.minimumStock),
+      'cost_per_unit': const DoubleConverter().toJson(instance.costPerUnit),
       'last_restocked': instance.lastRestocked?.toIso8601String(),
       'notes': instance.notes,
     };
@@ -306,7 +329,7 @@ InventoryHistoryRecord _$InventoryHistoryRecordFromJson(
   userId: json['user_id'] as String,
   date: DateTime.parse(json['date'] as String),
   action: json['action'] as String,
-  quantityChange: (json['quantity_change'] as num).toDouble(),
+  quantityChange: const DoubleConverter().fromJson(json['quantity_change']),
   notes: json['notes'] as String?,
   createdAt: DateTime.parse(json['created_at'] as String),
 );
@@ -319,7 +342,7 @@ Map<String, dynamic> _$InventoryHistoryRecordToJson(
   'user_id': instance.userId,
   'date': instance.date.toIso8601String(),
   'action': instance.action,
-  'quantity_change': instance.quantityChange,
+  'quantity_change': const DoubleConverter().toJson(instance.quantityChange),
   'notes': instance.notes,
   'created_at': instance.createdAt.toIso8601String(),
 };
@@ -364,8 +387,10 @@ MarketPrice _$MarketPriceFromJson(Map<String, dynamic> json) => MarketPrice(
   county: json['county'] as String,
   town: json['town'] as String?,
   item: json['item'] as String?,
-  pricePerKg: (json['price_per_kg'] as num).toDouble(),
-  pricePerBird: (json['price_per_bird'] as num?)?.toDouble(),
+  pricePerKg: const DoubleConverter().fromJson(json['price_per_kg']),
+  pricePerBird: const OptionalDoubleConverter().fromJson(
+    json['price_per_bird'],
+  ),
   status: json['status'] as String?,
   source: json['source'] as String?,
   notes: json['notes'] as String?,
@@ -378,8 +403,10 @@ Map<String, dynamic> _$MarketPriceToJson(MarketPrice instance) =>
       'county': instance.county,
       'town': instance.town,
       'item': instance.item,
-      'price_per_kg': instance.pricePerKg,
-      'price_per_bird': instance.pricePerBird,
+      'price_per_kg': const DoubleConverter().toJson(instance.pricePerKg),
+      'price_per_bird': const OptionalDoubleConverter().toJson(
+        instance.pricePerBird,
+      ),
       'status': instance.status,
       'source': instance.source,
       'notes': instance.notes,
@@ -423,17 +450,23 @@ BatchSummary _$BatchSummaryFromJson(Map<String, dynamic> json) => BatchSummary(
   batch: Batch.fromJson(json['batch'] as Map<String, dynamic>),
   totalMortality: (json['total_mortality'] as num).toInt(),
   currentChicks: (json['current_chicks'] as num).toInt(),
-  totalExpenditure: (json['total_expenditure'] as num).toDouble(),
-  mortalityRate: (json['mortality_rate'] as num).toDouble(),
+  totalExpenditure: const DoubleConverter().fromJson(json['total_expenditure']),
+  mortalityRate: const DoubleConverter().fromJson(json['mortality_rate']),
   daysActive: (json['days_active'] as num).toInt(),
-  totalSales: (json['total_sales'] as num).toDouble(),
+  totalSales: const DoubleConverter().fromJson(json['total_sales']),
   birdsSold: (json['birds_sold'] as num).toInt(),
   remainingBirds: (json['remaining_birds'] as num).toInt(),
-  averageWeight: (json['average_weight'] as num?)?.toDouble(),
-  totalFeedConsumed: (json['total_feed_consumed'] as num).toDouble(),
-  fcr: (json['fcr'] as num?)?.toDouble(),
-  totalVaccinationCost: (json['total_vaccination_cost'] as num).toDouble(),
-  profitLoss: (json['profit_loss'] as num).toDouble(),
+  averageWeight: const OptionalDoubleConverter().fromJson(
+    json['average_weight'],
+  ),
+  totalFeedConsumed: const DoubleConverter().fromJson(
+    json['total_feed_consumed'],
+  ),
+  fcr: const OptionalDoubleConverter().fromJson(json['fcr']),
+  totalVaccinationCost: const DoubleConverter().fromJson(
+    json['total_vaccination_cost'],
+  ),
+  profitLoss: const DoubleConverter().fromJson(json['profit_loss']),
 );
 
 Map<String, dynamic> _$BatchSummaryToJson(BatchSummary instance) =>
@@ -441,17 +474,25 @@ Map<String, dynamic> _$BatchSummaryToJson(BatchSummary instance) =>
       'batch': instance.batch,
       'total_mortality': instance.totalMortality,
       'current_chicks': instance.currentChicks,
-      'total_expenditure': instance.totalExpenditure,
-      'mortality_rate': instance.mortalityRate,
+      'total_expenditure': const DoubleConverter().toJson(
+        instance.totalExpenditure,
+      ),
+      'mortality_rate': const DoubleConverter().toJson(instance.mortalityRate),
       'days_active': instance.daysActive,
-      'total_sales': instance.totalSales,
+      'total_sales': const DoubleConverter().toJson(instance.totalSales),
       'birds_sold': instance.birdsSold,
       'remaining_birds': instance.remainingBirds,
-      'average_weight': instance.averageWeight,
-      'total_feed_consumed': instance.totalFeedConsumed,
-      'fcr': instance.fcr,
-      'total_vaccination_cost': instance.totalVaccinationCost,
-      'profit_loss': instance.profitLoss,
+      'average_weight': const OptionalDoubleConverter().toJson(
+        instance.averageWeight,
+      ),
+      'total_feed_consumed': const DoubleConverter().toJson(
+        instance.totalFeedConsumed,
+      ),
+      'fcr': const OptionalDoubleConverter().toJson(instance.fcr),
+      'total_vaccination_cost': const DoubleConverter().toJson(
+        instance.totalVaccinationCost,
+      ),
+      'profit_loss': const DoubleConverter().toJson(instance.profitLoss),
     };
 
 DailyCheck _$DailyCheckFromJson(Map<String, dynamic> json) => DailyCheck(
@@ -459,8 +500,12 @@ DailyCheck _$DailyCheckFromJson(Map<String, dynamic> json) => DailyCheck(
   batchId: json['flock_id'] as String,
   checkDate: DateTime.parse(json['check_date'] as String),
   checkTime: json['check_time'] as String?,
-  temperatureCelsius: (json['temperature_celsius'] as num?)?.toDouble(),
-  humidityPercent: (json['humidity_percent'] as num?)?.toDouble(),
+  temperatureCelsius: const OptionalDoubleConverter().fromJson(
+    json['temperature_celsius'],
+  ),
+  humidityPercent: const OptionalDoubleConverter().fromJson(
+    json['humidity_percent'],
+  ),
   chickBehavior: json['chick_behavior'] as String?,
   litterCondition: json['litter_condition'] as String?,
   feedLevel: json['feed_level'] as String?,
@@ -474,8 +519,12 @@ Map<String, dynamic> _$DailyCheckToJson(DailyCheck instance) =>
       'flock_id': instance.batchId,
       'check_date': instance.checkDate.toIso8601String(),
       'check_time': instance.checkTime,
-      'temperature_celsius': instance.temperatureCelsius,
-      'humidity_percent': instance.humidityPercent,
+      'temperature_celsius': const OptionalDoubleConverter().toJson(
+        instance.temperatureCelsius,
+      ),
+      'humidity_percent': const OptionalDoubleConverter().toJson(
+        instance.humidityPercent,
+      ),
       'chick_behavior': instance.chickBehavior,
       'litter_condition': instance.litterCondition,
       'feed_level': instance.feedLevel,
@@ -521,8 +570,10 @@ AIResponse _$AIResponseFromJson(Map<String, dynamic> json) => AIResponse(
   actionableHighlights: (json['actionable_highlights'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
-  estimatedDaysToTarget: (json['estimated_days_to_target'] as num?)?.toDouble(),
-  estimatedFcr: (json['estimated_fcr'] as num?)?.toDouble(),
+  estimatedDaysToTarget: const OptionalDoubleConverter().fromJson(
+    json['estimated_days_to_target'],
+  ),
+  estimatedFcr: const OptionalDoubleConverter().fromJson(json['estimated_fcr']),
 );
 
 Map<String, dynamic> _$AIResponseToJson(AIResponse instance) =>
@@ -534,6 +585,10 @@ Map<String, dynamic> _$AIResponseToJson(AIResponse instance) =>
       'potential_causes': instance.potentialCauses,
       'response': instance.response,
       'actionable_highlights': instance.actionableHighlights,
-      'estimated_days_to_target': instance.estimatedDaysToTarget,
-      'estimated_fcr': instance.estimatedFcr,
+      'estimated_days_to_target': const OptionalDoubleConverter().toJson(
+        instance.estimatedDaysToTarget,
+      ),
+      'estimated_fcr': const OptionalDoubleConverter().toJson(
+        instance.estimatedFcr,
+      ),
     };

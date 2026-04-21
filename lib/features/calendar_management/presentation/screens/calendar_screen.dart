@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../providers/broiler_provider.dart';
-import '../../../../core/models/broiler_models.dart';
-import '../../../../core/network/api_client.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/core/models/broiler_models.dart';
+import 'package:mobile/core/network/api_client.dart';
 import 'package:flutter/services.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -197,7 +197,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 final messenger = ScaffoldMessenger.of(context);
                                 try {
                                   final taskId = evt['id'];
-                                  await ApiClient.instance.put('/tasks/$taskId', data: {
+                                  await ApiClient.instance.put('${ApiEndpoints.tasks}/$taskId', data: {
                                     'status': v == true ? 'DONE' : 'PENDING',
                                   });
                                   ref.invalidate(tasksProvider);
@@ -279,7 +279,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
         if (_recurrenceInterval != null) 'recurrence_interval': _recurrenceInterval,
       };
 
-      await ApiClient.instance.post('/tasks/', data: payload);
+      await ApiClient.instance.post(ApiEndpoints.tasks, data: payload);
       ref.invalidate(tasksProvider);
       if (mounted) Navigator.pop(context);
     } catch (e) {

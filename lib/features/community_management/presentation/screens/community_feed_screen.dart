@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/features/community_management/data/models/community_models.dart';
 import 'package:mobile/features/community_management/providers/community_provider.dart';
-import 'package:mobile/presentation/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
 
@@ -111,7 +111,6 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
 
   Widget _buildPostCard(BuildContext context, CommunityPost post) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return CustomCard(
       margin: const EdgeInsets.only(bottom: 16),
@@ -156,7 +155,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                         ],
                         Text(
                           timeago.format(post.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -181,7 +180,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                   post.content,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: isDark ? Colors.grey[300] : Colors.grey[700]),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -199,8 +198,8 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 100,
-                    color: Colors.grey[200],
-                    child: const Icon(LucideIcons.image, color: Colors.grey),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Icon(LucideIcons.image, color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -260,7 +259,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
           Icon(LucideIcons.users, size: 80, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
           const SizedBox(height: 16),
           const Text('No posts yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Text('Be the first to share something with the community!', style: TextStyle(color: Colors.grey)),
+          Text('Be the first to share something with the community!', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
         ],
       ),
     );

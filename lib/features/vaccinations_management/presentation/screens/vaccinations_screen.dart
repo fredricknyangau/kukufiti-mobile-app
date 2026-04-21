@@ -1,20 +1,19 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
+import 'package:mobile/shared/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/utils/toast_service.dart';
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_button.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../presentation/widgets/custom_input.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../providers/broiler_provider.dart';
-import '../../../../core/models/broiler_models.dart';
-import '../../../../core/constants/broiler_constants.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/core/utils/toast_service.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_button.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/custom_input.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/core/models/broiler_models.dart';
+import 'package:mobile/core/constants/broiler_constants.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
@@ -333,6 +332,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
     }
 
     setState(() => _isLoading = true);
+    final cost = double.tryParse(_costController.text.trim());
     final payload = {
       'event_id': const Uuid().v4(),
       'vaccine_name': _nameController.text.trim(),
@@ -342,6 +342,7 @@ class _AddEditVaccinationDialogState extends State<_AddEditVaccinationDialog> {
       'administered_by': _administeredByController.text.trim().isEmpty ? null : _administeredByController.text.trim(),
       'batch_number': _batchNumberController.text.trim().isEmpty ? null : _batchNumberController.text.trim(),
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      if (cost != null && cost > 0) 'cost_ksh': cost,
     };
 
     try {

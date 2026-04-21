@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../providers/data_providers.dart';
-import '../models/feed_recommendation.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/features/ai_insights/data/models/feed_recommendation.dart';
 
 final aiInsightsRepositoryProvider = Provider<AiInsightsRepository>((ref) {
   final dio = ref.watch(apiClientProvider);

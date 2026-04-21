@@ -4,8 +4,8 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
-    id("com.google.firebase.appdistribution")
+    // id("com.google.gms.google-services")
+    // id("com.google.firebase.appdistribution")
 }
 
 // ── Load signing credentials ──────────────────────────────────────────────────
@@ -69,10 +69,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            firebaseAppDistribution {
-                releaseNotesFile = "release_notes.txt"
-                groups           = "internal-testers"
-            }
+//            firebaseAppDistribution {
+//                releaseNotesFile = "release_notes.txt"
+//                groups           = "internal-testers"
+//            }
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")

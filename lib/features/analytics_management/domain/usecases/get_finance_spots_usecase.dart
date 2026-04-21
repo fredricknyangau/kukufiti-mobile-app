@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../entities/finance_spot.dart';
-import '../repositories/analytics_repository.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/analytics_management/domain/entities/finance_spot.dart';
+import 'package:mobile/features/analytics_management/domain/repositories/analytics_repository.dart';
 
 class GetFinanceSpotsUseCase implements UseCase<List<FinanceSpot>, NoParams> {
   final AnalyticsRepository repository;

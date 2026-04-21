@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/feed_recommendation.dart';
-import '../providers/ai_insights_provider.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:mobile/features/ai_insights/data/models/feed_recommendation.dart';
+import 'package:mobile/features/ai_insights/presentation/providers/ai_insights_provider.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 class FeedAdvisoryScreen extends ConsumerStatefulWidget {
   const FeedAdvisoryScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/weight_record.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/weight_management/domain/entities/weight_record.dart';
 
 abstract class WeightRepository {
   Future<Either<Failure, List<WeightRecord>>> getWeightRecords();

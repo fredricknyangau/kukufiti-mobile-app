@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/mortality_analysis.dart';
-import '../providers/ai_insights_provider.dart';
-import '../../../../providers/broiler_provider.dart';
-import '../../../../providers/data_providers.dart' as data_providers;
-import '../../../../core/models/broiler_models.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:mobile/features/ai_insights/data/models/mortality_analysis.dart';
+import 'package:mobile/features/ai_insights/presentation/providers/ai_insights_provider.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/shared/providers/data_providers.dart' as data_providers;
+import 'package:mobile/core/models/broiler_models.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 class MortalityAdvisoryScreen extends ConsumerStatefulWidget {
   const MortalityAdvisoryScreen({super.key});

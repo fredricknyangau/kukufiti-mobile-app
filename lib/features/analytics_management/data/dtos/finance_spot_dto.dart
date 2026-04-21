@@ -1,4 +1,4 @@
-import '../../domain/entities/finance_spot.dart';
+import 'package:mobile/features/analytics_management/domain/entities/finance_spot.dart';
 
 class FinanceSpotDto {
   final DateTime date;

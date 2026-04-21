@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../controllers/settings_controller.dart';
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import 'terms_screen.dart';
+import 'package:mobile/features/settings_management/presentation/controllers/settings_controller.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/features/settings_management/presentation/screens/terms_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

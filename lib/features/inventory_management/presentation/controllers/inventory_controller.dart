@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/inventory_repository_impl.dart';
-import '../../domain/entities/inventory_item.dart';
-import '../../domain/repositories/inventory_repository.dart';
-import '../../domain/usecases/get_inventory_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/inventory_management/data/repositories/inventory_repository_impl.dart';
+import 'package:mobile/features/inventory_management/domain/entities/inventory_item.dart';
+import 'package:mobile/features/inventory_management/domain/repositories/inventory_repository.dart';
+import 'package:mobile/features/inventory_management/domain/usecases/get_inventory_usecase.dart';
 
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

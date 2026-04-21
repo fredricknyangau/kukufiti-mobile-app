@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import '../network/api_client.dart';
-import '../utils/error_handler.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/utils/error_handler.dart';
 
 /// Result returned from a successful SSO sign-in.
 class SsoResult {

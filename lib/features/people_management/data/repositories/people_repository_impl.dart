@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/person.dart';
-import '../../domain/repositories/people_repository.dart';
-import '../dtos/person_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/people_management/domain/entities/person.dart';
+import 'package:mobile/features/people_management/domain/repositories/people_repository.dart';
+import 'package:mobile/features/people_management/data/dtos/person_dto.dart';
 
 class PeopleRepositoryImpl implements PeopleRepository {
   final Dio apiClient;

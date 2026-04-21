@@ -1,4 +1,4 @@
-import '../../domain/entities/mortality.dart';
+import 'package:mobile/features/mortality_management/domain/entities/mortality.dart';
 
 class MortalityDto {
   final String id;

@@ -1,4 +1,4 @@
-import '../../domain/entities/feed_record.dart';
+import 'package:mobile/features/feed_management/domain/entities/feed_record.dart';
 
 class FeedRecordDto {
   final String id;

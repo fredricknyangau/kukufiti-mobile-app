@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/flock.dart';
-import '../../domain/repositories/flock_repository.dart';
-import '../dtos/flock_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/flock_management/domain/entities/flock.dart';
+import 'package:mobile/features/flock_management/domain/repositories/flock_repository.dart';
+import 'package:mobile/features/flock_management/data/dtos/flock_dto.dart';
 
 class FlockRepositoryImpl implements FlockRepository {
   final Dio apiClient;

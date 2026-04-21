@@ -4,13 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../providers/broiler_provider.dart';
-import '../../../../core/models/broiler_models.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/core/models/broiler_models.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 class HarvestOptimizationScreen extends ConsumerStatefulWidget {
   const HarvestOptimizationScreen({super.key});

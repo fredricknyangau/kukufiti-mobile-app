@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../config/app_config.dart';
-import '../storage/secure_storage_service.dart';
-import 'sync_service.dart';
+import 'package:mobile/core/config/app_config.dart';
+import 'package:mobile/core/storage/secure_storage_service.dart';
+import 'package:mobile/core/network/sync_service.dart';
 
 /// Optimized HTTP client with robust timeout and non-blocking interceptor.
 class ApiClient {
@@ -12,8 +12,8 @@ class ApiClient {
           ? AppConfig.apiUrl 
           : '${AppConfig.apiUrl}/',
       connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 90),
+      sendTimeout: const Duration(seconds: 60),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

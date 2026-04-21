@@ -1,17 +1,16 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
+import 'package:mobile/shared/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/utils/toast_service.dart';
-import '../../../../providers/auth_provider.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../presentation/widgets/custom_button.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../presentation/widgets/custom_input.dart';
-import '../../../../core/models/broiler_models.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/core/utils/toast_service.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/shared/widgets/custom_button.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/custom_input.dart';
+import 'package:mobile/core/models/broiler_models.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -90,7 +89,7 @@ class ProfileScreen extends ConsumerWidget {
                 CustomButton(
                   text: 'Logout',
                   variant: CustomButtonVariant.destructive,
-                  icon: const Icon(LucideIcons.logOut, size: 20),
+                  icon: LucideIcons.logOut,
                   onPressed: () {
                     ref.read(authProvider.notifier).logout();
                   },

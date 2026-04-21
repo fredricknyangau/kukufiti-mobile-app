@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/biosecurity_log.dart';
-import '../../domain/repositories/biosecurity_repository.dart';
-import '../dtos/biosecurity_log_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/biosecurity_management/domain/entities/biosecurity_log.dart';
+import 'package:mobile/features/biosecurity_management/domain/repositories/biosecurity_repository.dart';
+import 'package:mobile/features/biosecurity_management/data/dtos/biosecurity_log_dto.dart';
 
 class BiosecurityRepositoryImpl implements BiosecurityRepository {
   final Dio apiClient;

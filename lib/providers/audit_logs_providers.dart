@@ -1,7 +1,0 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '_provider_utils.dart';
-
-final auditLogsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  setupKeepAlive(ref);
-  return fetchListWithFallback(endpoint: '/admin/audit-logs');
-});

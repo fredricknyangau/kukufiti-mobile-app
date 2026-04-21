@@ -1,8 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
-import '../network/api_client.dart';
-import '../utils/toast_service.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/utils/toast_service.dart';
 import 'package:flutter/material.dart';
 
 class SyncService {

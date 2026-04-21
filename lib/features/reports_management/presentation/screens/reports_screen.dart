@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../presentation/widgets/premium_gate.dart';
-import '../../../../core/network/api_client.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/premium_gate.dart';
+import 'package:mobile/core/network/api_client.dart';
 import 'package:dio/dio.dart';
 
 class ReportsScreen extends ConsumerWidget {

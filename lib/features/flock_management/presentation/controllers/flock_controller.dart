@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/flock_repository_impl.dart';
-import '../../domain/entities/flock.dart';
-import '../../domain/repositories/flock_repository.dart';
-import '../../domain/usecases/get_flocks_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/flock_management/data/repositories/flock_repository_impl.dart';
+import 'package:mobile/features/flock_management/domain/entities/flock.dart';
+import 'package:mobile/features/flock_management/domain/repositories/flock_repository.dart';
+import 'package:mobile/features/flock_management/domain/usecases/get_flocks_usecase.dart';
 
 final flockRepositoryProvider = Provider<FlockRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

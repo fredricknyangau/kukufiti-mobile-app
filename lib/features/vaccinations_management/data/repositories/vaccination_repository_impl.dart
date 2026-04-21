@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/vaccination.dart';
-import '../../domain/repositories/vaccination_repository.dart';
-import '../dtos/vaccination_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/vaccinations_management/domain/entities/vaccination.dart';
+import 'package:mobile/features/vaccinations_management/domain/repositories/vaccination_repository.dart';
+import 'package:mobile/features/vaccinations_management/data/dtos/vaccination_dto.dart';
 
 class VaccinationRepositoryImpl implements VaccinationRepository {
   final Dio apiClient;

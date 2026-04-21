@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/vet_consultation.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/vet_management/domain/entities/vet_consultation.dart';
 
 abstract class VetRepository {
   Future<Either<Failure, List<VetConsultation>>> getConsultations();

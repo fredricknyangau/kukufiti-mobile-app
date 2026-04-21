@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/biosecurity_repository_impl.dart';
-import '../../domain/entities/biosecurity_log.dart';
-import '../../domain/repositories/biosecurity_repository.dart';
-import '../../domain/usecases/get_biosecurity_logs_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/biosecurity_management/data/repositories/biosecurity_repository_impl.dart';
+import 'package:mobile/features/biosecurity_management/domain/entities/biosecurity_log.dart';
+import 'package:mobile/features/biosecurity_management/domain/repositories/biosecurity_repository.dart';
+import 'package:mobile/features/biosecurity_management/domain/usecases/get_biosecurity_logs_usecase.dart';
 
 final biosecurityRepositoryProvider = Provider<BiosecurityRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

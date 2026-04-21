@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../entities/vaccination.dart';
-import '../repositories/vaccination_repository.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/vaccinations_management/domain/entities/vaccination.dart';
+import 'package:mobile/features/vaccinations_management/domain/repositories/vaccination_repository.dart';
 
 class GetVaccinationsUseCase implements UseCase<List<Vaccination>, NoParams> {
   final VaccinationRepository repository;

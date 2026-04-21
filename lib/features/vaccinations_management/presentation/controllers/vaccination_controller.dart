@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/vaccination_repository_impl.dart';
-import '../../domain/entities/vaccination.dart';
-import '../../domain/repositories/vaccination_repository.dart';
-import '../../domain/usecases/get_vaccinations_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/vaccinations_management/data/repositories/vaccination_repository_impl.dart';
+import 'package:mobile/features/vaccinations_management/domain/entities/vaccination.dart';
+import 'package:mobile/features/vaccinations_management/domain/repositories/vaccination_repository.dart';
+import 'package:mobile/features/vaccinations_management/domain/usecases/get_vaccinations_usecase.dart';
 
 final vaccinationRepositoryProvider = Provider<VaccinationRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

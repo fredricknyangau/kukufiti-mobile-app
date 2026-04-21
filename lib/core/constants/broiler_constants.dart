@@ -1,4 +1,4 @@
-import '../models/broiler_models.dart';
+import 'package:mobile/core/models/broiler_models.dart';
 
 const List<Map<String, dynamic>> expenseCategories = [
   {'value': 'feed', 'label': 'Feed'},

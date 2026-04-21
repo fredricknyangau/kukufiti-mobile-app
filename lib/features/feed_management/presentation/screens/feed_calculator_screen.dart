@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/broiler_constants.dart';
-import '../../../../presentation/widgets/custom_card.dart';
+import 'package:mobile/core/constants/broiler_constants.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
 
 class FeedCalculatorScreen extends StatefulWidget {
   const FeedCalculatorScreen({super.key});

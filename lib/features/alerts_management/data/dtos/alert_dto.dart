@@ -1,4 +1,4 @@
-import '../../domain/entities/alert.dart';
+import 'package:mobile/features/alerts_management/domain/entities/alert.dart';
 
 class AlertDto {
   final int id;

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/expense_repository_impl.dart';
-import '../../domain/entities/expense.dart';
-import '../../domain/repositories/expense_repository.dart';
-import '../../domain/usecases/get_expenses_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/expenses_management/data/repositories/expense_repository_impl.dart';
+import 'package:mobile/features/expenses_management/domain/entities/expense.dart';
+import 'package:mobile/features/expenses_management/domain/repositories/expense_repository.dart';
+import 'package:mobile/features/expenses_management/domain/usecases/get_expenses_usecase.dart';
 
 final expenseRepositoryProvider = Provider<ExpenseRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

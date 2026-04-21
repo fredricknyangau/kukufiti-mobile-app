@@ -1,4 +1,4 @@
-import '../../domain/entities/weight_record.dart';
+import 'package:mobile/features/weight_management/domain/entities/weight_record.dart';
 
 class WeightRecordDto {
   final String id;

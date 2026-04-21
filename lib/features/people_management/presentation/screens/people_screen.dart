@@ -5,15 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_button.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../presentation/widgets/custom_input.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/utils/toast_service.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../core/models/people_models.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_button.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/custom_input.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/core/utils/toast_service.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/core/models/people_models.dart';
 
 class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});

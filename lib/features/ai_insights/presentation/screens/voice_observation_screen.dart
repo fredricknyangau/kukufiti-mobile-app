@@ -7,9 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../presentation/widgets/custom_card.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
 
 class VoiceObservationScreen extends ConsumerStatefulWidget {
   const VoiceObservationScreen({super.key});

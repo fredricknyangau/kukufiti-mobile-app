@@ -1,7 +1,7 @@
 name: mobile
 description: "KukuFiti - Modern Poultry Management"
 publish_to: 'none'
-version: 1.2.7+1
+version: 1.2.8+2
 
 environment:
   sdk: ^3.11.1
@@ -45,6 +45,7 @@ dependencies:
   audioplayers: ^6.6.0
   path: ^1.9.1
   timeago: ^3.7.0
+  riverpod_annotation: ^4.0.2
 
 
 dev_dependencies:

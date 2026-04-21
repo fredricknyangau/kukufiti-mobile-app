@@ -1,4 +1,4 @@
-import '../../domain/entities/expense.dart';
+import 'package:mobile/features/expenses_management/domain/entities/expense.dart';
 
 class ExpenseDto {
   final String id;

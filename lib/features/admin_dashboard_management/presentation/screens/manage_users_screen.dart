@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../presentation/widgets/custom_card.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
 
 
 class ManageUsersScreen extends ConsumerWidget {

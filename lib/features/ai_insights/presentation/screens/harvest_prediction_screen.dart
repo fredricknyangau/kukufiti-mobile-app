@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/harvest_prediction.dart';
-import '../providers/ai_insights_provider.dart';
-import '../../../../providers/broiler_provider.dart';
+import 'package:mobile/features/ai_insights/data/models/harvest_prediction.dart';
+import 'package:mobile/features/ai_insights/presentation/providers/ai_insights_provider.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
 
 class HarvestPredictionScreen extends ConsumerStatefulWidget {
   const HarvestPredictionScreen({super.key});

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/sales_repository_impl.dart';
-import '../../domain/entities/sale.dart';
-import '../../domain/repositories/sales_repository.dart';
-import '../../domain/usecases/get_sales_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/sales_management/data/repositories/sales_repository_impl.dart';
+import 'package:mobile/features/sales_management/domain/entities/sale.dart';
+import 'package:mobile/features/sales_management/domain/repositories/sales_repository.dart';
+import 'package:mobile/features/sales_management/domain/usecases/get_sales_usecase.dart';
 
 final salesRepositoryProvider = Provider<SalesRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

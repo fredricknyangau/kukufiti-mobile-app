@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/inventory_item.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/inventory_management/domain/entities/inventory_item.dart';
 
 abstract class InventoryRepository {
   Future<Either<Failure, List<InventoryItem>>> getInventoryItems();

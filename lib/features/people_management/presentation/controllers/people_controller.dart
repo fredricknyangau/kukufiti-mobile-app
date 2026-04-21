@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../data/repositories/people_repository_impl.dart';
-import '../../domain/entities/person.dart';
-import '../../domain/repositories/people_repository.dart';
-import '../../domain/usecases/get_people_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/features/people_management/data/repositories/people_repository_impl.dart';
+import 'package:mobile/features/people_management/domain/entities/person.dart';
+import 'package:mobile/features/people_management/domain/repositories/people_repository.dart';
+import 'package:mobile/features/people_management/domain/usecases/get_people_usecase.dart';
 
 final peopleRepositoryProvider = Provider<PeopleRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

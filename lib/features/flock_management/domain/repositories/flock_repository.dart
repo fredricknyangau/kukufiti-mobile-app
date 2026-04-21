@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/flock.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/flock_management/domain/entities/flock.dart';
 
 abstract class FlockRepository {
   Future<Either<Failure, List<Flock>>> getFlocks();

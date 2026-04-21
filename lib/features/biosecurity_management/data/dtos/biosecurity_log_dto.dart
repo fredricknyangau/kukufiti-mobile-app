@@ -1,4 +1,4 @@
-import '../../domain/entities/biosecurity_log.dart';
+import 'package:mobile/features/biosecurity_management/domain/entities/biosecurity_log.dart';
 
 class BiosecurityLogDto {
   final String id;

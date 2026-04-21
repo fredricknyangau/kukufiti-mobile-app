@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:mobile/shared/utils/json_converters.dart';
 
 part 'people_models.g.dart';
 
@@ -56,6 +57,7 @@ class Employee {
   final String name;
   final String role; // 'manager' | 'worker' | 'vet' | 'other'
   final String? phoneNumber;
+  @OptionalDoubleConverter()
   final double? salary;
   final DateTime? startDate;
   final bool isActive;

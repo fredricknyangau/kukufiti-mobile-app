@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/feed_recommendation.dart';
-import '../../data/models/mortality_analysis.dart';
-import '../../data/models/harvest_prediction.dart';
-import '../../data/models/disease_risk.dart';
-import '../../data/models/fcr_insights.dart';
-import '../../data/models/ai_chat.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/utils/error_handler.dart';
-import '../../../../providers/data_providers.dart';
+import 'package:mobile/features/ai_insights/data/models/feed_recommendation.dart';
+import 'package:mobile/features/ai_insights/data/models/mortality_analysis.dart';
+import 'package:mobile/features/ai_insights/data/models/harvest_prediction.dart';
+import 'package:mobile/features/ai_insights/data/models/disease_risk.dart';
+import 'package:mobile/features/ai_insights/data/models/fcr_insights.dart';
+import 'package:mobile/features/ai_insights/data/models/ai_chat.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/core/utils/error_handler.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
 
 class AiInsightsState {
   final bool isLoading;

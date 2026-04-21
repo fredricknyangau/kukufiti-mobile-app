@@ -19,7 +19,7 @@ class ApiEndpoints {
   // Financials — NOTE: backend prefixes these under /finance/
   static const String expenditures = 'finance/expenditures';
   static const String sales = 'finance/sales';
-  static const String inventory = 'inventory/';
+  static const String inventory = 'inventory';
 
   // Vet / Health
   static const String vetConsultations = 'health/consultations';
@@ -29,6 +29,8 @@ class ApiEndpoints {
 
   // Other
   static const String biosecurity = 'biosecurity/';
+  // alerts and farms list routes are defined as '/' on the backend router,
+  // so the full path must end with '/'
   static const String alerts = 'alerts/';
   static const String auditLogs = 'admin/audit-logs';
   static String people(String type) {
@@ -55,8 +57,9 @@ class ApiEndpoints {
 
   // New: Backend Sync
   static const String resources = 'resources/';
-  static const String settings = 'settings/';
-  static const String tasks = 'tasks/';
+  static const String settings = 'settings';
+  static const String tasks = 'tasks';
+  // farms list route is defined as '/' on the backend router
   static const String farms = 'farms/';
 
   // AI Advisory

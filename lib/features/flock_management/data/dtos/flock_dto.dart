@@ -1,4 +1,4 @@
-import '../../domain/entities/flock.dart';
+import 'package:mobile/features/flock_management/domain/entities/flock.dart';
 
 class FlockDto {
   final int id;

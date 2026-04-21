@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/auth_provider.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
 
-import '../../domain/entities/settings_state.dart';
-import '../../domain/repositories/settings_repository.dart';
-import '../../data/repositories/settings_repository_impl.dart';
+import 'package:mobile/features/settings_management/domain/entities/settings_state.dart';
+import 'package:mobile/features/settings_management/domain/repositories/settings_repository.dart';
+import 'package:mobile/features/settings_management/data/repositories/settings_repository_impl.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepositoryImpl();

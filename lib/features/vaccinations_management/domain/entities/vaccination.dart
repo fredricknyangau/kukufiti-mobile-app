@@ -5,6 +5,7 @@ class Vaccination {
   final String method;
   final bool completed;
   final DateTime date;
+  final double? costKsh;
 
   Vaccination({
     required this.id,
@@ -13,5 +14,6 @@ class Vaccination {
     required this.method,
     required this.completed,
     required this.date,
+    this.costKsh,
   });
 }

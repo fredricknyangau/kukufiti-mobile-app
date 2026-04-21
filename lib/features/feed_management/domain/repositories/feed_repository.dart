@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/feed_record.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/feed_management/domain/entities/feed_record.dart';
 
 abstract class FeedRepository {
   Future<Either<Failure, List<FeedRecord>>> getFeedRecords();

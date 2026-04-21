@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/analytics_repository_impl.dart';
-import '../../domain/entities/analytics_metrics.dart';
-import '../../domain/entities/finance_spot.dart';
-import '../../domain/repositories/analytics_repository.dart';
-import '../../domain/usecases/get_analytics_metrics_usecase.dart';
-import '../../domain/usecases/get_finance_spots_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/analytics_management/data/repositories/analytics_repository_impl.dart';
+import 'package:mobile/features/analytics_management/domain/entities/analytics_metrics.dart';
+import 'package:mobile/features/analytics_management/domain/entities/finance_spot.dart';
+import 'package:mobile/features/analytics_management/domain/repositories/analytics_repository.dart';
+import 'package:mobile/features/analytics_management/domain/usecases/get_analytics_metrics_usecase.dart';
+import 'package:mobile/features/analytics_management/domain/usecases/get_finance_spots_usecase.dart';
 
 final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

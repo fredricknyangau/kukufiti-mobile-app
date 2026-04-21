@@ -1,4 +1,4 @@
-import '../../domain/entities/vet_consultation.dart';
+import 'package:mobile/features/vet_management/domain/entities/vet_consultation.dart';
 
 class VetConsultationDto {
   final int id;

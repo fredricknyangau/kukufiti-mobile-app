@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/alert.dart';
-import '../../domain/repositories/alert_repository.dart';
-import '../dtos/alert_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/alerts_management/domain/entities/alert.dart';
+import 'package:mobile/features/alerts_management/domain/repositories/alert_repository.dart';
+import 'package:mobile/features/alerts_management/data/dtos/alert_dto.dart';
 
 class AlertRepositoryImpl implements AlertRepository {
   final Dio apiClient;

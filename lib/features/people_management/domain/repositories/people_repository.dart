@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/person.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/people_management/domain/entities/person.dart';
 
 abstract class PeopleRepository {
   Future<Either<Failure, List<Person>>> getPeople(String type);

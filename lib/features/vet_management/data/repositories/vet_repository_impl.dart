@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/vet_consultation.dart';
-import '../../domain/repositories/vet_repository.dart';
-import '../dtos/vet_consultation_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/vet_management/domain/entities/vet_consultation.dart';
+import 'package:mobile/features/vet_management/domain/repositories/vet_repository.dart';
+import 'package:mobile/features/vet_management/data/dtos/vet_consultation_dto.dart';
 
 class VetRepositoryImpl implements VetRepository {
   final Dio apiClient;

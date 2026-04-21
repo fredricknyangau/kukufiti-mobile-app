@@ -51,7 +51,7 @@ Employee _$EmployeeFromJson(Map<String, dynamic> json) => Employee(
   name: json['name'] as String,
   role: json['role'] as String,
   phoneNumber: json['phone_number'] as String?,
-  salary: (json['salary'] as num?)?.toDouble(),
+  salary: const OptionalDoubleConverter().fromJson(json['salary']),
   startDate: json['start_date'] == null
       ? null
       : DateTime.parse(json['start_date'] as String),
@@ -63,7 +63,7 @@ Map<String, dynamic> _$EmployeeToJson(Employee instance) => <String, dynamic>{
   'name': instance.name,
   'role': instance.role,
   'phone_number': instance.phoneNumber,
-  'salary': instance.salary,
+  'salary': const OptionalDoubleConverter().toJson(instance.salary),
   'start_date': instance.startDate?.toIso8601String(),
   'is_active': instance.isActive,
 };

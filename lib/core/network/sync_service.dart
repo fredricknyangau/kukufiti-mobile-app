@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'api_client.dart';
+import 'package:mobile/core/network/api_client.dart';
 
 class SyncRequest {
   final String path;

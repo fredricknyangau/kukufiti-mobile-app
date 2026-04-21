@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/mortality.dart';
-import '../../domain/repositories/mortality_repository.dart';
-import '../dtos/mortality_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/mortality_management/domain/entities/mortality.dart';
+import 'package:mobile/features/mortality_management/domain/repositories/mortality_repository.dart';
+import 'package:mobile/features/mortality_management/data/dtos/mortality_dto.dart';
 
 class MortalityRepositoryImpl implements MortalityRepository {
   final Dio apiClient;

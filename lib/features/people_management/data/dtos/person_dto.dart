@@ -1,4 +1,4 @@
-import '../../domain/entities/person.dart';
+import 'package:mobile/features/people_management/domain/entities/person.dart';
 
 class PersonDto {
   final int id;

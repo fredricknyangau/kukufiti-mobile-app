@@ -1,4 +1,4 @@
-import '../../domain/entities/sale.dart';
+import 'package:mobile/features/sales_management/domain/entities/sale.dart';
 
 class SaleDto {
   final String id;

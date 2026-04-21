@@ -1,4 +1,4 @@
-import 'package:mobile/presentation/widgets/custom_divider.dart';
+import 'package:mobile/shared/widgets/custom_divider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,20 +6,19 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/utils/toast_service.dart';
-import '../../../../core/utils/error_handler.dart';
-import '../../../../providers/broiler_provider.dart';
-import '../../../../providers/data_providers.dart';
-import '../../../../presentation/widgets/app_drawer.dart';
-import '../../../../presentation/widgets/custom_card.dart';
-import '../../../../presentation/widgets/custom_input.dart';
-import '../../../../presentation/widgets/custom_button.dart';
-import '../../../../core/models/broiler_models.dart';
-import '../../../../core/constants/broiler_constants.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/core/utils/toast_service.dart';
+import 'package:mobile/core/utils/error_handler.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/shared/widgets/app_drawer.dart';
+import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/shared/widgets/custom_input.dart';
+import 'package:mobile/shared/widgets/custom_button.dart';
+import 'package:mobile/core/models/broiler_models.dart';
+import 'package:mobile/core/constants/broiler_constants.dart';
 
 class BatchesScreen extends ConsumerWidget {
   const BatchesScreen({super.key});
@@ -457,6 +456,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                       hintText: 'e.g., 500',
                       controller: _sizeController,
                       keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
                         final count = int.tryParse(v);
@@ -469,14 +469,50 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: CustomInput(
-                      label: 'Cost per Chick',
+                      label: 'Cost per Chick (KES)',
                       hintText: 'e.g., 75',
                       controller: _costController,
                       keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
                 ],
               ),
+              // Live total cost preview
+              Builder(builder: (context) {
+                final count = int.tryParse(_sizeController.text);
+                final cost = double.tryParse(_costController.text);
+                if (count != null && cost != null && count > 0 && cost > 0) {
+                  final total = count * cost;
+                  return Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withAlpha(60),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.receipt_long_rounded,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Total Acquisition Cost: KES ${total.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _breed,

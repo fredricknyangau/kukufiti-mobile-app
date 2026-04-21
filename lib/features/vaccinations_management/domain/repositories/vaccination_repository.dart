@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/vaccination.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/vaccinations_management/domain/entities/vaccination.dart';
 
 abstract class VaccinationRepository {
   Future<Either<Failure, List<Vaccination>>> getVaccinations();

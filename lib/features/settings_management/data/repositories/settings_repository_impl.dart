@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/settings_state.dart';
-import '../../domain/repositories/settings_repository.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/settings_management/domain/entities/settings_state.dart';
+import 'package:mobile/features/settings_management/domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   static const String _themeKey = 'settings_theme_mode';
@@ -78,9 +78,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   Future<void> _syncSettingWithBackend(String key, String value) async {
     try {
-      await ApiClient.instance.put('${ApiEndpoints.settings}$key', data: {'value': value});
-    } catch (e) {
-      // Ignore failures, rely on local cache
+      await ApiClient.instance
+          .put('${ApiEndpoints.settings}/$key', data: {'value': value})
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Ignore failures — local cache is source of truth for settings
     }
   }
 

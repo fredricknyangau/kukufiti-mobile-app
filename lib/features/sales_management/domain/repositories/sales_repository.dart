@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/sale.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/features/sales_management/domain/entities/sale.dart';
 
 abstract class SalesRepository {
   Future<Either<Failure, List<Sale>>> getSales();

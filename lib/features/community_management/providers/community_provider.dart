@@ -5,7 +5,7 @@ import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/api_endpoints.dart';
 import 'package:mobile/core/storage/hive_cache_service.dart';
 import 'package:mobile/features/community_management/data/models/community_models.dart';
-import 'package:mobile/providers/auth_provider.dart';
+import 'package:mobile/features/auth_management/presentation/providers/auth_provider.dart';
 
 // Reuse the data extraction logic from the main data_providers
 dynamic _extractData(dynamic responseData) {

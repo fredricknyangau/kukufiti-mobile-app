@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/weight_repository_impl.dart';
-import '../../domain/entities/weight_record.dart';
-import '../../domain/repositories/weight_repository.dart';
-import '../../domain/usecases/get_weight_records_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/weight_management/data/repositories/weight_repository_impl.dart';
+import 'package:mobile/features/weight_management/domain/entities/weight_record.dart';
+import 'package:mobile/features/weight_management/domain/repositories/weight_repository.dart';
+import 'package:mobile/features/weight_management/domain/usecases/get_weight_records_usecase.dart';
 
 final weightRepositoryProvider = Provider<WeightRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

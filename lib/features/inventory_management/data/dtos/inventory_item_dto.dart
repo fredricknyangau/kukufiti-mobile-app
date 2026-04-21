@@ -1,4 +1,4 @@
-import '../../domain/entities/inventory_item.dart';
+import 'package:mobile/features/inventory_management/domain/entities/inventory_item.dart';
 
 class InventoryItemDto {
   final String id;

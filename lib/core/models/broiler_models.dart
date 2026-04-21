@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:mobile/shared/utils/json_converters.dart';
 
 part 'broiler_models.g.dart';
 
@@ -14,9 +15,11 @@ class Batch {
   final int initialChicks;
 
   @JsonKey(name: 'cost_per_bird')
+  @DoubleConverter()
   final double costPerChick;
 
   @JsonKey(name: 'total_acquisition_cost')
+  @DoubleConverter()
   final double totalCost;
 
   final String status; // 'active' | 'completed' | 'sold' | 'culled'
@@ -125,7 +128,9 @@ class Expenditure {
   final DateTime date;
   final String category;
   final String description;
+  @DoubleConverter()
   final double amount;
+  @OptionalDoubleConverter()
   final double? quantity;
   final String? unit;
   final String? receiptImage;
@@ -168,11 +173,14 @@ class WeightRecord {
   final DateTime date;
 
   @JsonKey(name: 'average_weight_grams')
+  @DoubleConverter()
   final double averageWeight;
   final int sampleSize;
   @JsonKey(name: 'min_weight_grams')
+  @OptionalDoubleConverter()
   final double? minWeightGrams;
   @JsonKey(name: 'max_weight_grams')
+  @OptionalDoubleConverter()
   final double? maxWeightGrams;
   final String? notes;
 
@@ -205,6 +213,8 @@ class VaccinationRecord {
   final String administrationMethod;
   final String? administeredBy;
   final String? batchNumber;
+  @JsonKey(name: 'cost_ksh')
+  @OptionalDoubleConverter()
   final double? cost;
   final String? notes;
   final DateTime? scheduledDate;
@@ -239,8 +249,11 @@ class SaleRecord {
   final String batchId;
   final DateTime date;
   final int quantity;
+  @OptionalDoubleConverter()
   final double? pricePerKg;
+  @DoubleConverter()
   final double pricePerBird;
+  @DoubleConverter()
   final double totalAmount;
   final String? buyerName;
   final String? buyerPhone;
@@ -249,6 +262,7 @@ class SaleRecord {
   final String? mpesaTransactionId;
 
   @JsonKey(name: 'average_weight_grams')
+  @OptionalDoubleConverter()
   final double? averageWeight;
   final String? customerId;
 
@@ -283,8 +297,10 @@ class FeedRecord {
   final DateTime date;
   final String feedType;
   @JsonKey(name: 'quantity_kg')
+  @DoubleConverter()
   final double quantity;
   @JsonKey(name: 'cost_ksh')
+  @OptionalDoubleConverter()
   final double? cost;
   final String? supplier;
   final String? notes;
@@ -311,9 +327,13 @@ class FeedRecord {
 @JsonSerializable(fieldRename: FieldRename.snake)
 class FeedIngredient {
   final String name;
+  @DoubleConverter()
   final double quantity;
+  @DoubleConverter()
   final double cost;
+  @OptionalDoubleConverter()
   final double? proteinContent;
+  @OptionalDoubleConverter()
   final double? energyContent;
 
   FeedIngredient({
@@ -333,9 +353,12 @@ class InventoryItem {
   final String id;
   final String name;
   final String category;
+  @DoubleConverter()
   final double quantity;
   final String unit;
+  @DoubleConverter()
   final double minimumStock;
+  @DoubleConverter()
   final double costPerUnit;
   final DateTime? lastRestocked;
   final String? notes;
@@ -363,6 +386,7 @@ class InventoryHistoryRecord {
   final String userId;
   final DateTime date;
   final String action;
+  @DoubleConverter()
   final double quantityChange;
   final String? notes;
   final DateTime createdAt;
@@ -426,7 +450,9 @@ class MarketPrice {
   final String county;
   final String? town;
   final String? item;
+  @DoubleConverter()
   final double pricePerKg;
+  @OptionalDoubleConverter()
   final double? pricePerBird;
   final String? status; // 'up' | 'down' | 'stable'
   final String? source;
@@ -490,16 +516,24 @@ class BatchSummary {
   final Batch batch;
   final int totalMortality;
   final int currentChicks;
+  @DoubleConverter()
   final double totalExpenditure;
+  @DoubleConverter()
   final double mortalityRate;
   final int daysActive;
+  @DoubleConverter()
   final double totalSales;
   final int birdsSold;
   final int remainingBirds;
+  @OptionalDoubleConverter()
   final double? averageWeight;
+  @DoubleConverter()
   final double totalFeedConsumed;
+  @OptionalDoubleConverter()
   final double? fcr;
+  @DoubleConverter()
   final double totalVaccinationCost;
+  @DoubleConverter()
   final double profitLoss;
 
   BatchSummary({
@@ -531,7 +565,9 @@ class DailyCheck {
   final DateTime checkDate;
   final String? checkTime;
   
+  @OptionalDoubleConverter()
   final double? temperatureCelsius;
+  @OptionalDoubleConverter()
   final double? humidityPercent;
   final String? chickBehavior; // 'normal', 'huddling', etc.
   final String? litterCondition; // 'dry', 'damp', etc.
@@ -593,7 +629,9 @@ class AIResponse {
   final List<String>? potentialCauses;
   final String? response; // For chat
   final List<String>? actionableHighlights;
+  @OptionalDoubleConverter()
   final double? estimatedDaysToTarget;
+  @OptionalDoubleConverter()
   final double? estimatedFcr;
 
   AIResponse({

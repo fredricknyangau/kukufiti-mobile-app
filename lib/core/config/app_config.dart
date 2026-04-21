@@ -9,7 +9,7 @@ class AppConfig {
 
     if (envApiUrl.isNotEmpty) return envApiUrl;
 
-    // Check Hive box for a saved URL (allows configuration in-app)
+    // Check Hive box for a saved URL (allows configuration in-app for dev)
     try {
       final box = Hive.box('offline_cache');
       final savedUrl = box.get('API_URL');
@@ -20,19 +20,13 @@ class AppConfig {
       debugPrint('AppConfig: Failed to read from Hive: $e');
     }
 
-    // Fall back to the production Render URL. This is intentional — it means
-    // `isUsingDefaultApiUrl` will return false and the ConfigErrorApp overlay
-    // will NOT show. The app will connect to the hosted backend directly.
-    return 'https://kukufiti-backend.onrender.com/api/v1';
+    // Default to the correct development URL if no environment is provided
+    return 'http://10.0.2.2:8080/api/v1';
   }
 
   /// Returns `true` only if the app is pointed at a known local-only dev URL
-  /// that would be unreachable in production (e.g. a private LAN IP or Android
-  /// emulator loopback). This is used by [ConfigErrorApp] to prompt the user
-  /// to enter the correct backend URL before proceeding.
-  ///
-  /// NOTE: The production Render URL fallback is NOT flagged here — it is a
-  /// valid public URL and the app should connect to it normally.
+  /// that would be unreachable in production. This is used by [ConfigErrorApp]
+  /// to prompt the user to enter the correct backend URL before proceeding.
   static bool get isUsingDefaultApiUrl {
     // If the user has saved a custom URL in Hive, always trust it.
     try {
@@ -43,8 +37,6 @@ class AppConfig {
       }
     } catch (_) {}
 
-    // Only flag legacy local-only development URLs.
-    return apiUrl == 'http://192.168.100.45:8000/api/v1' ||
-        apiUrl == 'http://10.0.2.2:8000/api/v1';
+    return apiUrl.contains('10.0.2.2') || apiUrl.contains('192.168.');
   }
 }

@@ -1,4 +1,4 @@
-import '../../domain/entities/vaccination.dart';
+import 'package:mobile/features/vaccinations_management/domain/entities/vaccination.dart';
 
 class VaccinationDto {
   final String id;
@@ -7,6 +7,7 @@ class VaccinationDto {
   final String method;
   final bool completed;
   final DateTime date;
+  final double? costKsh;
 
   VaccinationDto({
     required this.id,
@@ -15,6 +16,7 @@ class VaccinationDto {
     required this.method,
     required this.completed,
     required this.date,
+    this.costKsh,
   });
 
   factory VaccinationDto.fromJson(Map<String, dynamic> json) {
@@ -23,8 +25,9 @@ class VaccinationDto {
       vaccineName: json['vaccine_name'] ?? json['name'] ?? 'Unknown Vaccine',
       diseaseTarget: json['disease_target'] ?? 'General',
       method: json['administration_method'] ?? json['method'] ?? 'Drinking Water',
-      completed: json['completed'] ?? true, // optional or assumed true if logged
+      completed: json['completed'] ?? true,
       date: DateTime.tryParse(json['event_date']?.toString() ?? '') ?? DateTime.now(),
+      costKsh: (json['cost_ksh'] as num?)?.toDouble(),
     );
   }
 
@@ -36,6 +39,7 @@ class VaccinationDto {
       method: method,
       completed: completed,
       date: date,
+      costKsh: costKsh,
     );
   }
 }

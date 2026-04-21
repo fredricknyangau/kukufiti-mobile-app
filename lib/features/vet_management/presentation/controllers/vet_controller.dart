@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/vet_repository_impl.dart';
-import '../../domain/entities/vet_consultation.dart';
-import '../../domain/repositories/vet_repository.dart';
-import '../../domain/usecases/get_vet_consultations_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/vet_management/data/repositories/vet_repository_impl.dart';
+import 'package:mobile/features/vet_management/domain/entities/vet_consultation.dart';
+import 'package:mobile/features/vet_management/domain/repositories/vet_repository.dart';
+import 'package:mobile/features/vet_management/domain/usecases/get_vet_consultations_usecase.dart';
 
 final vetRepositoryProvider = Provider<VetRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

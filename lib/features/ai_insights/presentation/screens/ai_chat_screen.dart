@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/ai_insights_provider.dart';
+import 'package:mobile/features/ai_insights/presentation/providers/ai_insights_provider.dart';
 
 class AiChatScreen extends ConsumerStatefulWidget {
   const AiChatScreen({super.key});

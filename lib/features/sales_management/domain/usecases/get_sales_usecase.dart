@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../entities/sale.dart';
-import '../repositories/sales_repository.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/sales_management/domain/entities/sale.dart';
+import 'package:mobile/features/sales_management/domain/repositories/sales_repository.dart';
 
 class GetSalesUseCase implements UseCase<List<Sale>, NoParams> {
   final SalesRepository repository;

@@ -7,7 +7,9 @@ class SecureStorageService {
   static const _rememberedEmailKey = 'remembered_email';
   static const _hasSeenIntroKey = 'has_seen_intro';
 
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(),
+  );
 
   /// Auth Token Operations
   static Future<String?> getAuthToken() async {

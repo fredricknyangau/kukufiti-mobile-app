@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client_provider.dart';
-import '../../../../core/usecases/usecase.dart';
-import '../../data/repositories/feed_repository_impl.dart';
-import '../../domain/entities/feed_record.dart';
-import '../../domain/repositories/feed_repository.dart';
-import '../../domain/usecases/get_feed_records_usecase.dart';
+import 'package:mobile/core/network/api_client_provider.dart';
+import 'package:mobile/core/usecases/usecase.dart';
+import 'package:mobile/features/feed_management/data/repositories/feed_repository_impl.dart';
+import 'package:mobile/features/feed_management/domain/entities/feed_record.dart';
+import 'package:mobile/features/feed_management/domain/repositories/feed_repository.dart';
+import 'package:mobile/features/feed_management/domain/usecases/get_feed_records_usecase.dart';
 
 final feedRepositoryProvider = Provider<FeedRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);

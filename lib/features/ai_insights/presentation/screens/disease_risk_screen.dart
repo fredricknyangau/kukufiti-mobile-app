@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import '../../data/models/disease_risk.dart';
-import '../providers/ai_insights_provider.dart';
+import 'package:mobile/features/ai_insights/data/models/disease_risk.dart';
+import 'package:mobile/features/ai_insights/presentation/providers/ai_insights_provider.dart';
 
 class DiseaseRiskScreen extends ConsumerStatefulWidget {
   const DiseaseRiskScreen({super.key});

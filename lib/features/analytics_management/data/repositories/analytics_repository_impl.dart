@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/analytics_metrics.dart';
-import '../../domain/entities/finance_spot.dart';
-import '../../domain/repositories/analytics_repository.dart';
-import '../dtos/analytics_metrics_dto.dart';
-import '../dtos/finance_spot_dto.dart';
+import 'package:mobile/core/error/failures.dart';
+import 'package:mobile/core/network/api_endpoints.dart';
+import 'package:mobile/features/analytics_management/domain/entities/analytics_metrics.dart';
+import 'package:mobile/features/analytics_management/domain/entities/finance_spot.dart';
+import 'package:mobile/features/analytics_management/domain/repositories/analytics_repository.dart';
+import 'package:mobile/features/analytics_management/data/dtos/analytics_metrics_dto.dart';
+import 'package:mobile/features/analytics_management/data/dtos/finance_spot_dto.dart';
 
 class AnalyticsRepositoryImpl implements AnalyticsRepository {
   final Dio apiClient;
