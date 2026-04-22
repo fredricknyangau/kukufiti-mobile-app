@@ -3,22 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:mobile/app/app.dart';
+import 'package:mobile/core/config/app_config.dart';
 import 'package:mobile/core/notifications/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize app configuration
+  await AppConfig.initialize();
+
+  // Print build information (useful for debugging)
+  AppConfig.printBuildInfo();
+
   // Initialize notification service
   await NotificationService.initialize();
-  
+
   // Initialize Hive for offline storage
   await Hive.initFlutter();
   await Hive.openBox('offline_cache');
   await Hive.openBox('offline_sync_queue');
 
-  runApp(
-    const ProviderScope(
-      child: RootApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: RootApp()));
 }

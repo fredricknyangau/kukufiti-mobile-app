@@ -6,6 +6,9 @@ on:
       - main
       - develop
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build & Release Flutter APK
@@ -83,29 +86,110 @@ jobs:
           echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode \
             > android/app/google-services.json
 
-      # ─── 9. BUILD RELEASE APK ───────────────────────────────────────
+      # ─── 9. PREPARE BUILD METADATA ──────────────────────────────────
+      - name: Prepare build metadata
+        id: metadata
+        env:
+          DEFAULT_API_URL: ${{ secrets.API_URL }}
+          DEV_API_URL: ${{ secrets.DEV_API_URL }}
+          PROD_API_URL: ${{ secrets.PROD_API_URL }}
+        run: |
+          read_env_value() {
+            key="$1"
+            file="$2"
+            sed -n "s/^${key}=//p" "$file" | tail -n 1 | tr -d '\r' | sed 's/^"//; s/"$//'
+          }
+
+          # Extract base version from pubspec.yaml
+          BASE_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d ' ')
+          BUILD_NUMBER=${GITHUB_RUN_NUMBER}
+          RELEASE_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
+          ENV_FILE=""
+
+          # Try to find backend .env file
+          for candidate in backend/.env ../backend/.env; do
+            if [ -f "${candidate}" ]; then
+              ENV_FILE="${candidate}"
+              break
+            fi
+          done
+
+          # Determine API URL based on branch and environment
+          if [ -n "${ENV_FILE}" ]; then
+            if [ "${GITHUB_REF_NAME}" = "main" ]; then
+              API_URL=$(read_env_value MOBILE_API_URL_PROD "${ENV_FILE}")
+            elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
+              API_URL=$(read_env_value MOBILE_API_URL_DEV "${ENV_FILE}")
+            fi
+
+            if [ -z "${API_URL}" ]; then
+              API_URL=$(read_env_value MOBILE_API_URL "${ENV_FILE}")
+            fi
+          fi
+
+          # Fallback to GitHub secrets if .env not found
+          if [ -z "${API_URL}" ] && [ "${GITHUB_REF_NAME}" = "main" ] && [ -n "${PROD_API_URL}" ]; then
+            API_URL="${PROD_API_URL}"
+          elif [ -z "${API_URL}" ] && [ "${GITHUB_REF_NAME}" = "develop" ] && [ -n "${DEV_API_URL}" ]; then
+            API_URL="${DEV_API_URL}"
+          elif [ -z "${API_URL}" ] && [ -n "${DEFAULT_API_URL}" ]; then
+            API_URL="${DEFAULT_API_URL}"
+          fi
+
+          # Validate API URL
+          if [ -z "${API_URL}" ]; then
+            echo "❌ ERROR: API URL is empty."
+            echo "Define one of the following:"
+            echo "  1. MOBILE_API_URL[_DEV|_PROD] in backend/.env"
+            echo "  2. GitHub secrets: PROD_API_URL, DEV_API_URL, or API_URL"
+            exit 1
+          fi
+
+          # Sanitize branch name for tag
+          SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
+
+          # Set outputs for use in later steps
+          echo "api_url=${API_URL}" >> "$GITHUB_OUTPUT"
+          echo "build_name=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "release_version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=v${BASE_VERSION}-${SAFE_BRANCH}.${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+
+          echo "✅ Build Metadata Generated:"
+          echo "   Version: ${RELEASE_VERSION}"
+          echo "   Build #: ${BUILD_NUMBER}"
+          echo "   Branch: ${GITHUB_REF_NAME}"
+          echo "   API URL: ${API_URL:0:30}..."
+
+      # ─── 10. BUILD RELEASE APK ──────────────────────────────────────
       - name: Build release APK
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD:       ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS:          ${{ secrets.KEY_ALIAS }}
           KEY_PATH:           kukufiti-release.jks
-        run: flutter build apk --release --dart-define=API_URL=${{ secrets.API_URL }}
-
-      # ─── 9b. EXTRACT VERSION FROM PUBSPEC ───────────────────────────
-      - name: Get version from pubspec
-        id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d ' ')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🔨 Building APK with configuration:"
+          echo "   Version: ${{ steps.metadata.outputs.build_name }}"
+          echo "   Build #: ${{ steps.metadata.outputs.build_number }}"
+          echo "   Full Version: ${{ steps.metadata.outputs.release_version }}"
+          echo "   API URL: ${{ steps.metadata.outputs.api_url }}"
+          echo ""
+          
+          flutter build apk --release \
+            --dart-define=API_URL=${{ steps.metadata.outputs.api_url }} \
+            --build-name=${{ steps.metadata.outputs.build_name }} \
+            --build-number=${{ steps.metadata.outputs.build_number }}
+          
+          echo "✅ APK built successfully"
 
-      # ─── 10. RENAME APK ─────────────────────────────────────────────
+      # ─── 11. RENAME APK ─────────────────────────────────────────────
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
+             build/app/outputs/flutter-apk/kukufiti-v${{ steps.metadata.outputs.release_version }}.apk
 
-      # ─── 11. GENERATE CHANGELOG ─────────────────────────────────────
+      # ─── 12. GENERATE CHANGELOG ─────────────────────────────────────
       - name: Generate changelog
         id: changelog
         run: |
@@ -115,49 +199,52 @@ jobs:
           echo "$CHANGES"     >> $GITHUB_OUTPUT
           echo "EOF"          >> $GITHUB_OUTPUT
 
-      # ─── 12. FIREBASE APP DISTRIBUTION ──────────────────────────────
+      # ─── 13. FIREBASE APP DISTRIBUTION ──────────────────────────────
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           groups: internal-testers
-          file: build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
+          file: build/app/outputs/flutter-apk/kukufiti-v${{ steps.metadata.outputs.release_version }}.apk
           releaseNotes: |
-            Build ${{ github.run_number }} — ${{ github.ref_name }}
+            Version: ${{ steps.metadata.outputs.release_version }}
+            Build: ${{ steps.metadata.outputs.build_number }} — ${{ github.ref_name }}
             Commit: ${{ github.sha }}
+            API URL: ${{ steps.metadata.outputs.api_url }}
 
-      # ─── 13. CREATE GITHUB RELEASE ──────────────────────────────────
+      # ─── 14. CREATE GITHUB RELEASE ──────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: "KukuFiti v${{ steps.version.outputs.version }}"
+          tag_name: ${{ steps.metadata.outputs.release_tag }}
+          name: "KukuFiti v${{ steps.metadata.outputs.release_version }}"
           body: |
-            ## KukuFiti Build v${{ steps.version.outputs.version }}
+            ## KukuFiti Build v${{ steps.metadata.outputs.release_version }}
 
             | Field | Value |
             |---|---|
             | Branch | `${{ github.ref_name }}` |
             | Commit | `${{ github.sha }}` |
-            | Build | `#${{ github.run_number }}` |
+            | Build | `#${{ steps.metadata.outputs.build_number }}` |
+            | API URL | `${{ steps.metadata.outputs.api_url }}` |
             | Built at | `${{ github.event.head_commit.timestamp }}` |
 
             ## Recent Changes
             ${{ steps.changelog.outputs.changes }}
 
             ## How to Install
-            1. Download `kukufiti-v${{ steps.version.outputs.version }}.apk` below
+            1. Download `kukufiti-v${{ steps.metadata.outputs.release_version }}.apk` below
             2. On your Android phone: **Settings → Security → Install unknown apps** → Enable
             3. Open the downloaded APK file and tap **Install**
 
             > ⚠️ If prompted "Play Protect blocked the install", tap **Install anyway**
-          files: build/app/outputs/flutter-apk/kukufiti-v${{ steps.version.outputs.version }}.apk
+          files: build/app/outputs/flutter-apk/kukufiti-v${{ steps.metadata.outputs.release_version }}.apk
           prerelease: ${{ github.ref_name != 'main' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ─── 14. CLEANUP OLD PRE-RELEASES ───────────────────────────────
+      # ─── 15. CLEANUP OLD PRE-RELEASES ───────────────────────────────
       - name: Delete old develop pre-releases
         if: github.ref_name == 'develop'
         uses: dev-drprasad/delete-older-releases@v0.3.0
