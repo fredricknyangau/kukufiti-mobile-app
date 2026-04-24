@@ -169,8 +169,12 @@ class UpdateService {
       final currentParts = currentBase.split('.').map((e) => int.tryParse(e) ?? 0).toList();
       final latestParts = latestBase.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
-      while (currentParts.length < 3) currentParts.add(0);
-      while (latestParts.length < 3) latestParts.add(0);
+      while (currentParts.length < 3) {
+        currentParts.add(0);
+      }
+      while (latestParts.length < 3) {
+        latestParts.add(0);
+      }
 
       // 2. Compare major.minor.patch
       for (int i = 0; i < 3; i++) {
