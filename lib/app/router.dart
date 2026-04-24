@@ -178,7 +178,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/otp-verify',
         builder: (context, state) {
           final phone = state.uri.queryParameters['phone'] ?? '';
-          return OtpVerificationScreen(phoneNumber: phone);
+          final otp = state.uri.queryParameters['otp'];
+          return OtpVerificationScreen(phoneNumber: phone, initialOtp: otp);
         },
       ),
       GoRoute(

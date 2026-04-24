@@ -58,7 +58,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (mounted) {
       final encodedPhone = Uri.encodeComponent(fullPhone);
-      context.go('/otp-verify?phone=$encodedPhone');
+      var path = '/otp-verify?phone=$encodedPhone';
+      if (otpCode != null) {
+        path += '&otp=$otpCode';
+      }
+      context.go(path);
     }
   }
 

@@ -56,7 +56,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (mounted) {
       final encodedPhone = Uri.encodeComponent(fullPhone);
-      context.go('/otp-verify?phone=$encodedPhone');
+      var path = '/otp-verify?phone=$encodedPhone';
+      if (otpCode != null) {
+        path += '&otp=$otpCode';
+      }
+      context.go(path);
     }
   }
 

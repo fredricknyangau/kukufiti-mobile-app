@@ -10,8 +10,13 @@ import 'package:mobile/features/auth_management/presentation/providers/auth_prov
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
+  final String? initialOtp;
 
-  const OtpVerificationScreen({super.key, required this.phoneNumber});
+  const OtpVerificationScreen({
+    super.key,
+    required this.phoneNumber,
+    this.initialOtp,
+  });
 
   @override
   ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -199,6 +204,42 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                        if (widget.initialOtp != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(LucideIcons.info, size: 16, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Debug OTP: ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                Text(
+                                  widget.initialOtp!,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate().fadeIn().scale(),
+                        ],
                         const SizedBox(height: 32),
 
                         Row(
@@ -236,6 +277,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                       _focusNodes[index + 1].requestFocus();
                                     } else {
                                       _focusNodes[index].unfocus();
+                                      // Auto-verify when the last digit is entered
+                                      _verifyOtp();
                                     }
                                   } else {
                                     if (index > 0) {
