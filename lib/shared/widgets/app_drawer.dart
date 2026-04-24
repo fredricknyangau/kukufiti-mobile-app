@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mobile/shared/widgets/premium_upgrade_dialog.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 import 'package:mobile/shared/providers/data_providers.dart';
 import 'package:mobile/core/models/broiler_models.dart';
@@ -39,24 +41,8 @@ class AppDrawer extends ConsumerWidget {
       return false;
     }
 
-    void showUpgradeDialog(BuildContext context, String feature) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Unlock $feature', style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('Access into $feature requires a Professional Plan subscription to enable Advanced Farm Intelligence metrics securely.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Maybe Later')),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.push('/pricing');
-              },
-              child: const Text('Upgrade Now'),
-            ),
-          ],
-        ),
-      );
+    void triggerUpgrade(BuildContext context, String feature, String? requiredPlan) {
+      showPremiumUpgradeDialog(context, '$feature (${requiredPlan ?? 'Professional'})');
     }
 
     Widget buildDrawerItem(String title, String route, IconData icon) {
@@ -86,7 +72,9 @@ class AppDrawer extends ConsumerWidget {
               ? Icon(
                   requiredPlan == 'ENTERPRISE' ? LucideIcons.gem : LucideIcons.lock, 
                   size: 14, 
-                  color: requiredPlan == 'ENTERPRISE' ? Colors.purple.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.4)
+                  color: requiredPlan == 'ENTERPRISE' 
+                      ? (theme.extension<CustomColors>()?.purple ?? Colors.purple).withValues(alpha: 0.6) 
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.4)
                 ) 
               : null,
           selected: isSelected,
@@ -94,7 +82,7 @@ class AppDrawer extends ConsumerWidget {
           onTap: () {
             Navigator.pop(context);
             if (locked) {
-              showUpgradeDialog(context, title + (requiredPlan == 'ENTERPRISE' ? ' (Enterprise)' : ' (Professional)'));
+              triggerUpgrade(context, title, requiredPlan);
               return;
             }
             const branchRoutes = ['/dashboard', '/batches', '/analytics', '/settings', '/farms'];

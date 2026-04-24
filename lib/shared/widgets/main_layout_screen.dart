@@ -101,50 +101,85 @@ class _MainLayoutScreenState extends ConsumerState<MainLayoutScreen> with Widget
             if (isLocked)
               Positioned.fill(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
-                    color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+                          Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+                        ],
+                      ),
+                    ),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                width: 2,
+                              ),
                             ),
                             child: Icon(
-                              LucideIcons.lock,
+                              LucideIcons.shieldAlert,
                               color: Theme.of(context).colorScheme.primary,
-                              size: 40,
+                              size: 48,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 32),
                           Text(
-                            'Kuku Fiti is Locked',
+                            'KUKU FITI SECURED',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Authentication Required',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Authenticate to continue',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
+                            'Please verify your identity to access farm records',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                              fontSize: 14,
+                            ),
                           ),
-                          const SizedBox(height: 32),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
+                          const SizedBox(height: 48),
+                          SizedBox(
+                            width: 200,
+                            height: 56,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: _checkAuthOnLoad,
+                              icon: const Icon(LucideIcons.fingerprint),
+                              label: const Text(
+                                'UNLOCK NOW',
+                                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
                               ),
                             ),
-                            onPressed: _checkAuthOnLoad,
-                            icon: const Icon(LucideIcons.shieldCheck),
-                            label: const Text('Unlock'),
                           ),
                         ],
                       ),

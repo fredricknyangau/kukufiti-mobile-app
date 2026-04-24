@@ -46,6 +46,7 @@ class SettingsScreen extends ConsumerWidget {
           _buildProfileCard(context, ref, theme, userAsync.value, subscriptionAsync.value),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            theme,
             'Appearance',
             [
               ListTile(
@@ -61,6 +62,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            theme,
             'Regional Preferences',
             [
               ListTile(
@@ -85,6 +87,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            theme,
             'Notifications',
             [
               ListTile(
@@ -112,6 +115,7 @@ class SettingsScreen extends ConsumerWidget {
                     ? Column(
                         children: [
                           _buildSettingsSection(
+                            theme,
                             'Security',
                             [
                               ListTile(
@@ -166,6 +170,7 @@ class SettingsScreen extends ConsumerWidget {
                         ],
                       )
                     : _buildSettingsSection(
+                        theme,
                         'Security',
                         [
                           ListTile(
@@ -196,6 +201,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
           const SizedBox(height: 24),
           _buildSettingsSection(
+            theme,
             'Support & Legal',
             [
               ListTile(
@@ -225,6 +231,7 @@ class SettingsScreen extends ConsumerWidget {
           if (userAsync.value != null && (userAsync.value!.isSuperuser == true || userAsync.value!.role == 'ADMIN')) ...[
             const SizedBox(height: 24),
             _buildSettingsSection(
+              theme,
               'Admin Controls',
               [
                 ListTile(
@@ -244,6 +251,7 @@ class SettingsScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 24),
           _buildSettingsSection(
+            theme,
             'About',
             [
               ListTile(
@@ -263,6 +271,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showPinSetupDialog(BuildContext context, SettingsNotifier notifier) {
+    final theme = Theme.of(context);
     final pinController = TextEditingController();
     final confirmController = TextEditingController();
     bool isConfirming = false;
@@ -271,76 +280,146 @@ class SettingsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(isConfirming ? 'Confirm PIN' : 'Set App PIN', style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(isConfirming ? 'Re-enter your 4-digit PIN' : 'Enter a 4-digit PIN to secure the app'),
-              const SizedBox(height: 20),
-              TextField(
-                controller: isConfirming ? confirmController : pinController,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, letterSpacing: 16, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: OutlineInputBorder(),
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isConfirming ? LucideIcons.checkCircle2 : LucideIcons.key,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
-                onChanged: (value) {
-                  if (value.length == 4) {
-                    if (!isConfirming) {
-                      setState(() {
-                        firstPin = value;
-                        isConfirming = true;
-                      });
-                    } else {
-                      if (value == firstPin) {
-                        SecureStorageService.saveAppPin(value);
-                        notifier.setPinLock(true);
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('App PIN set successfully!')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('PINs do not match. Try again.')),
-                        );
+                const SizedBox(height: 24),
+                Text(
+                  isConfirming ? 'Confirm PIN' : 'Set App PIN',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  isConfirming 
+                    ? 'Re-enter your 4-digit PIN to confirm' 
+                    : 'Enter a 4-digit PIN to secure your farm data',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: isConfirming ? confirmController : pinController,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  maxLength: 4,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 32, 
+                    letterSpacing: 20, 
+                    fontWeight: FontWeight.w900,
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    filled: true,
+                    fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    if (value.length == 4) {
+                      if (!isConfirming) {
                         setState(() {
-                          isConfirming = false;
-                          pinController.clear();
-                          confirmController.clear();
+                          firstPin = value;
+                          isConfirming = true;
                         });
+                      } else {
+                        if (value == firstPin) {
+                          SecureStorageService.saveAppPin(value);
+                          notifier.setPinLock(true);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('App PIN set successfully!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('PINs do not match. Try again.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          setState(() {
+                            isConfirming = false;
+                            pinController.clear();
+                            confirmController.clear();
+                          });
+                        }
                       }
                     }
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+                  },
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsSection(String title, List<Widget> children) {
+  Widget _buildSettingsSection(ThemeData theme, String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 8),
+          padding: const EdgeInsets.only(left: 16, bottom: 8, top: 12),
           child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            title.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              fontSize: 10,
+            ),
           ),
         ),
         CustomCard(

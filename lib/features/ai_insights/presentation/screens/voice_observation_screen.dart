@@ -6,10 +6,12 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/api_endpoints.dart';
 import 'package:mobile/shared/widgets/custom_card.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 class VoiceObservationScreen extends ConsumerStatefulWidget {
   const VoiceObservationScreen({super.key});
@@ -115,21 +117,27 @@ class _VoiceObservationScreenState extends ConsumerState<VoiceObservationScreen>
   Widget _buildRecordingView(ThemeData theme) {
     return Column(
       children: [
-        Icon(
-          _isRecording ? LucideIcons.mic : LucideIcons.micOff,
-          size: 80,
-          color: _isRecording ? theme.colorScheme.primary : Colors.grey,
-        ).animate(onPlay: (c) => c.repeat()).shimmer(enabled: _isRecording),
+        _isRecording 
+          ? Icon(
+              LucideIcons.mic,
+              size: 80,
+              color: theme.colorScheme.primary,
+            ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms)
+          : Icon(
+              LucideIcons.micOff,
+              size: 80,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            ),
         const SizedBox(height: 24),
         Text(
           _isRecording ? 'Listening...' : 'Tap to Record Observation',
-          style: theme.textTheme.titleMedium,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'e.g. "I found 2 dead birds in flock A today. They looked lethargic."',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
         ),
       ],
     );
@@ -141,39 +149,59 @@ class _VoiceObservationScreenState extends ConsumerState<VoiceObservationScreen>
     final obs = List<String>.from(_result?['observations'] ?? []);
     final entities = List<String>.from(_result?['detected_entities'] ?? []);
     final suggestion = _result?['suggested_action'] ?? '';
+    final customColors = theme.extension<CustomColors>();
 
     return ListView(
       shrinkWrap: true,
       children: [
         CustomCard(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Transcript', style: theme.textTheme.labelSmall),
-              const SizedBox(height: 4),
-              Text('"$transcript"', style: const TextStyle(fontStyle: FontStyle.italic)),
-              const Divider(height: 24),
+              Text(
+                'TRANSCRIPT', 
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.1,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('"$transcript"', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15)),
+              const Divider(height: 32),
               if (mortality != null) ...[
-                _buildResItem(LucideIcons.skull, 'Mortality Detected', '$mortality birds', Colors.red),
+                _buildResItem(LucideIcons.skull, 'Mortality Detected', '$mortality birds', theme.colorScheme.error),
               ],
               if (obs.isNotEmpty) ...[
-                  _buildResItem(LucideIcons.eye, 'Observations', obs.join(', '), Colors.orange),
+                  _buildResItem(LucideIcons.eye, 'Observations', obs.join(', '), customColors?.warning ?? Colors.orange),
               ],
               if (entities.isNotEmpty) ...[
-                  _buildResItem(LucideIcons.package, 'Entities', entities.join(', '), Colors.blue),
+                  _buildResItem(LucideIcons.package, 'Entities', entities.join(', '), customColors?.info ?? Colors.blue),
               ],
-              const Divider(height: 24),
-              Text('AI Suggestion', style: theme.textTheme.labelSmall),
-              const SizedBox(height: 4),
-              Text(suggestion, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Divider(height: 32),
+              Text(
+                'AI SUGGESTION', 
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.1,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(suggestion, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        ElevatedButton(
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
           onPressed: () => setState(() => _result = null),
-          child: const Text('Record Another'),
+          icon: const Icon(LucideIcons.mic, size: 18),
+          label: const Text('Record Another'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
         ),
       ],
     );
@@ -181,19 +209,29 @@ class _VoiceObservationScreenState extends ConsumerState<VoiceObservationScreen>
 
   Widget _buildResItem(IconData icon, String label, String val, Color color) {
      return Padding(
-       padding: const EdgeInsets.symmetric(vertical: 4.0),
+       padding: const EdgeInsets.symmetric(vertical: 6.0),
        child: Row(
          children: [
-           Icon(icon, size: 16, color: color),
-           const SizedBox(width: 8),
-           Text('$label: ', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-           Expanded(child: Text(val, style: const TextStyle(fontSize: 12))),
+           Container(
+             padding: const EdgeInsets.all(4),
+             decoration: BoxDecoration(
+               color: color.withValues(alpha: 0.1),
+               shape: BoxShape.circle,
+             ),
+             child: Icon(icon, size: 14, color: color),
+           ),
+           const SizedBox(width: 12),
+           Text('$label: ', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+           Expanded(child: Text(val, style: const TextStyle(fontSize: 13))),
          ],
        ),
      );
   }
 
   Widget _buildMicrophoneButton(ThemeData theme) {
+    final activeColor = theme.colorScheme.error;
+    final inactiveColor = theme.colorScheme.primary;
+    
     return GestureDetector(
       onLongPress: _startRecording,
       onLongPressUp: _stopRecording,
@@ -202,11 +240,11 @@ class _VoiceObservationScreenState extends ConsumerState<VoiceObservationScreen>
         width: 100,
         height: 100,
         decoration: BoxDecoration(
-          color: _isRecording ? Colors.red : theme.colorScheme.primary,
+          color: _isRecording ? activeColor : inactiveColor,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: (_isRecording ? Colors.red : theme.colorScheme.primary).withValues(alpha: 0.3),
+              color: (_isRecording ? activeColor : inactiveColor).withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 5,
             )
@@ -218,12 +256,6 @@ class _VoiceObservationScreenState extends ConsumerState<VoiceObservationScreen>
           size: 40,
         ),
       ),
-    );
+    ).animate(target: _isRecording ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1));
   }
-}
-
-// Add extension for animation if not imported
-extension AnimateExtension on Widget {
-   Widget animate({Function(dynamic)? onPlay}) => this; // Placeholder for actual flutter_animate if used
-   Widget shimmer({bool enabled = false}) => this; // Placeholder
 }

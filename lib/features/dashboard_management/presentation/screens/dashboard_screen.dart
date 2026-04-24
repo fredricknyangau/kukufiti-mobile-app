@@ -155,54 +155,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              stops: const [0.0, 0.5, 1.0],
               colors: [
                 theme.colorScheme.primary,
+                theme.colorScheme.primary.withValues(alpha: 0.9),
                 theme.colorScheme.primary.withValues(alpha: 0.8),
-                theme.colorScheme.primary.withValues(alpha: 0.6),
               ],
             ),
           ),
           child: Stack(
             children: [
               Positioned(
-                right: -20,
-                bottom: -20,
+                right: -30,
+                top: -30,
                 child: Icon(
                   LucideIcons.leaf,
-                  size: 160,
-                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.08),
+                  size: 200,
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+              Positioned(
+                left: -20,
+                bottom: -20,
+                child: Icon(
+                  LucideIcons.sparkles,
+                  size: 140,
+                  color: Colors.white.withValues(alpha: 0.03),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 56, top: 40),
+                padding: const EdgeInsets.only(left: 56, top: 48),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Welcome back!',
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary.withValues(
-                          alpha: 0.8,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'WELCOME BACK',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
                         ),
-                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     profileAsync.maybeWhen(
                       data: (p) => Text(
                         p.fullName ?? 'Farmer',
-                        style: TextStyle(
-                          color: theme.colorScheme.onPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      orElse: () => Text(
+                      orElse: () => const Text(
                         'Farmer',
                         style: TextStyle(
-                          color: theme.colorScheme.onPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
                     ),
@@ -947,9 +966,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              isLocked ? '$label 🔒' : label,
+              label,
               style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface.withValues(alpha: isLocked ? 0.5 : 1.0),
               ),
             ),
           ],
@@ -966,41 +986,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         if (criticals.isEmpty) return const SizedBox.shrink();
 
         return Container(
+          margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.colorScheme.error, theme.colorScheme.error.withValues(alpha: 0.8)],
+              colors: [
+                theme.colorScheme.error,
+                theme.colorScheme.error.withValues(alpha: 0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.error.withValues(alpha: 0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: theme.colorScheme.error.withValues(alpha: 0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
               )
             ],
           ),
           child: Row(
             children: [
-              Icon(LucideIcons.shieldAlert, color: theme.colorScheme.onError, size: 28),
-              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(LucideIcons.shieldAlert, color: theme.colorScheme.onError, size: 24),
+              ),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Critical Attention Required',
-                      style: TextStyle(color: theme.colorScheme.onError, fontWeight: FontWeight.bold, fontSize: 14),
+                      'CRITICAL ALERT',
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        letterSpacing: 1.1,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${criticals.length} issues need immediate resolution.',
-                      style: TextStyle(color: theme.colorScheme.onError.withValues(alpha: 0.7), fontSize: 12),
+                      '${criticals.length} issues need immediate attention',
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(LucideIcons.chevronRight, color: theme.colorScheme.onError, size: 20),
+              Icon(LucideIcons.chevronRight, color: theme.colorScheme.onError.withValues(alpha: 0.7), size: 20),
             ],
           ),
         );

@@ -39,7 +39,6 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
     HapticFeedback.selectionClick();
 
     try {
-      // Find the selected flock to get current metrics
       final broilerState = ref.read(broilerProvider);
       final flocks = broilerState.batches;
       final flock = flocks.firstWhere((f) => f.id == _selectedFlockId);
@@ -152,46 +151,79 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
     final reason = _result?['reasoning'];
     final risks = List<String>.from(_result?['risk_factors'] ?? []);
     final trend = List<Map<String, dynamic>>.from(_result?['daily_profit_trend'] ?? []);
+    final customColors = theme.extension<CustomColors>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomCard(
           isPremium: true,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              Text('OPTIMAL HARVEST DATE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.extension<CustomColors>()?.success ?? Colors.green)),
+              Text(
+                'OPTIMAL HARVEST DATE', 
+                style: TextStyle(
+                  fontSize: 12, 
+                  fontWeight: FontWeight.w900, 
+                  letterSpacing: 1.2,
+                  color: customColors?.success ?? theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Day $optimalAge', style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w900, letterSpacing: -2)),
               const SizedBox(height: 8),
-              Text('Day $optimalAge', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: -2)),
-              Text('Estimated Profit: KES $projectedProfit', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: (customColors?.success ?? theme.colorScheme.primary).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Estimated Profit: KES $projectedProfit', 
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: customColors?.success ?? theme.colorScheme.primary,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 24),
         Text('Why this date?', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(reason ?? ''),
+        Text(reason ?? '', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
         const SizedBox(height: 24),
         Text('Profit Trend (Next 7 Days)', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         SizedBox(
-          height: 150,
+          height: 180,
           child: _buildTrendChart(theme, trend),
         ),
         const SizedBox(height: 24),
         if (risks.isNotEmpty) ...[
           Text('Risk Factors', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ...risks.map((r) => Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
-            child: Row(children: [Icon(LucideIcons.alertCircle, size: 14, color: theme.extension<CustomColors>()?.warning ?? Colors.orange), const SizedBox(width: 8), Expanded(child: Text(r, style: const TextStyle(fontSize: 13)))]),
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Icon(LucideIcons.alertTriangle, size: 16, color: customColors?.warning ?? theme.colorScheme.error), 
+                const SizedBox(width: 12), 
+                Expanded(child: Text(r, style: const TextStyle(fontSize: 14))),
+              ],
+            ),
           )),
         ],
         const SizedBox(height: 32),
         OutlinedButton(
           onPressed: () => setState(() => _result = null),
-          child: const Center(child: Text('Recalculate')),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: const Text('Recalculate'),
         ),
       ],
     );
@@ -205,6 +237,8 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
       spots.add(FlSpot(i.toDouble(), (trend[i]['profit'] as num).toDouble()));
     }
 
+    final color = theme.extension<CustomColors>()?.success ?? theme.colorScheme.primary;
+
     return LineChart(
       LineChartData(
         gridData: const FlGridData(show: false),
@@ -214,10 +248,13 @@ class _HarvestOptimizationScreenState extends ConsumerState<HarvestOptimizationS
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: theme.extension<CustomColors>()?.success ?? Colors.green,
+            color: color,
             barWidth: 4,
             dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(show: true, color: (theme.extension<CustomColors>()?.success ?? Colors.green).withValues(alpha: 0.1)),
+            belowBarData: BarAreaData(
+              show: true, 
+              color: color.withValues(alpha: 0.1),
+            ),
           ),
         ],
       ),

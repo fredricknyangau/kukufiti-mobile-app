@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mobile/core/utils/color_utils.dart';
 import 'package:mobile/features/community_management/data/models/community_models.dart';
 import 'package:mobile/features/community_management/providers/community_provider.dart';
 import 'package:mobile/shared/widgets/custom_card.dart';
@@ -88,15 +89,16 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
               );
             }
             final cat = categories[index - 1];
+            final catColor = ColorUtils.fromHex(cat.color);
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 label: Text(cat.name),
                 selected: _selectedCategoryId == cat.id,
                 onSelected: (val) => setState(() => _selectedCategoryId = val ? cat.id : null),
-                selectedColor: Color(int.parse(cat.color.replaceFirst('#', '0xFF'))).withValues(alpha: 0.2),
+                selectedColor: catColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
-                  color: _selectedCategoryId == cat.id ? Color(int.parse(cat.color.replaceFirst('#', '0xFF'))) : null,
+                  color: _selectedCategoryId == cat.id ? catColor : null,
                   fontWeight: _selectedCategoryId == cat.id ? FontWeight.bold : null,
                 ),
               ),
@@ -139,7 +141,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Color(int.parse(post.category!.color.replaceFirst('#', '0xFF'))).withValues(alpha: 0.1),
+                              color: ColorUtils.fromHex(post.category!.color).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -147,7 +149,7 @@ class _CommunityFeedScreenState extends ConsumerState<CommunityFeedScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: Color(int.parse(post.category!.color.replaceFirst('#', '0xFF'))),
+                                color: ColorUtils.fromHex(post.category!.color),
                               ),
                             ),
                           ),

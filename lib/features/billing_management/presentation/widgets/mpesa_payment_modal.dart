@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mobile/core/utils/toast_service.dart';
 import 'package:mobile/features/billing_management/presentation/providers/billing_providers.dart';
 import 'package:mobile/shared/widgets/custom_button.dart';
@@ -138,12 +139,16 @@ class _MpesaPaymentModalState extends ConsumerState<MpesaPaymentModal> {
         ? (widget.plan['yearly_price'] ?? widget.plan['monthly_price'])
         : widget.plan['monthly_price'];
 
-    return Padding(
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 32,
         left: 24,
         right: 24,
-        top: 32,
+        top: 12,
       ),
       child: Form(
         key: _formKey,
@@ -151,49 +156,107 @@ class _MpesaPaymentModalState extends ConsumerState<MpesaPaymentModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
             Row(
               children: [
-                Icon(LucideIcons.creditCard, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                Text(
-                  'Upgrade to ${widget.plan['name']}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(LucideIcons.smartphone, color: theme.colorScheme.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'M-PESA PAYMENT',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        widget.plan['name'],
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Complete your subscription to access premium features.',
-              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.05)),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                    'KES $price',
-                    style: TextStyle(
-                      fontSize: 18, 
-                      fontWeight: FontWeight.bold, 
-                      color: theme.colorScheme.primary
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'KES $price',
+                          style: const TextStyle(
+                            fontSize: 24, 
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.isAnnual ? 'YEARLY' : 'MONTHLY',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             if (!_isPolling) ...[
               CustomInput(
-                label: 'M-Pesa Phone Number',
-                hintText: 'e.g. 254712345678',
+                label: 'Phone Number',
+                hintText: 'e.g. 0712 345 678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: const Icon(LucideIcons.phone, size: 20),
@@ -205,7 +268,7 @@ class _MpesaPaymentModalState extends ConsumerState<MpesaPaymentModal> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               CustomButton(
                 text: 'Pay with M-Pesa',
                 onPressed: _handlePay,
@@ -213,39 +276,73 @@ class _MpesaPaymentModalState extends ConsumerState<MpesaPaymentModal> {
                 icon: LucideIcons.send,
               ),
             ] else ...[
-              const Center(
+              Center(
                 child: Column(
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 24),
+                    SizedBox(
+                      height: 80,
+                      width: 80,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            strokeWidth: 6,
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          ),
+                          Icon(LucideIcons.lock, color: theme.colorScheme.primary, size: 32),
+                        ],
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                     .shimmer(duration: 2.seconds, color: Colors.white.withValues(alpha: 0.5)),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Waiting for PIN...',
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                    ),
                   ],
                 ),
               ),
             ],
             if (_statusMessage != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isPolling ? LucideIcons.info : LucideIcons.alertCircle,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _statusMessage!,
+                        style: TextStyle(
+                          fontSize: 13, 
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95)),
+            ],
+            const SizedBox(height: 24),
+            if (!_isPolling && !_isInitiating)
+              TextButton(
+                onPressed: () => Navigator.pop(context),
                 child: Text(
-                  _statusMessage!,
-                  style: TextStyle(
-                    fontSize: 13, 
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    fontStyle: FontStyle.italic
-                  ),
-                  textAlign: TextAlign.center,
+                  'Cancel',
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
                 ),
               ),
-            ],
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: _isPolling || _isInitiating ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
           ],
         ),
       ),
