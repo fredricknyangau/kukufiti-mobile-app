@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile/core/config/app_config.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/app/theme/app_theme.dart';
+import 'package:mobile/core/network/connectivity_service.dart';
 import 'package:mobile/features/settings_management/presentation/controllers/settings_controller.dart';
 
 class ConfigInvalidNotifier extends Notifier<bool> {
@@ -40,6 +41,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final settings = ref.watch(settingsProvider);
+    final connectivity = ref.watch(connectivityProvider);
 
     return MaterialApp.router(
       title: 'KukuFiti',
@@ -48,6 +50,41 @@ class MyApp extends ConsumerWidget {
       themeMode: settings.themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Column(
+          children: [
+            if (connectivity == ConnectivityStatus.isDisconnected)
+              Material(
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.red.shade800,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: const SafeArea(
+                    bottom: false,
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.cloud_off, color: Colors.white, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            'You are offline',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(child: child ?? const SizedBox()),
+          ],
+        );
+      },
     );
   }
 }

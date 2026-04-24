@@ -152,39 +152,53 @@ class UpdateService {
     }
   }
 
-  /// Compares semantic versions: "1.0.0" vs "1.0.1"
-  /// Returns true if latest is newer than current
   static bool _isNewerVersion({
     required String current,
     required String latest,
   }) {
     try {
-      // Strip build numbers for primary version comparison (e.g. "1.0.0+1" -> "1.0.0")
-      final currentBase = current.split('+')[0];
-      final latestBase = latest.split('+')[0];
+      // 1. Normalize strings: strip leading 'v' and split by '+' or '-' 
+      //    to isolate the semantic part (e.g. "1.2.11-main.38" -> "1.2.11")
+      String cleanCurrent = current.startsWith('v') ? current.substring(1) : current;
+      String cleanLatest = latest.startsWith('v') ? latest.substring(1) : latest;
 
-      final currentParts = currentBase.split('.').map(int.parse).toList();
-      final latestParts = latestBase.split('.').map(int.parse).toList();
+      // Extract base version (before + or -)
+      final currentBase = cleanCurrent.split(RegExp(r'[+-]'))[0];
+      final latestBase = cleanLatest.split(RegExp(r'[+-]'))[0];
 
-      while (currentParts.length < 3) {
-        currentParts.add(0);
-      }
-      while (latestParts.length < 3) {
-        latestParts.add(0);
-      }
+      final currentParts = currentBase.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final latestParts = latestBase.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
+      while (currentParts.length < 3) currentParts.add(0);
+      while (latestParts.length < 3) latestParts.add(0);
+
+      // 2. Compare major.minor.patch
       for (int i = 0; i < 3; i++) {
         if (latestParts[i] > currentParts[i]) return true;
         if (latestParts[i] < currentParts[i]) return false;
       }
 
-      // Compare build numbers if base versions are identical
-      final currentBuild = current.contains('+') ? int.tryParse(current.split('+')[1]) ?? 0 : 0;
-      final latestBuild = latest.contains('+') ? int.tryParse(latest.split('+')[1]) ?? 0 : 0;
+      // 3. Compare build numbers/suffixes if base is equal
+      // For "1.2.11-main.38", we want to extract "38"
+      int currentBuild = _extractBuildNumber(cleanCurrent);
+      int latestBuild = _extractBuildNumber(cleanLatest);
 
       return latestBuild > currentBuild;
     } catch (_) {
       return false;
     }
+  }
+
+  static int _extractBuildNumber(String version) {
+    try {
+      // Look for the last numeric part in the string
+      // Matches both "+38" and "-main.38"
+      final regExp = RegExp(r'[.+](\d+)$');
+      final match = regExp.firstMatch(version);
+      if (match != null) {
+        return int.tryParse(match.group(1) ?? '0') ?? 0;
+      }
+    } catch (_) {}
+    return 0;
   }
 }
