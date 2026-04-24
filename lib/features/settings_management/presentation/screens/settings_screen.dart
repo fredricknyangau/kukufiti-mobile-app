@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:go_router/go_router.dart';
 import 'package:mobile/features/settings_management/presentation/controllers/settings_controller.dart';
 import 'package:mobile/shared/widgets/app_drawer.dart';
 import 'package:mobile/shared/widgets/custom_card.dart';
 import 'package:mobile/features/settings_management/presentation/screens/terms_screen.dart';
+import 'package:mobile/shared/providers/data_providers.dart';
+import 'package:mobile/app/theme/app_theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,6 +17,9 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final userAsync = ref.watch(profileProvider);
+    final subscriptionAsync = ref.watch(subscriptionProvider);
+    final theme = Theme.of(context);
 
     // Helper map for titles
     String getThemeModeTitle(ThemeMode mode) {
@@ -35,6 +41,8 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildProfileCard(context, ref, theme, userAsync.value, subscriptionAsync.value),
+          const SizedBox(height: 24),
           _buildSettingsSection(
             'Appearance',
             [
@@ -154,6 +162,157 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileCard(
+    BuildContext context, 
+    WidgetRef ref, 
+    ThemeData theme, 
+    dynamic user, 
+    dynamic sub,
+  ) {
+    final plan = sub?['plan_type'] ?? 'STARTER';
+    final isPremium = plan != 'STARTER';
+    final customColors = theme.extension<CustomColors>();
+    final planColor = plan == 'ENTERPRISE' 
+        ? (customColors?.purple ?? Colors.purple)
+        : (plan == 'PROFESSIONAL' ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.4));
+
+    return CustomCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    (user?.fullName ?? 'F')[0].toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.fullName ?? 'Farmer',
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.email ?? '',
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: planColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: planColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            plan == 'ENTERPRISE' ? LucideIcons.gem : (isPremium ? LucideIcons.award : LucideIcons.user),
+                            size: 12,
+                            color: planColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            plan,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: planColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/profile'),
+                  icon: const Icon(LucideIcons.user, size: 16),
+                  label: const Text('Edit Profile'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (isPremium) {
+                      // Manage subscription logic or just navigate to billing
+                      context.push('/pricing');
+                    } else {
+                      context.push('/pricing');
+                    }
+                  },
+                  icon: Icon(isPremium ? LucideIcons.creditCard : LucideIcons.trendingUp, size: 16),
+                  label: Text(isPremium ? 'Plan' : 'Upgrade'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/welcome');
+              }
+            },
+            icon: const Icon(LucideIcons.logOut, size: 16),
+            label: const Text('Logout and Sign out'),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

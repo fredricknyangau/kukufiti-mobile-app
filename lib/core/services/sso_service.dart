@@ -5,6 +5,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/utils/error_handler.dart';
+import 'package:mobile/core/config/app_config.dart';
 
 /// Result returned from a successful SSO sign-in.
 class SsoResult {
@@ -24,6 +25,7 @@ class SsoResult {
 /// Throws a [String] error message on failure (already user-friendly).
 class SsoService {
   static final _googleSignIn = GoogleSignIn(
+    serverClientId: AppConfig.googleClientId,
     scopes: ['email', 'profile'],
   );
 
@@ -34,7 +36,9 @@ class SsoService {
     GoogleSignInAccount? account;
     try {
       account = await _googleSignIn.signIn();
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('Google Sign-In Error: $e');
+      debugPrint('Stack Trace: $stack');
       throw 'Google sign-in was cancelled or failed. Please try again.';
     }
 

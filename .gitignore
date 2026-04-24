@@ -58,3 +58,6 @@ firebase_options.dart
 android/key.properties
 android/app/kukufiti-release.jks
 *.b64
+
+# Build configuration
+.dart_tool/config/pubspec-lock-overrides.json

@@ -12,3 +12,12 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Google Sign-In configuration
+# Keep google-services.json out of version control on shared repos
+# Use CI/CD secrets to inject during builds
+# google-services.json
+
+# Build artifacts
+build/
+.gradle/

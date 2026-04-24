@@ -60,6 +60,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    final isNewUser = await ref.read(authProvider.notifier).signInWithGoogle();
+    
+    if (!mounted) return;
+    
+    final authState = ref.read(authProvider);
+    if (authState.error != null) {
+      ToastService.showError(context, authState.error!);
+      return;
+    }
+
+    if (isNewUser == true) {
+      context.go('/onboarding');
+    } else if (isNewUser == false) {
+      context.go('/dashboard');
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    final isNewUser = await ref.read(authProvider.notifier).signInWithApple();
+    
+    if (!mounted) return;
+    
+    final authState = ref.read(authProvider);
+    if (authState.error != null) {
+      ToastService.showError(context, authState.error!);
+      return;
+    }
+
+    if (isNewUser == true) {
+      context.go('/onboarding');
+    } else if (isNewUser == false) {
+      context.go('/dashboard');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -166,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(LucideIcons.mail, size: 18),
                                 label: const Text('Google', style: TextStyle(fontSize: 13)),
-                                onPressed: () => ToastService.showInfo(context, 'Google Sign In coming soon'),
+                                onPressed: authState.isLoading ? null : _handleGoogleSignIn,
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -178,7 +214,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: OutlinedButton.icon(
                                 icon: const Icon(LucideIcons.apple, size: 18),
                                 label: const Text('Apple', style: TextStyle(fontSize: 13)),
-                                onPressed: () => ToastService.showInfo(context, 'Apple Sign In coming soon'),
+                                onPressed: authState.isLoading ? null : _handleAppleSignIn,
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

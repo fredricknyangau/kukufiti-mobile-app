@@ -4,6 +4,7 @@ import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/api_endpoints.dart';
 import 'package:mobile/features/auth_management/domain/repositories/auth_repository.dart';
 import 'package:mobile/core/utils/error_handler.dart';
+import 'package:mobile/core/services/sso_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   @override
@@ -52,6 +53,26 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure('Invalid response: Missing token'));
     } catch (e) {
       return Left(ServerFailure(getFriendlyErrorMessage(e)));
+    }
+  }
+
+  @override
+  Future<Either<Failure, (String, bool)>> signInWithGoogle() async {
+    try {
+      final result = await SsoService.signInWithGoogle();
+      return Right((result.accessToken, result.isNewUser));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, (String, bool)>> signInWithApple() async {
+    try {
+      final result = await SsoService.signInWithApple();
+      return Right((result.accessToken, result.isNewUser));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

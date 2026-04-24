@@ -39,6 +39,10 @@ class AppConfig {
     return 'http://10.0.2.2:8080/api/v1';
   }
 
+  static String get googleClientId {
+    return const String.fromEnvironment('GOOGLE_CLIENT_ID');
+  }
+
   /// Returns `true` only if the app is pointed at a known local-only dev URL
   /// that would be unreachable in production. This is used by [ConfigErrorApp]
   /// to prompt the user to enter the correct backend URL before proceeding.

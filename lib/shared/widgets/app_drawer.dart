@@ -161,7 +161,6 @@ class AppDrawer extends ConsumerWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Soft glowing fluid circles in header
                   Positioned(
                     top: -40,
                     right: -40,
@@ -177,7 +176,7 @@ class AppDrawer extends ConsumerWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
@@ -185,10 +184,14 @@ class AppDrawer extends ConsumerWidget {
                             color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
-                        child: Icon(
-                          LucideIcons.feather,
-                          color: theme.colorScheme.primary,
-                          size: 24,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/images/chicken_logo.jpeg',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -296,101 +299,6 @@ class AppDrawer extends ConsumerWidget {
                       icon: LucideIcons.lock,
                       initiallyExpanded: ['/admin', '/audit-logs'].contains(currentRoute),
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.only(left: 8, right: 4),
-                    leading: CircleAvatar(
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      radius: 18,
-                      child: Text(
-                        (user?.fullName ?? 'F')[0].toUpperCase(),
-                        style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            user?.fullName ?? 'Farmer',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        subscriptionAsync.when(
-                          data: (sub) {
-                            final plan = sub['plan_type'] ?? 'STARTER';
-                            final isPremium = plan != 'STARTER';
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isPremium 
-                                    ? theme.colorScheme.primary.withValues(alpha: 0.1) 
-                                    : theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isPremium 
-                                      ? theme.colorScheme.primary.withValues(alpha: 0.3) 
-                                      : theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Text(
-                                plan,
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w900,
-                                  color: isPremium ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            );
-                          },
-                          loading: () => const SizedBox.shrink(),
-                          error: (e, s) => const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                    subtitle: Text(user?.email ?? '', style: const TextStyle(fontSize: 10)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.push('/profile');
-                    },
-                  ),
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.only(left: 8, right: 4),
-                    leading: Icon(LucideIcons.trendingUp, color: theme.colorScheme.primary, size: 20),
-                    title: Text(
-                      'Upgrade Plan',
-                      style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.push('/pricing');
-                    },
-                  ),
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.only(left: 8, right: 4),
-                    leading: Icon(LucideIcons.logOut, color: theme.colorScheme.error, size: 20),
-                    title: Text(
-                      'Logout',
-                      style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    onTap: () => ref.read(authProvider.notifier).logout(),
-                  ),
                 ],
               ),
             ),

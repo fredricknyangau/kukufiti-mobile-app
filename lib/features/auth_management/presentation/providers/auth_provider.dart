@@ -128,6 +128,48 @@ class Auth extends _$Auth {
     );
   }
 
+  Future<bool?> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    final repo = ref.read(authRepositoryProvider);
+    final result = await repo.signInWithGoogle();
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return null;
+      },
+      (data) async {
+        final token = data.$1;
+        final isNewUser = data.$2;
+        await SecureStorageService.setAuthToken(token);
+        state = state.copyWith(isAuthenticated: true, isLoading: false);
+        return isNewUser;
+      },
+    );
+  }
+
+  Future<bool?> signInWithApple() async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    final repo = ref.read(authRepositoryProvider);
+    final result = await repo.signInWithApple();
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return null;
+      },
+      (data) async {
+        final token = data.$1;
+        final isNewUser = data.$2;
+        await SecureStorageService.setAuthToken(token);
+        state = state.copyWith(isAuthenticated: true, isLoading: false);
+        return isNewUser;
+      },
+    );
+  }
+
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await SecureStorageService.deleteAuthToken();

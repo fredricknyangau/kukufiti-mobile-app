@@ -140,6 +140,8 @@ class Expenditure {
   final bool? createInventoryItem;
   final String? newInventoryName;
   final String? newInventoryUnit;
+  final String? relatedId;
+  final String? relatedType;
 
   Expenditure({
     required this.id,
@@ -157,6 +159,8 @@ class Expenditure {
     this.createInventoryItem,
     this.newInventoryName,
     this.newInventoryUnit,
+    this.relatedId,
+    this.relatedType,
   });
 
   factory Expenditure.fromJson(Map<String, dynamic> json) => _$ExpenditureFromJson(json);

@@ -314,7 +314,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       _status = widget.batch!.status.toLowerCase();
       _startDate = widget.batch!.commencementDate;
       _expectedEndDate = widget.batch!.expectedEndDate;
-      _selectedFarmId = widget.batch!.farmId ?? widget.batch!.sourceLocation;
+      _selectedFarmId = widget.batch!.farmId;
       _sourceLocationController.text = widget.batch!.sourceLocation ?? '';
       _hatcherySourceController.text = widget.batch!.hatcherySource ?? '';
       _notesController.text = widget.batch!.notes ?? '';
@@ -351,7 +351,7 @@ class _AddBatchSheetState extends ConsumerState<_AddBatchSheet> {
       'start_date': DateFormat('yyyy-MM-dd').format(_startDate!),
       if (_expectedEndDate != null) 'expected_end_date': DateFormat('yyyy-MM-dd').format(_expectedEndDate!),
       'status': _status,
-      'farm_id': _selectedFarmId,
+      if (_selectedFarmId != null && _selectedFarmId!.trim().isNotEmpty) 'farm_id': _selectedFarmId,
       if (_sourceLocationController.text.trim().isNotEmpty) 'source_location': _sourceLocationController.text.trim(),
       if (_hatcherySourceController.text.trim().isNotEmpty) 'hatchery_source': _hatcherySourceController.text.trim(),
       if (_notesController.text.trim().isNotEmpty) 'notes': _notesController.text.trim(),

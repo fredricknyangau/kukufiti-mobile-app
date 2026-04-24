@@ -5,4 +5,6 @@ abstract class AuthRepository {
   Future<Either<Failure, String>> sendOtp(String phoneNumber);
   Future<Either<Failure, (String, bool)>> verifyOtp(String phoneNumber, String code);
   Future<Either<Failure, String>> login(String email, String password);
+  Future<Either<Failure, (String, bool)>> signInWithGoogle();
+  Future<Either<Failure, (String, bool)>> signInWithApple();
 }
