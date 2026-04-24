@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mobile/core/config/app_config.dart';
 
 class UpdateInfo {
   final bool isUpdateAvailable;
@@ -39,8 +40,7 @@ class UpdateService {
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
       // Get the currently installed app version
-      final packageInfo = await PackageInfo.fromPlatform();
-      final currentVersion = packageInfo.version; // e.g. "1.0.0"
+      final currentVersion = AppConfig.fullVersion; // e.g. "1.0.0+1"
 
       // Call GitHub API
       final response = await http
