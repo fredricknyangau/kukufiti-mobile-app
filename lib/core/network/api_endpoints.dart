@@ -57,8 +57,8 @@ class ApiEndpoints {
 
   // New: Backend Sync
   static const String resources = 'resources/';
-  static const String settings = 'settings';
-  static const String tasks = 'tasks';
+  static const String settings = 'settings/';
+  static const String tasks = 'tasks/';
   // farms list route is defined as '/' on the backend router
   static const String farms = 'farms/';
 

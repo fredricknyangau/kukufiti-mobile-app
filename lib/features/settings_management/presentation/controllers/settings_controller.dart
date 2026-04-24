@@ -32,6 +32,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       pushNotificationsEnabled: true,
       emailSummariesEnabled: false,
       biometricLockEnabled: false,
+      pinLockEnabled: false,
     );
   }
 
