@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/api_endpoints.dart';
@@ -35,8 +36,26 @@ class BroilerState {
 class BroilerNotifier extends Notifier<BroilerState> {
   @override
   BroilerState build() {
-    // Schedule the fetch to happen after the first build is complete
+    // 1. Try to load from cache IMMEDIATELY (synchronously)
+    final cachedData = HiveCacheService.getCachedData(ApiEndpoints.batches);
+    
+    // 2. Schedule background refresh
     Future.microtask(() => fetchBatches());
+
+    if (cachedData != null) {
+      try {
+        final List data = cachedData;
+        final batches = data.map((e) => Batch.fromJson(e as Map<String, dynamic>)).toList();
+        return BroilerState(
+          batches: batches,
+          currentBatch: batches.isNotEmpty ? batches.first : null,
+          isLoading: true, // Mark as loading so UI can show a refresh indicator if needed
+        );
+      } catch (e) {
+        debugPrint('BroilerProvider: Hydration failed: $e');
+      }
+    }
+
     return const BroilerState(isLoading: true);
   }
 

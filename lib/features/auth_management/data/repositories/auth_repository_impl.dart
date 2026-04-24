@@ -14,7 +14,8 @@ class AuthRepositoryImpl implements AuthRepository {
         ApiEndpoints.sendOtp,
         data: {'phone_number': phoneNumber},
       );
-      final otpCode = response.data['code']?.toString() ?? 'unknown';
+      // Backend returns 'debug_code' in dev mode, check both
+      final otpCode = (response.data['debug_code'] ?? response.data['code'])?.toString() ?? 'unknown';
       return Right(otpCode);
     } catch (e) {
       return Left(ServerFailure(getFriendlyErrorMessage(e)));

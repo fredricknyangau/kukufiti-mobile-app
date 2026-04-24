@@ -77,4 +77,25 @@ class SecureStorageService {
       await _storage.write(key: _hasSeenIntroKey, value: value.toString());
     } catch (_) {}
   }
+
+  /// App PIN Operations
+  static Future<String?> getAppPin() async {
+    try {
+      return await _storage.read(key: 'app_pin');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<void> saveAppPin(String pin) async {
+    try {
+      await _storage.write(key: 'app_pin', value: pin);
+    } catch (_) {}
+  }
+
+  static Future<void> clearAppPin() async {
+    try {
+      await _storage.delete(key: 'app_pin');
+    } catch (_) {}
+  }
 }

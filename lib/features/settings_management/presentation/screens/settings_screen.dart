@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:mobile/core/config/app_config.dart';
+import 'package:mobile/core/storage/secure_storage_service.dart';
+import 'package:mobile/core/services/biometric_service.dart';
 import 'package:mobile/features/settings_management/presentation/controllers/settings_controller.dart';
 import 'package:mobile/shared/widgets/app_drawer.dart';
 import 'package:mobile/shared/widgets/custom_card.dart';
-import 'package:mobile/features/settings_management/presentation/screens/terms_screen.dart';
 import 'package:mobile/shared/providers/data_providers.dart';
 import 'package:mobile/app/theme/app_theme.dart';
 
@@ -104,19 +106,142 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
+          // Security Section with Biometric Hardware Check
+          ref.watch(biometricSupportProvider).when(
+                data: (isSupported) => isSupported
+                    ? Column(
+                        children: [
+                          _buildSettingsSection(
+                            'Security',
+                            [
+                              ListTile(
+                                leading: const Icon(LucideIcons.lock),
+                                title: const Text('Biometric App Lock'),
+                                subtitle: const Text('Require fingerprint or FaceID to open'),
+                                trailing: Switch(
+                                  value: settings.biometricLockEnabled,
+                                  onChanged: (v) async {
+                                    if (v) {
+                                      // Verification step: confirm they have access now
+                                      final authenticated = await BiometricService.authenticate();
+                                      if (authenticated) {
+                                        notifier.setBiometricLock(true);
+                                      } else {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Authentication failed. Biometric lock not enabled.')),
+                                          );
+                                        }
+                                      }
+                                    } else {
+                                      notifier.setBiometricLock(false);
+                                    }
+                                  },
+                                ),
+                              ),
+                              ListTile(
+                                leading: const Icon(LucideIcons.key),
+                                title: const Text('App PIN Lock'),
+                                subtitle: const Text('Use a 4-digit PIN as fallback'),
+                                trailing: Switch(
+                                  value: settings.pinLockEnabled,
+                                  onChanged: (v) async {
+                                    if (v) {
+                                      final existingPin = await SecureStorageService.getAppPin();
+                                      if (existingPin == null) {
+                                        if (context.mounted) _showPinSetupDialog(context, notifier);
+                                      } else {
+                                        notifier.setPinLock(true);
+                                      }
+                                    } else {
+                                      notifier.setPinLock(false);
+                                    }
+                                  },
+                                ),
+                                onTap: settings.pinLockEnabled ? () => _showPinSetupDialog(context, notifier) : null,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      )
+                    : _buildSettingsSection(
+                        'Security',
+                        [
+                          ListTile(
+                            leading: const Icon(LucideIcons.key),
+                            title: const Text('App PIN Lock'),
+                            subtitle: const Text('Protect app with a 4-digit PIN'),
+                            trailing: Switch(
+                              value: settings.pinLockEnabled,
+                              onChanged: (v) async {
+                                if (v) {
+                                  final existingPin = await SecureStorageService.getAppPin();
+                                  if (existingPin == null) {
+                                    if (context.mounted) _showPinSetupDialog(context, notifier);
+                                  } else {
+                                    notifier.setPinLock(true);
+                                  }
+                                } else {
+                                  notifier.setPinLock(false);
+                                }
+                              },
+                            ),
+                            onTap: settings.pinLockEnabled ? () => _showPinSetupDialog(context, notifier) : null,
+                          ),
+                        ],
+                      ),
+                loading: () => const SizedBox.shrink(),
+                error: (err, stack) => const SizedBox.shrink(),
+              ),
+          const SizedBox(height: 24),
           _buildSettingsSection(
-            'Security',
+            'Support & Legal',
             [
               ListTile(
-                leading: const Icon(LucideIcons.lock),
-                title: const Text('Biometric App Lock'),
-                trailing: Switch(
-                  value: settings.biometricLockEnabled,
-                  onChanged: (v) => notifier.setBiometricLock(v),
-                ),
+                leading: const Icon(LucideIcons.helpCircle),
+                title: const Text('Help & Support'),
+                subtitle: const Text('FAQs and contact support'),
+                trailing: const Icon(LucideIcons.chevronRight),
+                onTap: () => context.push('/contact'),
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.fileText),
+                title: const Text('Terms of Service'),
+                trailing: const Icon(LucideIcons.chevronRight),
+                onTap: () => context.push('/terms'),
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.shieldCheck),
+                title: const Text('Privacy Policy'),
+                trailing: const Icon(LucideIcons.chevronRight),
+                onTap: () {
+                  // Reuse terms screen or add dedicated one later
+                  context.push('/terms');
+                },
               ),
             ],
           ),
+          if (userAsync.value != null && (userAsync.value!.isSuperuser == true || userAsync.value!.role == 'ADMIN')) ...[
+            const SizedBox(height: 24),
+            _buildSettingsSection(
+              'Admin Controls',
+              [
+                ListTile(
+                  leading: const Icon(LucideIcons.shield),
+                  title: const Text('Admin Dashboard'),
+                  trailing: const Icon(LucideIcons.chevronRight),
+                  onTap: () => context.push('/admin'),
+                ),
+                ListTile(
+                  leading: const Icon(LucideIcons.clipboardList),
+                  title: const Text('System Audit Logs'),
+                  trailing: const Icon(LucideIcons.chevronRight),
+                  onTap: () => context.push('/audit-logs'),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 24),
           _buildSettingsSection(
             'About',
@@ -124,22 +249,85 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(LucideIcons.info),
                 title: const Text('Version'),
-                trailing: const Text('1.2.4'),
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.fileText),
-                title: const Text('Terms of Service'),
-                trailing: const Icon(LucideIcons.chevronRight),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const TermsScreen()),
-                  );
-                },
+                subtitle: Text('Build Mode: ${AppConfig.buildMode.toUpperCase()}'),
+                trailing: Text(
+                  AppConfig.fullVersion,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showPinSetupDialog(BuildContext context, SettingsNotifier notifier) {
+    final pinController = TextEditingController();
+    final confirmController = TextEditingController();
+    bool isConfirming = false;
+    String firstPin = '';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(isConfirming ? 'Confirm PIN' : 'Set App PIN', style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(isConfirming ? 'Re-enter your 4-digit PIN' : 'Enter a 4-digit PIN to secure the app'),
+              const SizedBox(height: 20),
+              TextField(
+                controller: isConfirming ? confirmController : pinController,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 24, letterSpacing: 16, fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  if (value.length == 4) {
+                    if (!isConfirming) {
+                      setState(() {
+                        firstPin = value;
+                        isConfirming = true;
+                      });
+                    } else {
+                      if (value == firstPin) {
+                        SecureStorageService.saveAppPin(value);
+                        notifier.setPinLock(true);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('App PIN set successfully!')),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('PINs do not match. Try again.')),
+                        );
+                        setState(() {
+                          isConfirming = false;
+                          pinController.clear();
+                          confirmController.clear();
+                        });
+                      }
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -276,12 +464,7 @@ class SettingsScreen extends ConsumerWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    if (isPremium) {
-                      // Manage subscription logic or just navigate to billing
-                      context.push('/pricing');
-                    } else {
-                      context.push('/pricing');
-                    }
+                    context.push('/pricing');
                   },
                   icon: Icon(isPremium ? LucideIcons.creditCard : LucideIcons.trendingUp, size: 16),
                   label: Text(isPremium ? 'Plan' : 'Upgrade'),

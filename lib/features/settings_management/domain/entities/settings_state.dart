@@ -7,6 +7,7 @@ class SettingsState {
   final bool pushNotificationsEnabled;
   final bool emailSummariesEnabled;
   final bool biometricLockEnabled;
+  final bool pinLockEnabled;
 
   SettingsState({
     required this.themeMode,
@@ -15,6 +16,7 @@ class SettingsState {
     this.pushNotificationsEnabled = true,
     this.emailSummariesEnabled = false,
     this.biometricLockEnabled = false,
+    this.pinLockEnabled = false,
   });
 
   SettingsState copyWith({
@@ -24,6 +26,7 @@ class SettingsState {
     bool? pushNotificationsEnabled,
     bool? emailSummariesEnabled,
     bool? biometricLockEnabled,
+    bool? pinLockEnabled,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -32,6 +35,7 @@ class SettingsState {
       pushNotificationsEnabled: pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       emailSummariesEnabled: emailSummariesEnabled ?? this.emailSummariesEnabled,
       biometricLockEnabled: biometricLockEnabled ?? this.biometricLockEnabled,
+      pinLockEnabled: pinLockEnabled ?? this.pinLockEnabled,
     );
   }
 }

@@ -11,5 +11,6 @@ abstract class SettingsRepository {
   Future<Either<Failure, void>> setPushNotifications(bool enabled);
   Future<Either<Failure, void>> setEmailSummaries(bool enabled);
   Future<Either<Failure, void>> setBiometricLock(bool enabled);
+  Future<Either<Failure, void>> setPinLock(bool enabled);
 }
 

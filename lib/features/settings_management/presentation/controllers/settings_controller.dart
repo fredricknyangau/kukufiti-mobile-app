@@ -7,10 +7,16 @@ import 'package:mobile/shared/providers/data_providers.dart';
 import 'package:mobile/features/settings_management/domain/entities/settings_state.dart';
 import 'package:mobile/features/settings_management/domain/repositories/settings_repository.dart';
 import 'package:mobile/features/settings_management/data/repositories/settings_repository_impl.dart';
+import 'package:mobile/core/services/biometric_service.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepositoryImpl();
 });
+
+final biometricSupportProvider = FutureProvider<bool>((ref) async {
+  return await BiometricService.canCheckBiometrics();
+});
+
 
 class SettingsNotifier extends Notifier<SettingsState> {
   @override
@@ -75,6 +81,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(biometricLockEnabled: enabled);
     final repository = ref.read(settingsRepositoryProvider);
     await repository.setBiometricLock(enabled);
+  }
+
+  Future<void> setPinLock(bool enabled) async {
+    state = state.copyWith(pinLockEnabled: enabled);
+    final repository = ref.read(settingsRepositoryProvider);
+    await repository.setPinLock(enabled);
   }
 }
 
